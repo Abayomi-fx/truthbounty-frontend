@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { History, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react';
+import React from 'react';
+import { History, ExternalLink, ShieldCheck } from 'lucide-react';
 import type { AdminAuditRecord } from '@/app/types/admin';
+import { CopyableValue } from '@/components/ui/CopyableValue';
 
 export interface AdminAuditTrailProps {
   records: AdminAuditRecord[];
@@ -15,14 +16,6 @@ export function AdminAuditTrail({
   isLoading = false,
   className = '',
 }: AdminAuditTrailProps) {
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const handleCopy = (id: string, text: string) => {
-    void navigator.clipboard?.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
   if (isLoading) {
     return (
       <div className={`rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse ${className}`}>
@@ -72,26 +65,18 @@ export function AdminAuditTrail({
                 </thead>
                 <tbody className="divide-y divide-border font-mono">
                   {records.map((rec) => {
-                    const isCopiedId = copiedId === rec.auditId;
-                    const isCopiedHash = copiedId === rec.consequenceHash;
-
                     return (
                       <tr key={rec.auditId} className="hover:bg-muted/20 transition-colors">
                         <td className="px-4 py-3.5 font-bold text-foreground">
                           <div className="flex items-center gap-1.5">
                             <span>{rec.auditId}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(rec.auditId, rec.auditId)}
-                              aria-label={`Copy Audit ID ${rec.auditId}`}
-                              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                            >
-                              {isCopiedId ? (
-                                <Check className="h-3 w-3 text-emerald-500" aria-hidden="true" />
-                              ) : (
-                                <Copy className="h-3 w-3" aria-hidden="true" />
-                              )}
-                            </button>
+                            <CopyableValue
+                              kind="support-reference"
+                              value={rec.auditId}
+                              displayValue=""
+                              label="audit reference"
+                              accessibleLabel={`Copy Audit ID ${rec.auditId}`}
+                            />
                           </div>
                         </td>
                         <td className="px-4 py-3.5 font-sans">
@@ -115,18 +100,15 @@ export function AdminAuditTrail({
                                 ? `${rec.consequenceHash.slice(0, 10)}...${rec.consequenceHash.slice(-8)}`
                                 : '0x00'}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(rec.consequenceHash, rec.consequenceHash)}
-                              aria-label="Copy consequence hash"
-                              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                            >
-                              {isCopiedHash ? (
-                                <Check className="h-3 w-3 text-emerald-500" aria-hidden="true" />
-                              ) : (
-                                <Copy className="h-3 w-3" aria-hidden="true" />
-                              )}
-                            </button>
+                            {rec.consequenceHash && (
+                              <CopyableValue
+                                kind="hash"
+                                value={rec.consequenceHash}
+                                displayValue=""
+                                label="consequence hash"
+                                accessibleLabel="Copy consequence hash"
+                              />
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap text-muted-foreground font-sans text-[11px]">
@@ -149,9 +131,6 @@ export function AdminAuditTrail({
           {/* Approved Mobile Card Alternative */}
           <div className="md:hidden space-y-3" data-testid="admin-audit-mobile-cards">
             {records.map((rec) => {
-              const isCopiedId = copiedId === rec.auditId;
-              const isCopiedHash = copiedId === rec.consequenceHash;
-
               return (
                 <div
                   key={rec.auditId}
@@ -160,18 +139,13 @@ export function AdminAuditTrail({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 font-mono font-bold text-foreground">
                       <span>{rec.auditId}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(rec.auditId, rec.auditId)}
-                        aria-label={`Copy Audit ID ${rec.auditId}`}
-                        className="p-1 text-muted-foreground hover:text-foreground"
-                      >
-                        {isCopiedId ? (
-                          <Check className="h-3 w-3 text-emerald-500" aria-hidden="true" />
-                        ) : (
-                          <Copy className="h-3 w-3" aria-hidden="true" />
-                        )}
-                      </button>
+                      <CopyableValue
+                        kind="support-reference"
+                        value={rec.auditId}
+                        displayValue=""
+                        label="audit reference"
+                        accessibleLabel={`Copy Audit ID ${rec.auditId}`}
+                      />
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
                       <ShieldCheck className="h-3 w-3" aria-hidden="true" />
@@ -199,18 +173,15 @@ export function AdminAuditTrail({
                             ? `${rec.consequenceHash.slice(0, 8)}...${rec.consequenceHash.slice(-6)}`
                             : '0x00'}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(rec.consequenceHash, rec.consequenceHash)}
-                          aria-label="Copy consequence hash"
-                          className="p-0.5 text-muted-foreground hover:text-foreground"
-                        >
-                          {isCopiedHash ? (
-                            <Check className="h-3 w-3 text-emerald-500" aria-hidden="true" />
-                          ) : (
-                            <Copy className="h-3 w-3" aria-hidden="true" />
-                          )}
-                        </button>
+                        {rec.consequenceHash && (
+                          <CopyableValue
+                            kind="hash"
+                            value={rec.consequenceHash}
+                            displayValue=""
+                            label="consequence hash"
+                            accessibleLabel="Copy consequence hash"
+                          />
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
