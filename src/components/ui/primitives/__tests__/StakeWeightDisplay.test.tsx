@@ -34,8 +34,8 @@ describe('StakeWeightDisplay', () => {
       expect(region).toBeInTheDocument();
       expect(region).toHaveTextContent('Supporting');
       expect(region).toHaveTextContent('Opposing');
-      expect(region).toHaveTextContent('700.0000 ETH');
-      expect(region).toHaveTextContent('300.0000 ETH');
+      expect(region).toHaveTextContent('700 ETH');
+      expect(region).toHaveTextContent('300 ETH');
     });
 
     it('shows percentages', () => {
@@ -73,7 +73,7 @@ describe('StakeWeightDisplay', () => {
       );
       const region = screen.getByRole('region', { name: /stake weights/i });
       expect(region).toHaveTextContent('Quorum');
-      expect(region).toHaveTextContent('500.0000 ETH');
+      expect(region).toHaveTextContent('500 ETH');
     });
 
     it('shows quorum reached when total >= quorum', () => {
@@ -162,8 +162,8 @@ describe('StakeWeightDisplay', () => {
     it('renders compact horizontal layout', () => {
       render(<StakeWeightDisplay supporting={defaultSupporting} opposing={defaultOpposing} compact />);
       const region = screen.getByRole('region', { name: /stake weights/i });
-      expect(region).toHaveTextContent('700.0000 ETH');
-      expect(region).toHaveTextContent('300.0000 ETH');
+      expect(region).toHaveTextContent('700 ETH');
+      expect(region).toHaveTextContent('300 ETH');
       expect(region).toHaveTextContent('70.0%');
       expect(region).toHaveTextContent('30.0%');
     });
@@ -211,7 +211,7 @@ describe('StakeWeightDisplay', () => {
         />
       );
       const region = screen.getByRole('region', { name: /stake weights/i });
-      expect(region).toHaveTextContent('2000.0000 ETH');
+      expect(region).toHaveTextContent('2000 ETH');
     });
   });
 });

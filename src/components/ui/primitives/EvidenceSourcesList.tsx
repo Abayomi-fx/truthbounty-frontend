@@ -44,6 +44,23 @@ const TYPE_CONFIG: Record<EvidenceType, { icon: React.ReactNode; label: string; 
   onchain: { icon: <Shield size={14} aria-hidden="true" />, label: 'On-chain', tone: 'text-emerald-400' },
 };
 
+// Supported chain explorers - only render links for configured chains
+const EXPLORER_CONFIG: Record<number, { name: string; txUrl: (hash: string) => string; blockUrl: (block: number) => string }> = {
+  1: { name: 'Ethereum Mainnet', txUrl: (h) => `https://etherscan.io/tx/${h}`, blockUrl: (b) => `https://etherscan.io/block/${b}` },
+  5: { name: 'Ethereum Goerli', txUrl: (h) => `https://goerli.etherscan.io/tx/${h}`, blockUrl: (b) => `https://goerli.etherscan.io/block/${b}` },
+  10: { name: 'Optimism Mainnet', txUrl: (h) => `https://optimistic.etherscan.io/tx/${h}`, blockUrl: (b) => `https://optimistic.etherscan.io/block/${b}` },
+  420: { name: 'Optimism Goerli', txUrl: (h) => `https://goerli-optimism.etherscan.io/tx/${h}`, blockUrl: (b) => `https://goerli-optimism.etherscan.io/block/${b}` },
+  42161: { name: 'Arbitrum One', txUrl: (h) => `https://arbiscan.io/tx/${h}`, blockUrl: (b) => `https://arbiscan.io/block/${b}` },
+  421613: { name: 'Arbitrum Goerli', txUrl: (h) => `https://goerli.arbiscan.io/tx/${h}`, blockUrl: (b) => `https://goerli.arbiscan.io/block/${b}` },
+  11155111: { name: 'Ethereum Sepolia', txUrl: (h) => `https://sepolia.etherscan.io/tx/${h}`, blockUrl: (b) => `https://sepolia.etherscan.io/block/${b}` },
+  11155420: { name: 'Optimism Sepolia', txUrl: (h) => `https://sepolia-optimism.etherscan.io/tx/${h}`, blockUrl: (b) => `https://sepolia-optimism.etherscan.io/block/${b}` },
+};
+
+function getExplorerForChain(chainId: number | undefined): { name: string; txUrl: (hash: string) => string; blockUrl: (block: number) => string } | null {
+  if (!chainId) return null;
+  return EXPLORER_CONFIG[chainId] ?? null;
+}
+
 export interface EvidenceSourcesListProps {
   /** Array of evidence sources. */
   sources: EvidenceSource[];
@@ -209,7 +226,6 @@ export function EvidenceSourcesList({
         className="w-full text-xs text-muted-foreground border-t border-border pt-2"
         role="table"
         aria-label="Evidence sources reference"
-        aria-hidden="true"
       >
         <thead>
           <tr>
@@ -274,6 +290,7 @@ function EvidenceSourceItem({
 }) {
   const typeConfig = TYPE_CONFIG[source.type];
   const itemId = React.useId();
+  const explorer = getExplorerForChain(source.chainId);
 
   const handleClick = () => onClick?.(source);
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -283,109 +300,128 @@ function EvidenceSourceItem({
     }
   };
 
-  const content = (
-    <li
-      id={itemId}
-      className={cn(
-        'p-3 rounded-lg border bg-muted/30 transition-colors',
-        onClick && 'hover:bg-muted/50 cursor-pointer'
-      )}
-      role="listitem"
-      tabIndex={onClick ? 0 : -1}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      aria-label={`Evidence ${index + 1}: ${source.title}`}
-    >
-      <div className="flex flex-wrap items-start gap-3">
-        <span
-          className={cn('flex-shrink-0 size-8 rounded-full border flex items-center justify-center', typeConfig.tone)}
-          aria-hidden="true"
-        >
-          {typeConfig.icon}
-        </span>
+  const renderTxLink = () => {
+    if (!source.verificationTxHash || !explorer) return null;
+    return (
+      <a
+        href={explorer.txUrl(source.verificationTxHash)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 hover:underline"
+        aria-label={`View transaction ${source.verificationTxHash.slice(0, 10)}… on ${explorer.name}`}
+      >
+        <ExternalLink size={10} aria-hidden="true" />
+        <span className="font-mono">Tx: {source.verificationTxHash.slice(0, 10)}…</span>
+      </a>
+    );
+  };
 
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-medium text-foreground truncate">{source.title}</h4>
-            <span className={cn('inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium', typeConfig.tone.replace('text-', 'bg-').replace('400', '/10') + ' ' + typeConfig.tone)}>
-              {typeConfig.label}
-            </span>
-            {showDisputeStatus && source.disputed && (
-              <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-destructive/10 text-destructive border border-destructive/30">
-                <AlertCircle size={10} aria-hidden="true" />
-                Disputed
+  const renderBlockLink = () => {
+    if (!source.blockNumber || !explorer) return null;
+    return (
+      <a
+        href={explorer.blockUrl(source.blockNumber)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 hover:underline"
+        aria-label={`View block ${source.blockNumber} on ${explorer.name}`}
+      >
+        <ExternalLink size={10} aria-hidden="true" />
+        <span className="font-mono">Block {source.blockNumber.toString()}</span>
+      </a>
+    );
+  };
+
+  return (
+    <li id={itemId} className="space-y-3 p-3 rounded-lg border bg-muted/30">
+      <button
+        type="button"
+        className={cn(
+          'w-full text-left p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          onClick && 'hover:bg-muted/50 cursor-pointer'
+        )}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        aria-label={`Evidence ${index + 1}: ${source.title}`}
+        disabled={!onClick}
+      >
+        <div className="flex flex-wrap items-start gap-3">
+          <span
+            className={cn('flex-shrink-0 size-8 rounded-full border flex items-center justify-center', typeConfig.tone)}
+            aria-hidden="true"
+          >
+            {typeConfig.icon}
+          </span>
+
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="font-medium text-foreground truncate">{source.title}</h4>
+              <span className={cn('inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium', typeConfig.tone.replace('text-', 'bg-').replace('400', '/10') + ' ' + typeConfig.tone)}>
+                {typeConfig.label}
               </span>
-            )}
-            {showVerification && source.verified && (
-              <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-success/10 text-success border border-success/30">
-                <Shield size={10} aria-hidden="true" />
-                Verified
-              </span>
-            )}
-          </div>
+              {showDisputeStatus && source.disputed && (
+                <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-destructive/10 text-destructive border border-destructive/30">
+                  <AlertCircle size={10} aria-hidden="true" />
+                  Disputed
+                </span>
+              )}
+              {showVerification && source.verified && (
+                <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-success/10 text-success border border-success/30">
+                  <Shield size={10} aria-hidden="true" />
+                  Verified
+                </span>
+              )}
+            </div>
 
-          {source.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">{source.description}</p>
-          )}
-
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {renderValue ? (
-              <span className="flex-1 min-w-0">{renderValue(source)}</span>
-            ) : (
-              <span className="flex-1 min-w-0 truncate font-mono">{source.value}</span>
+            {source.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2">{source.description}</p>
             )}
 
-            {source.submittedBy && (
-              <span className="flex items-center gap-1">
-                <span aria-hidden="true">👤</span>
-                <span>{source.submittedBy}</span>
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              {renderValue ? (
+                <span className="flex-1 min-w-0">{renderValue(source)}</span>
+              ) : (
+                <span className="flex-1 min-w-0 truncate font-mono">{source.value}</span>
+              )}
 
-            {source.submittedAt && (
-              <time dateTime={source.submittedAt} className="flex items-center gap-1">
-                <Clock size={10} aria-hidden="true" />
-                <span>{new Date(source.submittedAt).toLocaleString()}</span>
-              </time>
-            )}
+              {source.submittedBy && (
+                <span className="flex items-center gap-1">
+                  <span aria-hidden="true">👤</span>
+                  <span>{source.submittedBy}</span>
+                </span>
+              )}
 
-            {showContentHash && source.contentHash && (
-              <span className="flex items-center gap-1 font-mono">
-                <span aria-hidden="true">#</span>
-                <span>{source.contentHash.slice(0, 16)}…</span>
-              </span>
-            )}
+              {source.submittedAt && (
+                <time dateTime={source.submittedAt} className="flex items-center gap-1">
+                  <Clock size={10} aria-hidden="true" />
+                  <span>{new Date(source.submittedAt).toLocaleString()}</span>
+                </time>
+              )}
 
-            {showOnChainDetails && source.type === 'onchain' && (
-              <>
-                {source.verificationTxHash && (
-                  <a
-                    href={`https://sepolia-optimism.etherscan.io/tx/${source.verificationTxHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`View transaction ${source.verificationTxHash.slice(0, 10)}… on explorer`}
-                  >
-                    <ExternalLink size={10} aria-hidden="true" />
-                    <span className="font-mono">Tx: {source.verificationTxHash.slice(0, 10)}…</span>
-                  </a>
-                )}
-                {source.blockNumber && (
-                  <span className="flex items-center gap-1 font-mono">
-                    <span aria-hidden="true">⛓</span>
-                    <span>Block {source.blockNumber.toString()}</span>
-                  </span>
-                )}
-              </>
-            )}
+              {showContentHash && source.contentHash && (
+                <span className="flex items-center gap-1 font-mono">
+                  <span aria-hidden="true">#</span>
+                  <span>{source.contentHash.slice(0, 16)}…</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </button>
+      {showOnChainDetails && source.type === 'onchain' && (
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-2 border-t border-border/50 ml-11">
+          {renderTxLink()}
+          {renderBlockLink()}
+          {!explorer && source.chainId && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground" title={`Unsupported chain: ${source.chainId}`}>
+              <span aria-hidden="true">⛓</span>
+              <span>Chain {source.chainId} (no explorer)</span>
+            </span>
+          )}
+        </div>
+      )}
     </li>
   );
-
-  return content;
 }
 
 export default EvidenceSourcesList;

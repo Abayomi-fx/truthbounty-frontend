@@ -1,7 +1,7 @@
 'use client';
 
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import type { ClaimDetailProjection } from '@/app/types/claim-detail-projection';
+import type { ClaimDetailProjection, ClaimStatus } from '@/app/types/claim-detail-projection';
 import { ConfidenceMeter } from '@/components/ui/primitives/ConfidenceMeter';
 import { OutcomeBadge } from '@/components/ui/primitives/OutcomeBadge';
 import { StakeWeightDisplay } from '@/components/ui/primitives/StakeWeightDisplay';
@@ -10,35 +10,30 @@ export interface ClaimVerificationsProps {
   claim: ClaimDetailProjection;
 }
 
+function mapClaimStatusToOutcome(status: ClaimStatus): 'verified' | 'disputed' | 'rejected' | 'inconclusive' | 'provisional' {
+  switch (status) {
+    case 'VERIFIED':
+      return 'verified';
+    case 'REJECTED':
+      return 'rejected';
+    case 'DISPUTED':
+      return 'disputed';
+    case 'UNDER_REVIEW':
+    case 'OPEN':
+      return 'provisional';
+    default:
+      return 'inconclusive';
+  }
+}
+
 export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
-  const { verifications, voteCounts, confidenceScore, settlement } = claim;
+  const { verifications, voteCounts, confidenceScore, settlement, status } = claim;
   const totalVotes = voteCounts.support + voteCounts.reject;
 
-  // Use canonical settlement projection for outcome and finality
-  // instead of deriving from vote counts
-  let outcomeKind: 'verified' | 'disputed' | 'rejected' | 'inconclusive' | 'provisional' = 'inconclusive';
+  // Use canonical projected status from the projection (authoritative)
+  // instead of deriving from vote counts in the UI
+  const outcomeKind = mapClaimStatusToOutcome(status);
   const isProvisional = !settlement.isFinalized;
-
-  if (settlement.isFinalized) {
-    if (totalVotes > 0) {
-      if (voteCounts.support > voteCounts.reject) {
-        outcomeKind = 'verified';
-      } else if (voteCounts.reject > voteCounts.support) {
-        outcomeKind = 'rejected';
-      } else {
-        outcomeKind = 'disputed';
-      }
-    }
-  } else if (totalVotes > 0) {
-    // Not finalized but has votes - provisional state
-    if (voteCounts.support > voteCounts.reject) {
-      outcomeKind = 'provisional';
-    } else if (voteCounts.reject > voteCounts.support) {
-      outcomeKind = 'provisional';
-    } else {
-      outcomeKind = 'provisional';
-    }
-  }
 
   // Use canonical settlement timestamp for provenance
   const determinedAt = settlement.settledAt ?? verifications[0]?.timestamp;
