@@ -29,6 +29,8 @@ jobs:
           node-version: 24
       - name: Verify contract release artifacts (drift fails here)
         run: node scripts/verify-artifacts.mjs
+      - name: Scan source and release inputs for public-boundary leaks
+        run: node scripts/secret-scan.mjs src release next.config.ts
 
   lint:
     name: Lint & Style
@@ -236,3 +238,5 @@ jobs:
         run: npm run type-check
       - name: Build production app
         run: npm run build
+      - name: Scan browser bundles, source maps, HTML, and RSC payloads
+        run: node scripts/secret-scan.mjs .next

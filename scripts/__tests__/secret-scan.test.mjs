@@ -104,3 +104,31 @@ test('scenario e: benign src/good.ts with no secrets -> exit 0', () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('sensitive NEXT_PUBLIC environment names are rejected without printing their values', () => {
+  const root = makeTempRoot();
+  try {
+    writeSubFile(root, 'src/config.ts', 'const value = process.env.NEXT_PUBLIC_API_SECRET;\n');
+    const result = runScan(root, ['src']);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /SENSITIVE_ENV_NAME/);
+    assert.doesNotMatch(result.stderr, /actual-value|super-secret/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('production source maps are scanned for secret canaries', () => {
+  const root = makeTempRoot();
+  try {
+    writeSubFile(root, '.next/static/chunks/app.js.map', JSON.stringify({
+      sourcesContent: [`const token = "${'sk' + '_live' + '_abcdefghijklmnopqrstuvwxyz'}";`],
+    }));
+    const result = runScan(root, ['.next']);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /STRIPE_TOKEN/);
+    assert.match(result.stderr, /app\.js\.map/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
