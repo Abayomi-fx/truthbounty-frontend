@@ -11,24 +11,37 @@ export interface ClaimVerificationsProps {
 }
 
 export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
-  const { verifications, voteCounts, confidenceScore } = claim;
+  const { verifications, voteCounts, confidenceScore, settlement } = claim;
   const totalVotes = voteCounts.support + voteCounts.reject;
-  const supportPercentage = totalVotes > 0 ? (voteCounts.support / totalVotes) * 100 : 0;
-  const rejectPercentage = totalVotes > 0 ? (voteCounts.reject / totalVotes) * 100 : 0;
 
-  // Determine outcome based on vote counts
+  // Use canonical settlement projection for outcome and finality
+  // instead of deriving from vote counts
   let outcomeKind: 'verified' | 'disputed' | 'rejected' | 'inconclusive' | 'provisional' = 'inconclusive';
-  if (totalVotes > 0) {
+  const isProvisional = !settlement.isFinalized;
+
+  if (settlement.isFinalized) {
+    if (totalVotes > 0) {
+      if (voteCounts.support > voteCounts.reject) {
+        outcomeKind = 'verified';
+      } else if (voteCounts.reject > voteCounts.support) {
+        outcomeKind = 'rejected';
+      } else {
+        outcomeKind = 'disputed';
+      }
+    }
+  } else if (totalVotes > 0) {
+    // Not finalized but has votes - provisional state
     if (voteCounts.support > voteCounts.reject) {
-      outcomeKind = 'verified';
+      outcomeKind = 'provisional';
     } else if (voteCounts.reject > voteCounts.support) {
-      outcomeKind = 'rejected';
+      outcomeKind = 'provisional';
     } else {
-      outcomeKind = 'disputed';
+      outcomeKind = 'provisional';
     }
   }
-  // Check if outcome is provisional (not finalized)
-  const isProvisional = verifications.some((v) => !v.finalizedAt);
+
+  // Use canonical settlement timestamp for provenance
+  const determinedAt = settlement.settledAt ?? verifications[0]?.timestamp;
 
   return (
     <div className="space-y-4 pt-4 border-t border-[#232329]">
@@ -37,7 +50,7 @@ export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
         kind={outcomeKind}
         provisional={isProvisional}
         source="Canonical Projection"
-        determinedAt={verifications[0]?.timestamp}
+        determinedAt={determinedAt}
       />
 
       {/* Vote Counts & Stake Weights */}

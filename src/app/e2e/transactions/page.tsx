@@ -3,8 +3,11 @@ import { notFound } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 function isE2EHarnessEnabled(): boolean {
-  // Always enable in this environment for e2e testing
-  return true;
+  // Evaluated per request (the route is force-dynamic) so it reflects the
+  // server's runtime env, not a value snapshotted at build time.
+  return (
+    process.env.NODE_ENV !== 'production' || process.env.E2E_HARNESS === '1'
+  );
 }
 
 export default async function TransactionStatesPage() {

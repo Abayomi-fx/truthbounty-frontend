@@ -182,7 +182,7 @@ export function ConfidenceMeter({
 
         {showValue && (
           <output
-            for={meterId}
+            htmlFor={meterId}
             className={cn(
               'font-mono tabular-nums text-sm font-medium min-w-[3.5rem] text-right',
               isUnknown ? 'text-muted-foreground' : currentBand ? TONE_STYLES[currentBand.tone].text : ''
