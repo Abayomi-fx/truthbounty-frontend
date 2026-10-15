@@ -1,5 +1,9 @@
 import type { Preview } from '@storybook/nextjs-vite'
 
+// Load the app's Tailwind design system so story rendering matches the
+// production app (also required for accurate a11y contrast checks).
+import '../src/app/globals.css'
+
 const preview: Preview = {
   parameters: {
     controls: {

@@ -1,5 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider } from 'wagmi';
+import { wagmiConfig } from '@/config/wagmi';
 import TrustIndicator from './TrustIndicator';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
 
 const meta: Meta<typeof TrustIndicator> = {
   title: 'UI/TrustIndicator',
@@ -10,9 +17,13 @@ const meta: Meta<typeof TrustIndicator> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ padding: '20px', background: '#f5f5f5', borderRadius: '8px' }}>
-        <Story />
-      </div>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <div style={{ padding: '20px', background: '#18181b', borderRadius: '8px' }}>
+            <Story />
+          </div>
+        </QueryClientProvider>
+      </WagmiProvider>
     ),
   ],
 };
