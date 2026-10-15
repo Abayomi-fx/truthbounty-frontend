@@ -36,6 +36,7 @@ const VALID_STATUSES = new Set<TransactionStatus>([
   'dropped',
   'replaced',
   'reverted',
+  'reorged',
 ]);
 
 function isValidStatus(v: unknown): v is TransactionStatus {

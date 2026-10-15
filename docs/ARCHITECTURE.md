@@ -178,6 +178,7 @@ export type WebSocketEvent =
 Components are organized by features rather than type:
 
 - **claims/** - All claim-related components
+- **claim-lifecycle/** - Event-derived timeline visualization (V2-FE-014)
 - **verification/** - Verification workflow components
 - **disputes/** - Dispute management components
 - **worldcoin/** - Identity verification components
@@ -222,6 +223,19 @@ export function useClaims() {
     // ... other options
   });
 }
+
+// Example: useClaimLifecycleTimeline hook (V2-FE-014)
+export function useClaimLifecycleTimeline(config) {
+  // Aggregates chain events, API projections, and WebSocket updates
+  // into canonical timeline with staleness detection and reconciliation
+  return {
+    timeline, // Complete timeline with events and metadata
+    isLoading,
+    isError,
+    isStale, // Staleness detection for data integrity
+    reconcile, // Manual reconciliation function
+  };
+}
 ```
 
 ## Data Flow Patterns
@@ -244,6 +258,19 @@ User Action → Component → Mutation Hook → API → WebSocket Broadcast → 
 ### 4. Blockchain Integration Flow
 ```
 User Action → Wagmi Hook → Smart Contract → Transaction → Indexer → API → Frontend
+```
+
+### 5. Event-Derived Timeline Flow (V2-FE-014)
+```
+Chain Events → Indexer → API Projection
+                              ↓
+WebSocket Updates → useClaimLifecycleTimeline
+                              ↓
+                    Timeline State (with provenance tracking)
+                              ↓
+                    ClaimLifecycleTimeline Component
+                              ↓
+                    Accessible UI (all states)
 ```
 
 ## Type System Architecture
@@ -323,6 +350,27 @@ interface ClaimCreatedEvent {
 - **Wagmi**: Secure wallet connection management
 - **RainbowKit**: Standardized wallet UI
 - **Transaction Signing**: Client-side transaction validation
+
+### 4. Wallet-Scoped Auth Sessions (V2-FE-008)
+
+Authenticated sessions are bound to the connected wallet scope
+(`account address + chain id`):
+
+- **Session store** (`src/lib/session-store.ts`): a token is only usable for the
+  exact `(address, chainId)` scope it was issued for. Address comparisons are
+  case-insensitive; stored payloads are shape-validated before use.
+- **Session reconciliation** (`src/hooks/useSessionReconciliation.ts`): when the
+  connected account changes, the required chain changes, or the wallet
+  disconnects, the auth session is invalidated, chain-scoped storage caches and
+  the resumable WebSocket cursor are dropped, and the query cache is cleared.
+  It also coordinates wagmi reconnect, explicit logout, and re-authentication.
+- **Consumer API** (`src/hooks/useAuthSession.ts`): `authenticate()` stores a
+  backend-issued token bound to the current scope and refuses to run without a
+  connected wallet; `isAuthenticated` flips to false as soon as the scope moves.
+- **Realtime stream** (`src/hooks/useWebSocket.ts`): authenticated frames and
+  the HTTP catch-up request only carry the `Authorization` header while the
+  stored session is valid for the current scope; the socket is re-established
+  when the wallet scope changes so a stale session cannot keep a live stream.
 
 ## Testing Architecture
 
@@ -410,3 +458,35 @@ The TruthBounty frontend architecture is designed to be:
 - **User-friendly**: Focus on UX and accessibility
 
 This architecture provides a solid foundation for building a decentralized verification platform that can evolve with changing requirements while maintaining code quality and developer productivity.
+
+---
+
+## Security Architecture — Formal Model
+
+For the **full, independently reviewable** security model of the frontend, see:
+
+- **[THREAT_MODEL.md](./THREAT_MODEL.md)** — trust boundaries, threat actors, threat/mitigation matrix, fail-closed posture, telemetry redaction rules, and maintainer sign-off.
+- **[UI_STATE_MODEL.md](./UI_STATE_MODEL.md)** — canonical UI state model (loading, empty, stale, rejected, failed, pending, confirmed, finalized, reorged) with per-surface applicability and accessibility contracts.
+
+### Authority model (summary)
+
+- **Smart contracts** are authoritative for protocol mutation.
+- The **API is a projection / read layer**, never authoritative for mutation.
+- The **frontend never fabricates** transaction success, settlement, rewards, reputation, or protocol state.
+- **Fail closed** on missing config, unsupported chain, missing CSP nonce, unresolved canonical artifacts, simulation/receipt mismatch, or integrity uncertainty.
+
+### Where the security primitives live
+
+| Concern | Location |
+|---|---|
+| Integrity boundary (fail-closed UI) | `src/components/security/IntegrityBoundary.tsx` |
+| Telemetry redaction | `src/lib/security/redaction.ts` |
+| Sensitive path policy | `src/lib/security/sensitive-paths.ts` |
+| Evidence sanitization | `src/lib/security/evidence-sanitizer.ts` |
+| CSP + security headers | `src/lib/security/headers.ts`, `docs/SECURITY_HEADERS.md` |
+| SIWE auth | `src/lib/auth/siwe-client.ts`, `docs/SIWE_AUTH.md` |
+| Transaction lifecycle | `src/hooks/useTransactionMachine.ts`, `useReceiptProjection.ts`, `useFinalizationDetection.ts` |
+| Reorg reconciliation | `src/hooks/useReorgReconciliation.ts`, `useStateReconciliation.ts` |
+| Settlement detection | `src/hooks/useSettlementDetection.ts` |
+| Canonical wallet enforcement | `src/hooks/useCanonicalWallet.ts` |
+| PR security review gate | `.github/workflows/pr-security-review.yml` |

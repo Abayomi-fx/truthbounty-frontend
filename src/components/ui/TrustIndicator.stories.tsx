@@ -1,7 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider } from 'wagmi';
-import { wagmiConfig } from '@/config/wagmi';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import TrustIndicator from './TrustIndicator';
 
 const queryClient = new QueryClient({

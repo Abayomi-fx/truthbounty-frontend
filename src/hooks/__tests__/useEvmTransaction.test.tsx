@@ -120,6 +120,50 @@ describe('useEvmTransaction', () => {
 
     expect(result.current.state.status).toBe('idle');
     expect(result.current.isCorrectNetwork).toBe(false);
+    expect(result.current.isWriteReady).toBe(false);
+    expect(result.current.readiness.ready).toBe(false);
+  });
+
+  it('fails closed when disconnected before PREPARE', async () => {
+    mockedUseAccount.mockReturnValue({
+      address: undefined,
+      isConnected: false,
+    } as any);
+
+    const { result } = renderHook(() =>
+      useEvmTransaction({
+        expectedChainId: MOCK_CHAIN_ID,
+      }),
+    );
+
+    await expect(
+      result.current.writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: TEST_ABI,
+        functionName: 'finalizeClaim',
+        args: ['0x' + '11'.repeat(32), 'resolved'],
+      }),
+    ).rejects.toMatchObject({
+      reason: 'INVALID_TRANSITION',
+    });
+
+    expect(result.current.state.status).toBe('idle');
+    expect(result.current.readiness.failures.map((f) => f.code)).toContain(
+      'WALLET_DISCONNECTED',
+    );
+    expect(mockedUseWriteContract().writeContractAsync).not.toHaveBeenCalled();
+  });
+
+  it('exposes write readiness for UI gating', () => {
+    const { result } = renderHook(() =>
+      useEvmTransaction({
+        expectedChainId: MOCK_CHAIN_ID,
+      }),
+    );
+
+    expect(result.current.isWriteReady).toBe(true);
+    expect(result.current.readiness.ready).toBe(true);
+    expect(result.current.readiness.failures).toHaveLength(0);
   });
 
   it('accepts raw sendTransaction calls with explicit value and calldata preconditions', async () => {
@@ -212,5 +256,50 @@ describe('useEvmTransaction', () => {
     expect(allowance.amount).toBe(250n);
     expect(customError.name).toBe('InsufficientAllowance');
     expect(customError.args[0]).toBe(MOCK_ADDRESS_1);
+  });
+});
+
+describe('useEvmTransaction — identity change invalidation (V2-FE-046)', () => {
+  const OTHER_ADDRESS = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8' as const;
+
+  it('discards an unsigned intent when the account changes mid-signature', async () => {
+    const { result, rerender } = renderHook(() =>
+      useEvmTransaction({ expectedChainId: MOCK_CHAIN_ID }),
+    );
+
+    act(() => {
+      result.current.send({ type: 'PREPARE', chainId: MOCK_CHAIN_ID });
+    });
+    act(() => {
+      result.current.send({ type: 'REQUEST_SIGNATURE' });
+    });
+    expect(result.current.state.status).toBe('signature-requested');
+
+    mockedUseAccount.mockReturnValue({ address: OTHER_ADDRESS, isConnected: true } as never);
+    rerender();
+
+    await waitFor(() => expect(result.current.state.status).toBe('idle'));
+  });
+
+  it('preserves a submitted transaction (canonical hash) when the account changes', async () => {
+    const { result, rerender } = renderHook(() =>
+      useEvmTransaction({ expectedChainId: MOCK_CHAIN_ID }),
+    );
+
+    await act(async () => {
+      await result.current.writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: TEST_ABI,
+        functionName: 'finalizeClaim',
+        args: ['0x' + '11'.repeat(32), 'resolved'],
+      });
+    });
+    expect(result.current.state.status).toBe('submitted');
+
+    mockedUseAccount.mockReturnValue({ address: OTHER_ADDRESS, isConnected: true } as never);
+    rerender();
+
+    await waitFor(() => expect(result.current.state.status).toBe('submitted'));
+    expect(result.current.state.txHash).toBe(MOCK_TX_HASH_1);
   });
 });

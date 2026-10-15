@@ -93,3 +93,86 @@ describe('EvidenceViewer - scroll lock', () => {
     expect(container.style.maxHeight).toBe('60vh');
   });
 });
+
+describe('EvidenceViewer - fail-closed unsafe evidence rendering', () => {
+  it('renders a safe https link as a hardened anchor', () => {
+    render(
+      <EvidenceViewer
+        claimId="claim-1"
+        evidence={[{ type: 'link', value: 'https://example.com/evidence' }]}
+      />
+    );
+
+    const link = screen.getByRole('link', { name: /example\.com\/evidence/ });
+    expect(link).toHaveAttribute('href', 'https://example.com/evidence');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link.getAttribute('rel')).toMatch(/noopener/);
+    expect(link.getAttribute('rel')).toMatch(/noreferrer/);
+  });
+
+  it('blocks an unsafe link value as a blocked item, never an anchor', () => {
+    render(
+      <EvidenceViewer
+        claimId="claim-1"
+        evidence={[{ type: 'link', value: 'javascript:alert(1)' }]}
+      />
+    );
+
+    expect(screen.getByTestId('evidence-blocked-item')).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('renders a safe https image source', () => {
+    render(
+      <EvidenceViewer
+        claimId="claim-1"
+        evidence={[{ type: 'image', value: 'https://example.com/evidence/img1.png' }]}
+      />
+    );
+
+    const img = screen.getByAltText('Evidence image') as HTMLImageElement;
+    expect(img.src).toContain('https://example.com/evidence/img1.png');
+    expect(img.getAttribute('referrerPolicy')).toBe('no-referrer');
+  });
+
+  it('blocks an unsafe image value (data:) as a blocked item', () => {
+    render(
+      <EvidenceViewer
+        claimId="claim-1"
+        evidence={[{ type: 'image', value: 'data:text/html,<script>alert(1)</script>' }]}
+      />
+    );
+
+    expect(screen.getByTestId('evidence-blocked-item')).toBeInTheDocument();
+    expect(screen.queryByAltText('Evidence image')).not.toBeInTheDocument();
+  });
+
+  it('renders a safe ipfs link through the gateway', () => {
+    render(
+      <EvidenceViewer
+        claimId="claim-1"
+        evidence={[
+          { type: 'link', value: 'ipfs://QmT5NvUtoM5nWFfrQdVrFtvGfKFmG7AHE8P34isapyhCxX/doc' },
+        ]}
+      />
+    );
+
+    const link = screen.getByRole('link');
+    expect(link.getAttribute('href')).toContain('dweb.link/ipfs/QmT5NvUtoM5nWFfrQdVrFtvGfKFmG7AHE8P34isapyhCxX/doc');
+  });
+
+  it('renders plain text evidence as text children, never dangerouslySetInnerHTML', () => {
+    render(
+      <EvidenceViewer
+        claimId="claim-1"
+        evidence={[{ type: 'text', value: '<script>alert("xss")</script>' }]}
+      />
+    );
+
+    // React escapes it as a text node; no script element is mounted.
+    expect(
+      screen.getByText('<script>alert("xss")</script>')
+    ).toBeInTheDocument();
+    expect(document.querySelector('script')).toBeNull();
+  });
+});

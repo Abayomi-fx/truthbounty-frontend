@@ -1,7 +1,10 @@
 
+'use client';
+
 // src/app/(dashboard)/how-it-works/page.tsx
 
 import React from 'react';
+import Link from 'next/link';
 import {
   ArrowRight,
   BookOpen,
@@ -72,8 +75,8 @@ const faqs = [
 
 export default function HowItWorksPage() {
   return (
-    <main className="min-h-screen bg-gray-50/70 dark:bg-gray-950">
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="min-h-screen bg-gray-50/70 dark:bg-gray-950">
+        <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         {/* Hero */}
         <section className="relative overflow-hidden rounded-3xl border border-gray-200 bg-white px-6 py-10 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:px-10 sm:py-14">
           {/* Decorative background */}
@@ -288,16 +291,16 @@ export default function HowItWorksPage() {
               deserves to be trusted.
             </p>
 
-            <a
-              href="/dashboard/claims"
+            <Link
+              href="/"
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
             >
               Explore claims
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

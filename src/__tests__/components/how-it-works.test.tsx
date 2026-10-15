@@ -17,7 +17,8 @@ import HowItWorksPage from '@/app/(dashboard)/how-it-works/page';
 describe('HowItWorksPage', () => {
   it('renders the main heading', () => {
     render(<HowItWorksPage />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/how truthbounty works/i);
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent(/turn information into/i);
   });
 
   it('renders all 5 process steps', () => {

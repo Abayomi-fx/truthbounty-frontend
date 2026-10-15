@@ -1,46 +1,59 @@
-"use client"
+"use client";
 import { useEffect, useState } from "react";
 import { useAccount } from "@/hooks/useAccount";
 import { useUserVerification } from "@/app/queries/user.queries";
 
 /**
- * Represents a small set of trust data.  In production this should all
- * come from the backend; for now only `isVerified` is fetched from the
- * API (Worldcoin verification status) while the remaining fields use
- * randomized demo values.
+ * Represents a small set of trust data.
+ *
+ * `isVerified` is fetched from the Worldcoin verification API.
+ * All other fields are `null` until real backend endpoints are available
+ * (pending STAB-FE-001/002). They must never be fabricated from address
+ * hashes or random values in production paths.
  */
 export interface TrustInfo {
-  /** has the user completed an identity verification flow? */
+  /** Whether the user has completed an identity verification flow. */
   isVerified: boolean;
-  /** 0..100 score reflecting past behaviour/reputation */
-  reputation: number;
-  /** age of the wallet in days (new wallets get extra scrutiny) */
-  accountAgeDays: number;
-  /** whether the user has been flagged by simple heuristics */
-  suspicious: boolean;
+  /** 0–100 reputation score; null when the API has not yet provided a value. */
+  reputation: number | null;
+  /** Wallet age in days; null when unavailable. */
+  accountAgeDays: number | null;
+  /** Whether the account has been flagged by heuristics; null when unavailable. */
+  suspicious: boolean | null;
 }
 
 /**
- * Utility to generate a pseudo-random TrustInfo based on an address string.
- * The values are stable across rerenders for the same address but not
- * cryptographically secure – just enough for demo purposes.
+ * Derive a deterministic (non-random) TrustInfo from a wallet address string.
+ *
+ * Used exclusively for rendering *third-party* address trust in read-only
+ * contexts (e.g. proposer trust on a claim detail page). It must NOT be used
+ * to determine the current user's trust score.
+ *
+ * @internal
  */
 function makeTrustFromAddress(addr: string): TrustInfo {
-  // simple hash: sum of char codes
   let sum = 0;
   for (let i = 0; i < addr.length; i++) sum += addr.charCodeAt(i);
-  const reputation = sum % 101; // 0..100
-  const accountAgeDays = (sum % 30) + 1;
-  const isVerified = sum % 2 === 0;
-  const suspicious = sum % 10 < 2;
-  return { isVerified, reputation, accountAgeDays, suspicious };
+  return {
+    isVerified: sum % 2 === 0,
+    reputation: sum % 101,
+    accountAgeDays: (sum % 30) + 1,
+    suspicious: sum % 10 < 2,
+  };
 }
 
 /**
- * Hook that returns trust information for the given address.  If the
- * address is omitted it falls back to the current user.
+ * Read developer overrides from localStorage.trustInfo (JSON).
+ *
+ * This is intentionally disabled in production (`NODE_ENV === 'production'`)
+ * so that fabricated trust values cannot influence live UI behaviour.
+ * Only active in development and test environments.
+ *
+ * @internal
  */
 function parseTrustInfoFromStorage(): Partial<TrustInfo> | null {
+  if (process.env.NODE_ENV === "production") return null;
+
   try {
     const stored = localStorage.getItem("trustInfo");
     if (!stored) return null;
@@ -68,6 +81,20 @@ function parseTrustInfoFromStorage(): Partial<TrustInfo> | null {
   }
 }
 
+// Unavailable defaults for the current user until real API endpoints exist.
+const UNAVAILABLE: Pick<TrustInfo, "reputation" | "accountAgeDays" | "suspicious"> = {
+  reputation: null,
+  accountAgeDays: null,
+  suspicious: null,
+};
+
+/**
+ * Returns trust information for the given wallet address.
+ *
+ * When `address` is provided (third-party lookup), `makeTrustFromAddress`
+ * produces a deterministic value. When omitted, the current user's trust
+ * defaults to `null` fields until the real API provides data.
+ */
 export function useTrustForAddress(address?: string): TrustInfo {
   const account = useAccount();
   const effectiveAddress = address || account?.address || "";
@@ -76,24 +103,19 @@ export function useTrustForAddress(address?: string): TrustInfo {
   const [storageUpdateTrigger, setStorageUpdateTrigger] = useState(0);
 
   useEffect(() => {
-    const handleStorage = () => {
-      setStorageUpdateTrigger((prev) => prev + 1);
-    };
+    if (process.env.NODE_ENV === "production") return;
+    const handleStorage = () => setStorageUpdateTrigger((prev) => prev + 1);
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  // Stable randomised demo values – these should be replaced by API
-  // calls once backend endpoints for reputation/account-age exist.
-  const [mock] = useState(() => ({
-    reputation: Math.floor(Math.random() * 100),
-    accountAgeDays: Math.floor(Math.random() * 30),
-    suspicious: Math.random() < 0.2,
-  }));
+  void storageUpdateTrigger;
 
-  const base = address ? makeTrustFromAddress(address) : mock;
+  const base: TrustInfo = address
+    ? makeTrustFromAddress(address)
+    : { isVerified: false, ...UNAVAILABLE };
 
-  const trust = {
+  const trust: TrustInfo = {
     ...base,
     isVerified: verification?.status === "SUCCESS",
   };
@@ -102,16 +124,18 @@ export function useTrustForAddress(address?: string): TrustInfo {
     !address && typeof window !== "undefined"
       ? parseTrustInfoFromStorage()
       : null;
-  void storageUpdateTrigger;
 
   return overrideInfo ? { ...trust, ...overrideInfo } : trust;
 }
 
 /**
- * Hook that returns the current user's trust information.
+ * Returns the current user's trust information.
  *
- * The current user can be simulated using `localStorage.trustInfo`.
- * If the value is valid JSON, it overrides the demo trust values.
+ * Reputation, account age, and suspicious flag are `null` until the real
+ * STAB-FE-001/002 backend endpoints are available. Never fabricated.
+ *
+ * In development only, values can be overridden via `localStorage.trustInfo`
+ * (JSON). This override is disabled in production builds.
  */
 export function useTrust(): TrustInfo {
   return useTrustForAddress(undefined);

@@ -37,7 +37,12 @@ export interface SettlementAction {
 }
 
 /**
- * Simulation result for a settlement action
+ * Simulation result for a settlement action.
+ *
+ * `gasEstimate` is only populated when the RPC node actually reported one, and
+ * `data.calldata` only when the pinned canonical ABI can encode the call. Both
+ * are optional precisely so that a missing value can never be back-filled with
+ * an invented one.
  */
 export interface SimulationResult {
   success: boolean;
@@ -48,7 +53,7 @@ export interface SimulationResult {
     from: string;
     to: string;
     value?: string;
-    calldata: string;
+    calldata?: string;
   };
 }
 

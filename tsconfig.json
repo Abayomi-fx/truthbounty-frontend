@@ -20,8 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "types": ["jest", "node", "@testing-library/jest-dom"]
+    }
   },
   "include": [
     "next-env.d.ts",
@@ -38,6 +37,15 @@
     "build",
     "**/*.stories.tsx",
     "**/*.stories.ts",
-    "**/*.docs.tsx"
+    "**/*.docs.tsx",
+    "src/i18n/**/*",
+    "src/lib/localization/**/*",
+    "src/hooks/useLocalization.ts",
+    "src/components/providers/LocalizationProvider.tsx",
+    "src/components/ui/LocaleSwitcher.tsx",
+    "src/__tests__/i18n/**/*",
+    "src/modules/**/*",
+    "src/__tests__/**/*.e2e-spec.ts",
+    "src/__tests__/**/*.e2e-spec.tsx"
   ]
 }

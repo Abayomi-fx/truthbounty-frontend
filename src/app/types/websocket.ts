@@ -3,6 +3,7 @@
 import type { Claim, ClaimStatus } from './claim';
 import type { Dispute } from './dispute';
 import type { Verification } from './verification';
+import type { WalletSessionScope } from '@/lib/session-store';
 
 /**
  * WebSocket event types for real-time updates
@@ -72,6 +73,12 @@ export interface WebSocketEvent<T = unknown> {
 export interface WebSocketConfig {
   url: string;
   authToken?: string; // Authentication token for protected subscriptions
+  /**
+   * Wallet scope that authenticates this socket. When provided, the auth token
+   * is only sent when it is still valid for this scope (V2-FE-008) — a stale
+   * session can never authenticate the catch-up/stream.
+   */
+  sessionScope?: WalletSessionScope | null;
   reconnectAttempts?: number;
   initialReconnectInterval?: number;
   maxReconnectInterval?: number;

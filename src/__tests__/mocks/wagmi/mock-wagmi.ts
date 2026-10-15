@@ -12,6 +12,14 @@
 
 import { useState, useCallback } from 'react';
 
+/** Build-output canary consumed by scripts/verify-production-boundaries.mjs. */
+export const TEST_ONLY_WALLET_MOCK_BUNDLE_SENTINEL =
+  'TRUTHBOUNTY_TEST_ONLY_WALLET_MOCK_V2_FE_087';
+
+if (process.env.NODE_ENV === 'production') {
+  throw new Error(TEST_ONLY_WALLET_MOCK_BUNDLE_SENTINEL);
+}
+
 // ---------------------------------------------------------------------------
 // Deterministic test fixtures (no Math.random)
 // ---------------------------------------------------------------------------
