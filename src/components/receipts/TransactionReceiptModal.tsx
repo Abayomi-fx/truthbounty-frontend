@@ -17,7 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import type { CanonicalReceiptRecord } from '@/lib/receipts/types';
-import { useTransactionReceipt } from '@/hooks/useTransactionReceipt';
+import { useReceipt } from '@/hooks/useReceipt';
 import { getTransactionExplorerUrl } from '@/lib/explorer';
 
 export interface TransactionReceiptModalProps {
@@ -43,7 +43,7 @@ export function TransactionReceiptModal({
     isDownloading,
     copiedChecksum,
     copyChecksum,
-  } = useTransactionReceipt({
+  } = useReceipt({
     action: receipt.action,
     status: receipt.status,
     chainId: receipt.provenance.chain.chainId,

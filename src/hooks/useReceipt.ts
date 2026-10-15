@@ -17,12 +17,14 @@ import {
   serializeDeterministicReceiptJson,
 } from '@/lib/receipts';
 
-export interface UseTransactionReceiptOptions {
+export interface UseReceiptOptions {
   input: RawReceiptInput | null;
   autoDownloadOnFinalized?: boolean;
 }
 
-export interface UseTransactionReceiptResult {
+export type UseTransactionReceiptOptions = UseReceiptOptions;
+
+export interface UseReceiptResult {
   receipt: CanonicalReceiptRecord | null;
   error: Error | null;
   downloadJson: () => void;
@@ -33,9 +35,11 @@ export interface UseTransactionReceiptResult {
   copyChecksum: () => Promise<void>;
 }
 
-export function useTransactionReceipt(
+export type UseTransactionReceiptResult = UseReceiptResult;
+
+export function useReceipt(
   input: RawReceiptInput | null,
-): UseTransactionReceiptResult {
+): UseReceiptResult {
   const [isDownloading, setIsDownloading] = useState(false);
   const [copiedChecksum, setCopiedChecksum] = useState(false);
 
@@ -150,3 +154,6 @@ export function useTransactionReceipt(
     copyChecksum,
   };
 }
+
+export const useTransactionReceipt = useReceipt;
+
