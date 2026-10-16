@@ -1,0 +1,352 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`UI-FE-080: Receipt State Snapshots generates deterministic snapshot for FINALIZED receipt with full provenance 1`] = `
+"{
+  "action": "verification",
+  "actionDetails": {
+    "actionType": "verification",
+    "parameters": {
+      "claimId": 55,
+      "payoutAmountWei": "1000000000000000000",
+      "verdict": "APPROVED"
+    },
+    "referenceId": "verdict-claim-55",
+    "targetResource": "TruthBountyWeighted#submitVerdict"
+  },
+  "checksum": "b462fae330207b5e3b1c9466b6d1478f98646209ef2d5b7bb2ad699729e70074",
+  "provenance": {
+    "chain": {
+      "apiVersion": "v2",
+      "chainId": 11155420,
+      "chainName": "Optimism Sepolia Testnet",
+      "contractAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "contractName": "TruthBountyWeighted",
+      "gitCommit": "5333c0acb9ccfb8a6a37ae76b3397d06781f0119",
+      "indexerReference": "ACK_VERIFIED",
+      "protocolVersion": "2.0.0",
+      "releaseId": "v2.0.0-sepolia"
+    },
+    "consensus": {
+      "blockHash": "0x9999888877776666555544443333222211110000aaaabbbbccccddddeeeeffff",
+      "blockNumber": "1023400",
+      "confirmations": 15,
+      "finalityLevel": "finalized",
+      "finalizedThreshold": 12,
+      "indexerAcknowledged": true,
+      "safeThreshold": 1,
+      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    },
+    "history": {
+      "isReorged": false,
+      "isReplaced": false,
+      "originalTxHash": null,
+      "orphanedBlockHash": null,
+      "reorgDetectedAt": null,
+      "replacedBy": null
+    }
+  },
+  "receiptId": "rcpt_verification_12345678_20261015120000",
+  "schemaVersion": "1.0.0",
+  "status": "finalized",
+  "timestamp": "2026-10-15T12:00:00.000Z"
+}"
+`;
+
+exports[`UI-FE-080: Receipt State Snapshots generates deterministic snapshot for PENDING receipt 1`] = `
+"{
+  "action": "claim",
+  "actionDetails": {
+    "actionType": "claim",
+    "parameters": {
+      "bountyId": 42,
+      "claimant": "0x1111111111111111111111111111111111111111"
+    },
+    "referenceId": "claim-101"
+  },
+  "checksum": "d051970b7bd12eae00631f8c2ec141830d0e407a2951f0e1ae0d2910904d46ab",
+  "provenance": {
+    "chain": {
+      "apiVersion": "v2",
+      "chainId": 11155420,
+      "chainName": "Optimism Sepolia Testnet",
+      "contractAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "contractName": "TruthBountyWeighted",
+      "gitCommit": "5333c0acb9ccfb8a6a37ae76b3397d06781f0119",
+      "indexerReference": null,
+      "protocolVersion": "2.0.0",
+      "releaseId": "v2.0.0-sepolia"
+    },
+    "consensus": {
+      "blockHash": null,
+      "blockNumber": null,
+      "confirmations": null,
+      "finalityLevel": "none",
+      "finalizedThreshold": 12,
+      "indexerAcknowledged": false,
+      "safeThreshold": 1,
+      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    },
+    "history": {
+      "isReorged": false,
+      "isReplaced": false,
+      "originalTxHash": null,
+      "orphanedBlockHash": null,
+      "reorgDetectedAt": null,
+      "replacedBy": null
+    }
+  },
+  "receiptId": "rcpt_claim_12345678_20261015120000",
+  "schemaVersion": "1.0.0",
+  "status": "pending",
+  "timestamp": "2026-10-15T12:00:00.000Z"
+}"
+`;
+
+exports[`UI-FE-080: Receipt State Snapshots generates deterministic snapshot for REORGED receipt retaining orphaned history 1`] = `
+"{
+  "action": "pause",
+  "actionDetails": {
+    "actionType": "pause",
+    "parameters": {
+      "action": "EMERGENCY_PAUSE",
+      "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    },
+    "referenceId": "emergency-pause-01"
+  },
+  "checksum": "f6394f1010162e6ce8e95c978359dea827bab53d94c46aba846e81dfd73ac796",
+  "provenance": {
+    "chain": {
+      "apiVersion": "v2",
+      "chainId": 11155420,
+      "chainName": "Optimism Sepolia Testnet",
+      "contractAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "contractName": "TruthBountyWeighted",
+      "gitCommit": "5333c0acb9ccfb8a6a37ae76b3397d06781f0119",
+      "indexerReference": null,
+      "protocolVersion": "2.0.0",
+      "releaseId": "v2.0.0-sepolia"
+    },
+    "consensus": {
+      "blockHash": null,
+      "blockNumber": "1023390",
+      "confirmations": null,
+      "finalityLevel": "none",
+      "finalizedThreshold": 12,
+      "indexerAcknowledged": false,
+      "safeThreshold": 1,
+      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    },
+    "history": {
+      "isReorged": true,
+      "isReplaced": false,
+      "originalTxHash": null,
+      "orphanedBlockHash": "0x9999888877776666555544443333222211110000aaaabbbbccccddddeeeeffff",
+      "reorgDetectedAt": "2026-10-15T12:00:00.000Z",
+      "replacedBy": null
+    }
+  },
+  "receiptId": "rcpt_pause_12345678_20261015120000",
+  "schemaVersion": "1.0.0",
+  "status": "reorged",
+  "timestamp": "2026-10-15T12:00:00.000Z"
+}"
+`;
+
+exports[`UI-FE-080: Receipt State Snapshots generates deterministic snapshot for REPLACED receipt with visible lineage 1`] = `
+"{
+  "action": "retry",
+  "actionDetails": {
+    "actionType": "retry",
+    "parameters": {
+      "newGasPriceGwei": 25
+    },
+    "referenceId": "retry-speedup-001"
+  },
+  "checksum": "b7216dde9cae371b73d475fa58870034e71bebd270064ab1d1227085067f42c3",
+  "provenance": {
+    "chain": {
+      "apiVersion": "v2",
+      "chainId": 11155420,
+      "chainName": "Optimism Sepolia Testnet",
+      "contractAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "contractName": "TruthBountyWeighted",
+      "gitCommit": "5333c0acb9ccfb8a6a37ae76b3397d06781f0119",
+      "indexerReference": null,
+      "protocolVersion": "2.0.0",
+      "releaseId": "v2.0.0-sepolia"
+    },
+    "consensus": {
+      "blockHash": null,
+      "blockNumber": null,
+      "confirmations": null,
+      "finalityLevel": "none",
+      "finalizedThreshold": 12,
+      "indexerAcknowledged": false,
+      "safeThreshold": 1,
+      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    },
+    "history": {
+      "isReorged": false,
+      "isReplaced": true,
+      "originalTxHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "orphanedBlockHash": null,
+      "reorgDetectedAt": null,
+      "replacedBy": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+    }
+  },
+  "receiptId": "rcpt_retry_12345678_20261015120000",
+  "schemaVersion": "1.0.0",
+  "status": "replaced",
+  "timestamp": "2026-10-15T12:00:00.000Z"
+}"
+`;
+
+exports[`UI-FE-080: Receipt State Snapshots generates deterministic snapshot for REVERTED receipt 1`] = `
+"{
+  "action": "dispute",
+  "actionDetails": {
+    "actionType": "dispute",
+    "notes": "Execution reverted: DisputePeriodExpired",
+    "parameters": {
+      "disputeId": 99,
+      "revertCode": "DISPUTE_EXPIRED"
+    },
+    "referenceId": "dispute-appeal-99"
+  },
+  "checksum": "e3855053d58c6e999dcb3d2f18bb1a6ab1b0509a53626f66ccb32c8e06ef6a65",
+  "provenance": {
+    "chain": {
+      "apiVersion": "v2",
+      "chainId": 11155420,
+      "chainName": "Optimism Sepolia Testnet",
+      "contractAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "contractName": "TruthBountyWeighted",
+      "gitCommit": "5333c0acb9ccfb8a6a37ae76b3397d06781f0119",
+      "indexerReference": null,
+      "protocolVersion": "2.0.0",
+      "releaseId": "v2.0.0-sepolia"
+    },
+    "consensus": {
+      "blockHash": "0x9999888877776666555544443333222211110000aaaabbbbccccddddeeeeffff",
+      "blockNumber": "1023450",
+      "confirmations": 1,
+      "finalityLevel": "none",
+      "finalizedThreshold": 12,
+      "indexerAcknowledged": false,
+      "safeThreshold": 1,
+      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    },
+    "history": {
+      "isReorged": false,
+      "isReplaced": false,
+      "originalTxHash": null,
+      "orphanedBlockHash": null,
+      "reorgDetectedAt": null,
+      "replacedBy": null
+    }
+  },
+  "receiptId": "rcpt_dispute_12345678_20261015120000",
+  "schemaVersion": "1.0.0",
+  "status": "reverted",
+  "timestamp": "2026-10-15T12:00:00.000Z"
+}"
+`;
+
+exports[`UI-FE-080: Receipt State Snapshots generates governance proposal decision snapshot 1`] = `
+"{
+  "action": "governance",
+  "actionDetails": {
+    "actionType": "governance",
+    "parameters": {
+      "newValue": 500,
+      "parameterKey": "MAX_BOUNTY_WEIGHT",
+      "proposalId": 12,
+      "proposer": "0x4444444444444444444444444444444444444444"
+    },
+    "referenceId": "prop-gov-12",
+    "targetResource": "TimelockController#executeProposal"
+  },
+  "checksum": "fc3207c2f01ebbd1bd5dcf48620a3d0286a8f8204cc565f420b3e18ed4513ec9",
+  "provenance": {
+    "chain": {
+      "apiVersion": "v2",
+      "chainId": 10,
+      "chainName": "Optimism Mainnet",
+      "contractAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "contractName": "TruthBountyWeighted",
+      "gitCommit": "5333c0acb9ccfb8a6a37ae76b3397d06781f0119",
+      "indexerReference": "ACK_VERIFIED",
+      "protocolVersion": "2.0.0",
+      "releaseId": "v2.0.0-mainnet"
+    },
+    "consensus": {
+      "blockHash": "0x9999888877776666555544443333222211110000aaaabbbbccccddddeeeeffff",
+      "blockNumber": "25410000",
+      "confirmations": 20,
+      "finalityLevel": "finalized",
+      "finalizedThreshold": 12,
+      "indexerAcknowledged": true,
+      "safeThreshold": 1,
+      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    },
+    "history": {
+      "isReorged": false,
+      "isReplaced": false,
+      "originalTxHash": null,
+      "orphanedBlockHash": null,
+      "reorgDetectedAt": null,
+      "replacedBy": null
+    }
+  },
+  "receiptId": "rcpt_governance_12345678_20261015120000",
+  "schemaVersion": "1.0.0",
+  "status": "finalized",
+  "timestamp": "2026-10-15T12:00:00.000Z"
+}"
+`;
+
+exports[`UI-FE-080: Receipt State Snapshots generates plain text snapshot for SUPPORT-REFERENCE action 1`] = `
+"================================================================================
+                      TRUTHBOUNTY PROTOCOL RECEIPT                              
+================================================================================
+
+Receipt ID:          rcpt_support-reference_12345678_20261015120000
+Schema Version:      1.0.0
+Action Type:         SUPPORT-REFERENCE
+Lifecycle Status:    SAFE
+Timestamp (UTC):     2026-10-15T12:00:00.000Z
+Digital Checksum:    SHA256:ec223bfd7d4ab63a65b245ab3e852b17843dbc7497c9454301a9c1caac8c2d5b
+
+--------------------------------------------------------------------------------
+PROVENANCE & PROTOCOL RELEASE
+--------------------------------------------------------------------------------
+Chain:               Optimism Mainnet (ID: 10)
+Protocol Version:    2.0.0
+Release ID:          v2.0.0-mainnet
+Git Commit:          5333c0acb9ccfb8a6a37ae76b3397d06781f0119
+Contract:            TruthBountyWeighted (0x70997970C51812dc3A010C7d01b50e0d17dc79C8)
+API Version:         v2
+
+--------------------------------------------------------------------------------
+CONSENSUS & FINALITY
+--------------------------------------------------------------------------------
+Transaction Hash:    0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+Block Number:        25410990
+Block Hash:          0x9999888877776666555544443333222211110000aaaabbbbccccddddeeeeffff
+Confirmations:       5 (Safe: 1, Finalized: 12)
+Finality Level:      SAFE
+Indexer Ack:         NO
+
+--------------------------------------------------------------------------------
+ACTION DETAILS (PRIVACY-SAFE)
+--------------------------------------------------------------------------------
+Reference ID:        TICKET-SUPP-8821
+Public Notes:        User reported stuck withdrawal, verified on-chain inclusion
+Parameters:
+  - accountAddress: 0x3333333333333333333333333333333333333333
+  - ticketCategory: WITHDRAWAL_INQUIRY
+
+================================================================================
+This document was generated deterministically from canonical TruthBounty state.
+================================================================================"
+`;
