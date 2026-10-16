@@ -14,6 +14,7 @@ import {
   DisputeWalletPosition,
   DisputeContext,
 } from '@/app/types/dispute';
+import { getReleaseChainId } from '@/lib/contracts/registry';
 
 interface UseDisputeContextConfig {
   claimId: string;
@@ -44,7 +45,7 @@ export function useDisputeContext(
   const {
     claimId,
     contractAddress,
-    expectedChainId = OPTIMISM_MAINNET_CHAIN_ID,
+    expectedChainId = getReleaseChainId(),
     pollInterval = DEFAULT_POLL_INTERVAL,
     enabled = true,
   } = config;
@@ -67,20 +68,7 @@ export function useDisputeContext(
       // 2. Query indexer GET /api/claims/:claimId/outcome for rich metadata
       // 3. Validate outcome is provisional (dispute window still open)
 
-      // Mock implementation
-      const mockOutcome: ProvisionalOutcome = {
-        claimId: claimIdParam,
-        decision: 'VERIFIED',
-        votesFor: 7,
-        votesAgainst: 3,
-        totalStake: '5000000000000000000', // 5 ETH
-        outcomeAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-        outcomeBlock: 12345600,
-        isProvisional: true,
-        isFinalized: false,
-      };
-
-      return mockOutcome;
+      throw new Error('Not implemented');
     },
     []
   );
@@ -98,31 +86,7 @@ export function useDisputeContext(
       // 2. Calculate time remaining from block.timestamp
       // 3. Check if dispute already opened via contract.disputes(claimId)
 
-      const initialStartBlock = 12345678;
-      const windowStartTime = new Date(Date.now() - 3600000); // 1 hour ago
-      const windowEndTime = new Date(Date.now() + 82800000); // 23 hours from now
-      const windowEndBlock = initialStartBlock + 41400; // ~23 hours at 2s/block
-
-      const timeRemaining = Math.max(
-        0,
-        Math.floor((windowEndTime.getTime() - Date.now()) / 1000)
-      );
-      const blocksRemaining = Math.max(0, windowEndBlock - currentBlockNum);
-
-      const mockDeadline: DisputeDeadline = {
-        claimId: claimIdParam,
-        windowStartTime: windowStartTime.toISOString(),
-        windowEndTime: windowEndTime.toISOString(),
-        timeRemaining,
-        windowEndBlock,
-        currentBlock: currentBlockNum,
-        blocksRemaining,
-        isWindowOpen: timeRemaining > 0 && blocksRemaining > 0,
-        isWindowClosed: timeRemaining === 0 || blocksRemaining === 0,
-        hasActiveDispute: false,
-      };
-
-      return mockDeadline;
+      throw new Error('Not implemented');
     },
     []
   );
@@ -137,23 +101,7 @@ export function useDisputeContext(
       // 2. Calculate slash amount (typically 10-20% of bond)
       // 3. Calculate potential reward (typically 1.5-2x bond if successful)
 
-      // Mock implementation
-      const bondAmount = '1000000000000000000'; // 1 ETH
-      const slashPercentage = 10; // 10%
-      const slashAmount = '100000000000000000'; // 0.1 ETH
-      const rewardMultiplier = 1.5;
-      const potentialReward = '1500000000000000000'; // 1.5 ETH
-
-      const mockBond: ChallengeBond = {
-        claimId: claimIdParam,
-        bondAmount,
-        slashAmount,
-        slashPercentage,
-        potentialReward,
-        rewardMultiplier,
-      };
-
-      return mockBond;
+      throw new Error('Not implemented');
     },
     []
   );
@@ -173,26 +121,7 @@ export function useDisputeContext(
       // 3. Call contract.disputes(claimId).challenger to check if already opened
       // 4. Validate sufficient balance for bond
 
-      // Mock implementation
-      const currentBalance = '5000000000000000000'; // 5 ETH
-      const bondBigInt = BigInt(bondAmount);
-      const balanceBigInt = BigInt(currentBalance);
-
-      const hasSufficientBalance = balanceBigInt >= bondBigInt;
-      const balanceAfterBond = (balanceBigInt - bondBigInt).toString();
-
-      const mockPosition: DisputeWalletPosition = {
-        claimId: claimIdParam,
-        userAddress: walletAddress,
-        canChallenge: true,
-        hasParticipatedInFirstRound: false,
-        hasOpenedDispute: false,
-        currentBalance,
-        hasSufficientBalance,
-        balanceAfterBond,
-      };
-
-      return mockPosition;
+      throw new Error('Not implemented');
     },
     []
   );
@@ -393,19 +322,7 @@ export function canOpenDispute(context: DisputeContext | null): boolean {
 
 /**
  * Utility: Get time remaining in dispute window (human-readable)
+ * Canonical implementation in @/lib/format
  */
-export function getDisputeTimeRemaining(
-  deadline: DisputeDeadline | null
-): string {
-  if (!deadline || deadline.timeRemaining <= 0) {
-    return 'Expired';
-  }
+export { getDisputeTimeRemaining } from '@/lib/format';
 
-  const hours = Math.floor(deadline.timeRemaining / 3600);
-  const minutes = Math.floor((deadline.timeRemaining % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-}

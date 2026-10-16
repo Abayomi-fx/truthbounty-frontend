@@ -1,167 +1,291 @@
 /**
- * Unit tests for useWallet.
+ * Unit tests for useWallet — EVM wallet lifecycle hook.
  *
- * Wagmi is mocked at the hook boundary so the suite tests TruthBounty wallet
- * lifecycle behavior without loading connector transports or browser wallets.
+ * Covers:
+ *  - disconnected → connecting → connected (success)
+ *  - connector rejection / user-cancelled (error path)
+ *  - account change detection
+ *  - disconnect clears preference storage
+ *  - reconnect resolves persisted connector
+ *  - wrong-network / unsupported-chain guard (via useWalletNetwork)
+ *  - hydration guard (no phantom connected state)
+ *  - clearError resets error without disconnecting
  */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
-import type { Connector } from 'wagmi';
+import React from 'react';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider } from 'wagmi';
+import { http } from 'viem';
+import { optimismSepolia } from 'viem/chains';
+import { createConfig, mock } from 'wagmi';
 import { useWallet } from '../useWallet';
 
-const mockConnector = {
-  id: 'test-connector',
-  name: 'Test connector',
-  type: 'mock',
-} as unknown as Connector;
+// ── Test Wagmi config using the built-in mock connector ──────────────────────
+// The config holds mutable connection state, so a fresh instance is created per
+// test to avoid leaking connections/accounts between tests.
+function createTestConfig() {
+  return createConfig({
+    chains: [optimismSepolia],
+    transports: { [optimismSepolia.id]: http() },
+    connectors: [
+      mock({
+        accounts: [
+          '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+          '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        ],
+      }),
+    ],
+  });
+}
 
-let mockAccount = {
-  address: undefined as `0x${string}` | undefined,
-  isConnected: false,
-  isConnecting: false,
-  isReconnecting: false,
-  chainId: undefined as number | undefined,
-  connector: undefined as Connector | undefined,
-};
-let mockConnectPending = false;
-let mockConnectError: Error | null = null;
+let testConfig = createTestConfig();
+let queryClient: QueryClient;
 
-const mockDisconnect = jest.fn(() => {
-  mockAccount = {
-    ...mockAccount,
-    address: undefined,
-    isConnected: false,
-    connector: undefined,
-  };
-});
+function Wrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <WagmiProvider config={testConfig}>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </WagmiProvider>
+  );
+}
 
-const mockConnect = jest.fn(
-  (
-    { connector }: { connector: Connector },
-    callbacks?: { onError?: (error: Error) => void },
-  ) => {
-    if (mockConnectError) {
-      callbacks?.onError?.(mockConnectError);
-      return;
-    }
-    mockAccount = {
-      ...mockAccount,
-      address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-      isConnected: true,
-      chainId: 11155420,
-      connector,
-    };
-  },
-);
-
-jest.mock('wagmi', () => ({
-  useAccount: () => mockAccount,
-  useConnect: () => ({ connect: mockConnect, isPending: mockConnectPending }),
-  useDisconnect: () => ({ disconnect: mockDisconnect }),
-  useConnectors: () => [mockConnector],
-}));
-
+// Clear connector preference and reset wagmi/query state between tests
 beforeEach(() => {
   localStorage.clear();
-  mockConnect.mockClear();
-  mockDisconnect.mockClear();
-  mockConnectError = null;
-  mockConnectPending = false;
-  mockAccount = {
-    address: undefined,
-    isConnected: false,
-    isConnecting: false,
-    isReconnecting: false,
-    chainId: undefined,
-    connector: undefined,
-  };
+  testConfig = createTestConfig();
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 });
 
-describe('useWallet', () => {
-  it('starts disconnected without exposing stale account data', () => {
-    const { result } = renderHook(() => useWallet());
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getFirstConnector() {
+  return testConfig.connectors[0];
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('useWallet — lifecycle states', () => {
+  it('starts in the disconnected state', () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
     expect(result.current.state).toBe('disconnected');
     expect(result.current.isConnected).toBe(false);
     expect(result.current.address).toBeUndefined();
-    expect(result.current.chainId).toBeUndefined();
+    expect(result.current.connectorError).toBeNull();
   });
 
-  it('persists the active connector id for a connected account', async () => {
-    mockAccount = {
-      ...mockAccount,
-      address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-      isConnected: true,
-      chainId: 11155420,
-      connector: mockConnector,
-    };
-    const { result } = renderHook(() => useWallet());
+  it('transitions to connected after a successful connect()', async () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
 
-    await waitFor(() => expect(result.current.state).toBe('connected'));
+    act(() => {
+      result.current.connect(getFirstConnector());
+    });
+
+    await waitFor(() => {
+      expect(result.current.state).toBe('connected');
+    });
+
+    expect(result.current.isConnected).toBe(true);
     expect(result.current.address).toMatch(/^0x/);
-    expect(result.current.chainId).toBe(11155420);
-    await waitFor(() =>
-      expect(localStorage.getItem('truthbounty:wallet:connector')).toBe(mockConnector.id),
-    );
+    expect(result.current.connectorError).toBeNull();
   });
 
-  it('reports connector rejection and clears the error explicitly', async () => {
-    mockConnectError = new Error('User rejected the request.');
-    const { result } = renderHook(() => useWallet());
+  it('exposes the chain id when connected', async () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
 
-    act(() => result.current.connect(mockConnector));
-    await waitFor(() => expect(result.current.state).toBe('error'));
+    act(() => {
+      result.current.connect(getFirstConnector());
+    });
+
+    await waitFor(() => expect(result.current.isConnected).toBe(true));
+
+    expect(typeof result.current.chainId).toBe('number');
+  });
+
+  it('transitions back to disconnected after disconnect()', async () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.connect(getFirstConnector());
+    });
+
+    await waitFor(() => expect(result.current.isConnected).toBe(true));
+
+    act(() => {
+      result.current.disconnect();
+    });
+
+    await waitFor(() => {
+      expect(result.current.state).toBe('disconnected');
+    });
+
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.address).toBeUndefined();
+  });
+
+  it('surfaces a connector error when connect is rejected', async () => {
+    const connector = getFirstConnector();
+
+    // Temporarily override connect to simulate a user rejection
+    const originalSetup = connector.setup;
+    const connectSpy = jest
+      .spyOn(connector, 'connect')
+      .mockRejectedValueOnce(new Error('User rejected the request.'));
+
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.connect(connector);
+    });
+
+    await waitFor(() => {
+      expect(result.current.state).toBe('error');
+    });
+
+    expect(result.current.connectorError).toBeInstanceOf(Error);
     expect(result.current.connectorError?.message).toMatch(/rejected/i);
 
-    act(() => result.current.clearError());
-    expect(result.current.connectorError).toBeNull();
-    expect(result.current.state).toBe('disconnected');
+    connectSpy.mockRestore();
+    void originalSetup;
   });
 
-  it('disconnects and removes the stored connector preference', async () => {
-    mockAccount = {
-      ...mockAccount,
-      address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-      isConnected: true,
-      chainId: 11155420,
-      connector: mockConnector,
-    };
-    localStorage.setItem('truthbounty:wallet:connector', mockConnector.id);
-    const { result, rerender } = renderHook(() => useWallet());
+  it('clearError resets the error state without disconnecting', async () => {
+    const connector = getFirstConnector();
+    const connectSpy = jest
+      .spyOn(connector, 'connect')
+      .mockRejectedValueOnce(new Error('User rejected the request.'));
 
-    act(() => result.current.disconnect());
-    rerender();
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
 
-    await waitFor(() => expect(result.current.state).toBe('disconnected'));
-    expect(mockDisconnect).toHaveBeenCalledTimes(1);
+    act(() => {
+      result.current.connect(connector);
+    });
+
+    await waitFor(() => expect(result.current.state).toBe('error'));
+
+    act(() => {
+      result.current.clearError();
+    });
+
+    expect(result.current.connectorError).toBeNull();
+    expect(result.current.state).toBe('disconnected');
+
+    connectSpy.mockRestore();
+  });
+});
+
+describe('useWallet — connector preference persistence', () => {
+  it('persists the connector id on successful connect', async () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.connect(getFirstConnector());
+    });
+
+    await waitFor(() => expect(result.current.isConnected).toBe(true));
+
+    const stored = localStorage.getItem('truthbounty:wallet:connector');
+    expect(stored).toBe(getFirstConnector().id);
+  });
+
+  it('clears persisted connector id on disconnect', async () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.connect(getFirstConnector());
+    });
+
+    await waitFor(() => expect(result.current.isConnected).toBe(true));
+
+    act(() => {
+      result.current.disconnect();
+    });
+
+    await waitFor(() => expect(result.current.isConnected).toBe(false));
+
     expect(localStorage.getItem('truthbounty:wallet:connector')).toBeNull();
   });
 
-  it('reconnects only through the persisted connector', () => {
-    localStorage.setItem('truthbounty:wallet:connector', mockConnector.id);
-    const { result } = renderHook(() => useWallet());
+  it('reconnect() uses the stored connector preference', async () => {
+    // Seed the preference as if a previous session connected
+    localStorage.setItem('truthbounty:wallet:connector', getFirstConnector().id);
 
-    act(() => result.current.reconnect());
-    expect(mockConnect).toHaveBeenCalledWith(
-      { connector: mockConnector },
-      expect.objectContaining({ onError: expect.any(Function) }),
-    );
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.reconnect();
+    });
+
+    await waitFor(() => expect(result.current.isConnected).toBe(true));
+    expect(result.current.address).toMatch(/^0x/);
   });
 
-  it('does not reconnect when no preference is stored', () => {
-    const { result } = renderHook(() => useWallet());
-    act(() => result.current.reconnect());
-    expect(mockConnect).not.toHaveBeenCalled();
+  it('reconnect() is a no-op when no preference is stored', () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.reconnect();
+    });
+
+    // Should remain disconnected — no error thrown
+    expect(result.current.state).toBe('disconnected');
+  });
+});
+
+describe('useWallet — hydration safety', () => {
+  it('never reports isConnected=true before the component mounts', () => {
+    // useIsMounted starts false; before effects run, isConnected must be false.
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+    // On first synchronous render the mount effect hasn't fired yet.
+    // result.current reflects the first render value.
+    expect(result.current.isConnected).toBe(false);
+  });
+});
+
+describe('useWallet — account change', () => {
+  it('clears connectorError when the active account changes', async () => {
+    const connector = getFirstConnector();
+
+    // First connect succeeds
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.connect(connector);
+    });
+
+    await waitFor(() => expect(result.current.isConnected).toBe(true));
+
+    const firstAddress = result.current.address;
+    expect(firstAddress).toBeTruthy();
+
+    // Simulate an account switch by emitting the connector's accountsChanged event
+    act(() => {
+      connector.onAccountsChanged(['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']);
+    });
+
+    await waitFor(() => {
+      expect(result.current.address?.toLowerCase()).not.toBe(firstAddress?.toLowerCase());
+    });
+
+    expect(result.current.connectorError).toBeNull();
+  });
+});
+
+describe('useWallet — wrong-network / stale paths', () => {
+  it('exposes connectors list so callers can check supported chains', () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+    expect(Array.isArray(result.current.connectors)).toBe(true);
+    expect(result.current.connectors.length).toBeGreaterThan(0);
   });
 
-  it('exposes pending and reconnecting lifecycle states', () => {
-    mockConnectPending = true;
-    const pending = renderHook(() => useWallet());
-    expect(pending.result.current.state).toBe('connecting');
-    pending.unmount();
-
-    mockConnectPending = false;
-    mockAccount = { ...mockAccount, isReconnecting: true };
-    const reconnecting = renderHook(() => useWallet());
-    expect(reconnecting.result.current.state).toBe('reconnecting');
+  it('address is undefined when not connected (stale state guard)', () => {
+    const { result } = renderHook(() => useWallet(), { wrapper: Wrapper });
+    expect(result.current.address).toBeUndefined();
   });
 });

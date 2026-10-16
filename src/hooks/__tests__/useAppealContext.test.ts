@@ -1,387 +1,345 @@
 /**
- * Unit tests for useAppealContext hook
- * Tests: successful fetch, wallet not connected, wrong network, invalid address
+ * Unit tests for useAppealContext.
+ *
+ * The hook has no fabrication path: every field arrives from the canonical API
+ * projection. These tests therefore drive the projection transport directly and
+ * assert the hook fails closed whenever the projection cannot be trusted.
  */
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { useAppealContext } from '../useAppealContext';
+import { AppealProjectionError } from '@/lib/appeals/projection';
+import {
+  buildAppealProjection,
+  FIXTURE_APPEAL_ID,
+  type AppealProjectionOverrides,
+} from '@/__tests__/fixtures/appealProjection';
 import * as wagmi from 'wagmi';
 
-// Mock Wagmi hooks
 jest.mock('wagmi', () => ({
   useAccount: jest.fn(),
   useChainId: jest.fn(),
-  useBlockNumber: jest.fn(),
 }));
 
-describe('useAppealContext', () => {
-  const mockContractAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E';
-  const mockUserAddress = '0x1234567890123456789012345678901234567890';
-  const OPTIMISM_MAINNET = 10;
-  const OPTIMISM_SEPOLIA = 11155420;
+const MOCK_CONTRACT = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
+const MOCK_USER = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
+const RELEASE_CHAIN_ID = 11155420; // OP Sepolia
 
+/** Projection whose claim id matches the hook's `claimId`. */
+function payload(overrides: AppealProjectionOverrides = {}) {
+  return buildAppealProjection({
+    appealId: FIXTURE_APPEAL_ID,
+    chainId: RELEASE_CHAIN_ID,
+    position: { userAddress: MOCK_USER },
+    ...overrides,
+  });
+}
+
+/** Projection for an arbitrary claim id. */
+function payloadForClaim(claimId: string) {
+  return buildAppealProjection({
+    appealId: FIXTURE_APPEAL_ID,
+    chainId: RELEASE_CHAIN_ID,
+    snapshot: { claimId },
+    position: { userAddress: MOCK_USER },
+  });
+}
+
+function renderContext(
+  overrides: Partial<Parameters<typeof useAppealContext>[0]> = {}
+) {
+  return renderHook(() =>
+    useAppealContext({
+      appealId: FIXTURE_APPEAL_ID,
+      claimId: 'claim-456',
+      contractAddress: MOCK_CONTRACT,
+      pollInterval: 100000,
+      fetcher: async () => payload(),
+      ...overrides,
+    })
+  );
+}
+
+describe('useAppealContext', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Default: wallet connected on correct network
     (wagmi.useAccount as jest.Mock).mockReturnValue({
-      address: mockUserAddress,
+      address: MOCK_USER,
       isConnected: true,
     });
-    (wagmi.useChainId as jest.Mock).mockReturnValue(OPTIMISM_MAINNET);
-    (wagmi.useBlockNumber as jest.Mock).mockReturnValue({
-      data: BigInt(12345678),
-    });
+    (wagmi.useChainId as jest.Mock).mockReturnValue(RELEASE_CHAIN_ID);
   });
 
-  describe('successful context fetch', () => {
-    it('should fetch complete appeal context when wallet connected', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-          pollInterval: 100000, // Long interval for testing
-        })
-      );
+  describe('successful projection load', () => {
+    it('exposes every field from the projection verbatim', async () => {
+      const source = payload();
+      const { result } = renderContext({ fetcher: async () => source });
 
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
+      await waitFor(() => expect(result.current.context).not.toBeNull());
 
-      expect(result.current.context).toBeDefined();
-      expect(result.current.context?.snapshot.appealId).toBe('appeal-123');
-      expect(result.current.context?.snapshot.claimId).toBe('claim-456');
-      expect(result.current.context?.deadline).toBeDefined();
-      expect(result.current.context?.stakeBounds).toBeDefined();
-      expect(result.current.context?.walletPosition).toBeDefined();
       expect(result.current.error).toBeNull();
+      expect(result.current.context?.snapshot).toEqual(source.snapshot);
+      expect(result.current.context?.deadline).toEqual(source.deadline);
+      expect(result.current.context?.stakeBounds).toEqual(source.stakeBounds);
+      expect(result.current.context?.walletPosition).toEqual(source.position);
     });
 
-    it('should compute eligibility correctly for eligible user', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
-      );
+    it('computes eligibility from projected deadline and position', async () => {
+      const { result } = renderContext();
 
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
-      });
+      await waitFor(() => expect(result.current.context).not.toBeNull());
 
       expect(result.current.context?.isEligible).toBe(true);
       expect(result.current.context?.ineligibilityReason).toBeUndefined();
     });
 
-    it('should include snapshot with first-round outcome', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-789',
-          claimId: 'claim-101',
-          contractAddress: mockContractAddress,
-        })
-      );
+    it('marks the user ineligible when the projection reports an ended appeal', async () => {
+      const ended = payload();
+      ended.deadline = {
+        ...ended.deadline,
+        blocksRemaining: 0,
+        timeRemaining: 0,
+        isActive: false,
+        hasEnded: true,
+      };
 
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
-      });
+      const { result } = renderContext({ fetcher: async () => ended });
 
-      const snapshot = result.current.context!.snapshot;
-      expect(snapshot.firstRoundDecision).toBeDefined();
-      expect(snapshot.firstRoundVotesFor).toBeGreaterThanOrEqual(0);
-      expect(snapshot.firstRoundVotesAgainst).toBeGreaterThanOrEqual(0);
-      expect(snapshot.initiatorAddress).toMatch(/^0x[a-fA-F0-9]{40}$/);
-      expect(snapshot.reason).toBeDefined();
+      await waitFor(() => expect(result.current.context).not.toBeNull());
+
+      expect(result.current.context?.isEligible).toBe(false);
+      expect(result.current.context?.ineligibilityReason).toContain('ended');
     });
 
-    it('should calculate deadline with time and block information', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
+    it('marks the user ineligible when the projection reports an existing position', async () => {
+      const participated = payload({
+        position: {
+          userAddress: MOCK_USER,
+          hasParticipated: true,
+          existingDecision: 'SUPPORT',
+          existingStake: '500000000000000000',
+        },
       });
 
-      const deadline = result.current.context!.deadline;
-      expect(deadline.startTime).toBeDefined();
-      expect(deadline.endTime).toBeDefined();
-      expect(deadline.timeRemaining).toBeGreaterThanOrEqual(0);
-      expect(deadline.endBlock).toBeGreaterThan(0);
-      expect(deadline.currentBlock).toBeGreaterThan(0);
-      expect(deadline.blocksRemaining).toBeGreaterThanOrEqual(0);
-      expect(typeof deadline.isActive).toBe('boolean');
-      expect(typeof deadline.hasEnded).toBe('boolean');
+      const { result } = renderContext({ fetcher: async () => participated });
+
+      await waitFor(() => expect(result.current.context).not.toBeNull());
+
+      expect(result.current.context?.isEligible).toBe(false);
+      expect(result.current.context?.ineligibilityReason).toContain(
+        'already participated'
+      );
     });
 
-    it('should provide stake bounds with min/max and totals', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
+    it('marks the user ineligible when the projection reports an insufficient balance', async () => {
+      const broke = payload({
+        position: { userAddress: MOCK_USER, hasMinimumBalance: false },
       });
 
-      const bounds = result.current.context!.stakeBounds;
-      expect(bounds.minStake).toBeDefined();
-      expect(BigInt(bounds.minStake)).toBeGreaterThan(BigInt(0));
-      expect(bounds.totalSupportStake).toBeDefined();
-      expect(bounds.totalOpposeStake).toBeDefined();
-      expect(bounds.supporterCount).toBeGreaterThanOrEqual(0);
-      expect(bounds.opposerCount).toBeGreaterThanOrEqual(0);
-    });
+      const { result } = renderContext({ fetcher: async () => broke });
 
-    it('should check wallet position and balance', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
+      await waitFor(() => expect(result.current.context).not.toBeNull());
+
+      expect(result.current.context?.isEligible).toBe(false);
+      expect(result.current.context?.ineligibilityReason).toContain(
+        'Insufficient balance'
       );
-
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
-      });
-
-      const position = result.current.context!.walletPosition;
-      expect(position.userAddress).toBe(mockUserAddress);
-      expect(typeof position.hasParticipated).toBe('boolean');
-      expect(position.currentBalance).toBeDefined();
-      expect(typeof position.hasMinimumBalance).toBe('boolean');
     });
   });
 
-  describe('wallet not connected', () => {
-    it('should return error when wallet not connected', async () => {
+  describe('fail-closed behaviour', () => {
+    it('returns no context when the projection endpoint is unavailable', async () => {
+      const { result } = renderContext({
+        fetcher: async () => {
+          throw new AppealProjectionError('UNAVAILABLE', 'Projection offline.');
+        },
+      });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.error).toMatch(/Projection offline/);
+      expect(result.current.context).toBeNull();
+    });
+
+    it('returns no context when the appeal is not found', async () => {
+      const { result } = renderContext({
+        fetcher: async () => {
+          throw new AppealProjectionError('NOT_FOUND', 'Appeal missing.');
+        },
+      });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.context).toBeNull();
+    });
+
+    it('returns no context when the projection is for another chain', async () => {
+      const { result } = renderContext({ fetcher: async () => payload({ chainId: 10 }) });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.error).toMatch(/does not match the pinned release chain/);
+      expect(result.current.context).toBeNull();
+    });
+
+    it('returns no context when the projection is for another claim', async () => {
+      const { result } = renderContext({
+        fetcher: async () => payloadForClaim('claim-999'),
+      });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.error).toMatch(/does not match the requested claim/);
+      expect(result.current.context).toBeNull();
+    });
+
+    it('returns no context when the projection carries another wallet position', async () => {
+      const foreign = payload({
+        position: { userAddress: `0x${'22'.repeat(20)}` },
+      });
+
+      const { result } = renderContext({ fetcher: async () => foreign });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.context).toBeNull();
+    });
+
+    it('returns no context when the transport throws', async () => {
+      const { result } = renderContext({
+        fetcher: async () => {
+          throw new Error('socket hang up');
+        },
+      });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.error).toMatch(/socket hang up/);
+      expect(result.current.context).toBeNull();
+    });
+
+    it('never invents values when the projection is malformed', async () => {
+      const { result } = renderContext({
+        fetcher: async () => ({ appealId: FIXTURE_APPEAL_ID, chainId: RELEASE_CHAIN_ID }),
+      });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.context).toBeNull();
+    });
+  });
+
+  describe('preconditions', () => {
+    it('returns an error when the wallet is not connected', async () => {
       (wagmi.useAccount as jest.Mock).mockReturnValue({
         address: undefined,
         isConnected: false,
       });
 
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
-      );
+      const { result } = renderContext();
 
-      await waitFor(() => {
-        expect(result.current.error).toBeDefined();
-      });
+      await waitFor(() => expect(result.current.error).not.toBeNull());
 
       expect(result.current.error).toContain('Wallet not connected');
       expect(result.current.context).toBeNull();
     });
-  });
 
-  describe('wrong network', () => {
-    it('should return error when on wrong chain', async () => {
-      (wagmi.useChainId as jest.Mock).mockReturnValue(1); // Ethereum mainnet
+    it('returns an error on the wrong chain without fetching a projection', async () => {
+      const fetcher = jest.fn(async () => payload());
+      (wagmi.useChainId as jest.Mock).mockReturnValue(1);
 
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-          expectedChainId: OPTIMISM_MAINNET,
-        })
-      );
+      const { result } = renderContext({ fetcher });
 
-      await waitFor(() => {
-        expect(result.current.error).toBeDefined();
-      });
+      await waitFor(() => expect(result.current.error).not.toBeNull());
 
       expect(result.current.error).toContain('Wrong network');
-      expect(result.current.error).toContain('10');
+      expect(result.current.error).toContain(String(RELEASE_CHAIN_ID));
       expect(result.current.error).toContain('1');
+      expect(fetcher).not.toHaveBeenCalled();
       expect(result.current.context).toBeNull();
     });
 
-    it('should work on Optimism Sepolia testnet', async () => {
-      (wagmi.useChainId as jest.Mock).mockReturnValue(OPTIMISM_SEPOLIA);
+    it('rejects an invalid contract address', async () => {
+      const { result } = renderContext({ contractAddress: 'invalid-address' });
 
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-          expectedChainId: OPTIMISM_SEPOLIA,
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
-      });
-
-      expect(result.current.error).toBeNull();
-      expect(result.current.context?.snapshot).toBeDefined();
-    });
-  });
-
-  describe('invalid contract address', () => {
-    it('should reject invalid contract address format', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: 'invalid-address',
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.error).toBeDefined();
-      });
+      await waitFor(() => expect(result.current.error).not.toBeNull());
 
       expect(result.current.error).toContain('Invalid contract address');
       expect(result.current.context).toBeNull();
     });
 
-    it('should reject contract address without 0x prefix', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: '742d35Cc6634C0532925a3b844Bc9e7595f0eB1E',
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.error).toBeDefined();
+    it('rejects a contract address without the 0x prefix', async () => {
+      const { result } = renderContext({
+        contractAddress: '742d35Cc6634C0532925a3b844Bc9e7595f0eB1E',
       });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
 
       expect(result.current.error).toContain('Invalid contract address');
     });
-  });
 
-  describe('ineligibility scenarios', () => {
-    it('should mark user ineligible if appeal has ended', async () => {
-      // Mock an expired appeal
-      (wagmi.useBlockNumber as jest.Mock).mockReturnValue({
-        data: BigInt(99999999), // Far future block
-      });
+    it('rejects an empty appeal id', async () => {
+      const { result } = renderContext({ appealId: '' });
 
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-expired',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
-      );
+      await waitFor(() => expect(result.current.error).not.toBeNull());
 
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
-      });
+      expect(result.current.error).toContain('Invalid appeal or claim ID');
+    });
 
-      // In the mock implementation, deadline calculation will show expired
-      expect(result.current.context?.deadline.hasEnded).toBe(true);
-      expect(result.current.context?.isEligible).toBe(false);
-      expect(result.current.context?.ineligibilityReason).toContain('ended');
+    it('rejects an empty claim id', async () => {
+      const { result } = renderContext({ claimId: '' });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      expect(result.current.error).toContain('Invalid appeal or claim ID');
     });
   });
 
-  describe('refetch functionality', () => {
-    it('should refetch context when refetch is called', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-          pollInterval: 100000,
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
+  describe('refetch', () => {
+    it('re-reads the projection when refetch is called', async () => {
+      let block = 40_000;
+      const fetcher = jest.fn(async () => {
+        const base = payload();
+        return {
+          ...base,
+          deadline: { ...base.deadline, blocksRemaining: block },
+        };
       });
 
-      const firstContext = result.current.context;
+      const { result } = renderContext({ fetcher });
 
-      // Call refetch
+      await waitFor(() => expect(result.current.context).not.toBeNull());
+      expect(result.current.context?.deadline.blocksRemaining).toBe(40_000);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+
+      block = 12_000;
       await result.current.refetch();
 
-      await waitFor(() => {
-        expect(result.current.context).not.toBeNull();
-      });
-
-      // Should have fetched again (might be same data in mock)
-      expect(result.current.context).not.toBeNull();
+      await waitFor(() =>
+        expect(result.current.context?.deadline.blocksRemaining).toBe(12_000)
+      );
+      expect(fetcher).toHaveBeenCalledTimes(2);
       expect(result.current.error).toBeNull();
     });
-  });
 
-  describe('invalid appeal or claim ID', () => {
-    it('should handle empty appeal ID', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: '',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.error).toBeDefined();
+    it('clears a previously loaded context when a later refetch fails closed', async () => {
+      let shouldFail = false;
+      const fetcher = jest.fn(async () => {
+        if (shouldFail) {
+          throw new AppealProjectionError('UNAVAILABLE', 'Projection offline.');
+        }
+        return payload();
       });
 
-      expect(result.current.error).toContain('Invalid appeal or claim ID');
-    });
+      const { result } = renderContext({ fetcher });
 
-    it('should handle empty claim ID', async () => {
-      const { result } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: '',
-          contractAddress: mockContractAddress,
-        })
-      );
+      await waitFor(() => expect(result.current.context).not.toBeNull());
 
-      await waitFor(() => {
-        expect(result.current.error).toBeDefined();
-      });
+      shouldFail = true;
+      await result.current.refetch();
 
-      expect(result.current.error).toContain('Invalid appeal or claim ID');
-    });
-  });
-
-  describe('block number updates', () => {
-    it('should update deadline when block number changes', async () => {
-      const { result, rerender } = renderHook(() =>
-        useAppealContext({
-          appealId: 'appeal-123',
-          claimId: 'claim-456',
-          contractAddress: mockContractAddress,
-        })
-      );
-
-      await waitFor(() => {
-        expect(result.current.context?.deadline).toBeDefined();
-      });
-
-      const initialBlocksRemaining = result.current.context!.deadline.blocksRemaining;
-
-      // Simulate block advancement
-      (wagmi.useBlockNumber as jest.Mock).mockReturnValue({
-        data: BigInt(12345700), // Advanced by 22 blocks
-      });
-
-      rerender();
-
-      await waitFor(() => {
-        expect(result.current.context?.deadline.blocksRemaining).not.toBe(initialBlocksRemaining);
-      });
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+      expect(result.current.context).toBeNull();
     });
   });
 });

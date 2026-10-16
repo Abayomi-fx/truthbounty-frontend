@@ -1,24 +1,46 @@
-
 "use client";
 import React, { memo } from "react";
-
 import { useTrust } from "@/components/hooks/useTrust";
 import TrustScoreTooltip from "@/components/ui/TrustScoreTooltip";
 import { StatsCardsSkeleton } from "@/components/skeletons";
 
-import { platformStats } from "@/data/mock-data";
+interface StatItem {
+  label: string;
+  value: string;
+}
 
 interface StatsCardsProps {
+  /** Live platform statistics from the indexer API. Renders em-dash placeholders when absent. */
+  platformStats?: StatItem[];
   isLoading?: boolean;
 }
 
-const StatsCards = memo(function StatsCards({ isLoading = false }: StatsCardsProps) {
+const STAT_LABELS = [
+  "Claims",
+  "Verifications",
+  "Votes Cast",
+  "Unique Verifiers",
+  "TVL",
+  "Chains",
+];
+
+const StatsCards = memo(function StatsCards({
+  platformStats,
+  isLoading = false,
+}: StatsCardsProps) {
   const trust = useTrust();
-  const userTrustValue = trust.reputation.toString();
+
+  // reputation is null when the API has not yet provided a value.
+  // Never call .toString() on null — render the explicit placeholder instead.
+  const userTrustValue =
+    trust.reputation !== null ? trust.reputation.toString() : "—";
+
+  const resolvedStats: StatItem[] =
+    platformStats ?? STAT_LABELS.map((label) => ({ label, value: "—" }));
 
   const stats = [
     { label: "My Trust", value: userTrustValue, tooltip: true },
-    ...platformStats,
+    ...resolvedStats,
   ];
 
   if (isLoading) {
@@ -35,7 +57,7 @@ const StatsCards = memo(function StatsCards({ isLoading = false }: StatsCardsPro
         >
           <div className="text-2xl font-bold text-white flex items-center">
             {stat.value}
-            {'tooltip' in stat && stat.tooltip && (
+            {"tooltip" in stat && stat.tooltip && (
               <span className="ml-2">
                 <TrustScoreTooltip />
               </span>

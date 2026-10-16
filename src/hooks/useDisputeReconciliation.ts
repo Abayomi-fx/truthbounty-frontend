@@ -86,8 +86,7 @@ export function useDisputeReconciliation(
         // 3. Decode disputeId from event parameters
         // 4. Event signature: DisputeOpened(bytes32 indexed claimId, bytes32 indexed disputeId, address challenger, uint256 bond)
 
-        // Mock implementation
-        return `dispute-${txHash}-${Date.now()}`;
+        throw new Error('Not implemented');
       } catch (err) {
         return undefined;
       }
@@ -111,8 +110,7 @@ export function useDisputeReconciliation(
         //   - "Insufficient bond"
         //   - "Contract paused"
 
-        // Mock implementation
-        return 'Transaction reverted';
+        throw new Error('Not implemented');
       } catch (err) {
         return 'Unknown revert reason';
       }
@@ -131,9 +129,7 @@ export function useDisputeReconciliation(
         // 2. Verify balance decreased by bond amount
         // 3. Return new balance
 
-        // Mock updated balance
-        const mockNewBalance = '4000000000000000000'; // 4 ETH (was 5 ETH, locked 1 ETH)
-        return mockNewBalance;
+        throw new Error('Not implemented');
       } catch (err) {
         throw new Error(
           `Failed to fetch updated balance: ${err instanceof Error ? err.message : String(err)}`
@@ -154,8 +150,7 @@ export function useDisputeReconciliation(
       // 3. Return true when dispute is indexed
       // 4. Return false if timeout
 
-      // Mock implementation - assume instant indexing
-      return true;
+      throw new Error('Not implemented');
     },
     []
   );

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { getTokenBalance } from '@/app/lib/wallet';
 import { useAccount } from '@/hooks/useAccount';
 
+import { FormattedToken } from '@/components/ui/formatting';
+
 export function StakeForm({
   claimId: _claimId,
   onStakeChange,
@@ -55,8 +57,9 @@ export function StakeForm({
       />
 
       {balance !== null && (
-        <p className="text-sm sm:text-sm mt-2">
-          Balance: {balance} TBNT
+        <p className="text-sm sm:text-sm mt-2 flex items-center gap-1.5">
+          <span>Balance: </span>
+          <FormattedToken amount={balance} symbol="TBNT" />
         </p>
       )}
 
