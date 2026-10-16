@@ -15,6 +15,8 @@ import { queryKeys } from './queryKeys';
 import {
   fetchDisputesByClaim,
   fetchDisputeDetail,
+  fetchDisputeRegister,
+  fetchPublicDisputeDetail,
   createDispute,
   type CreateDisputePayload,
 } from '../api/disputes.api';
@@ -38,6 +40,34 @@ export function useDisputeDetail(disputeId: string) {
   return useQuery({
     queryKey: queryKeys.disputes.detail(disputeId),
     queryFn: () => fetchDisputeDetail(disputeId),
+    enabled: !!disputeId,
+    staleTime: 1000 * 30,
+  });
+}
+
+/**
+ * Public dispute register projection.
+ *
+ * The register is a read-only projection. Freshness is labelled by the
+ * projection layer; the UI must not infer canonical authority from it.
+ */
+export function useDisputeRegister() {
+  return useQuery({
+    queryKey: queryKeys.disputes.register(),
+    queryFn: fetchDisputeRegister,
+    staleTime: 1000 * 30,
+  });
+}
+
+/**
+ * Public dispute detail projection by dispute ID.
+ *
+ * Resolves to `null` when the ID is unknown to the projection layer.
+ */
+export function usePublicDisputeDetail(disputeId: string) {
+  return useQuery({
+    queryKey: queryKeys.disputes.publicDetail(disputeId),
+    queryFn: () => fetchPublicDisputeDetail(disputeId),
     enabled: !!disputeId,
     staleTime: 1000 * 30,
   });

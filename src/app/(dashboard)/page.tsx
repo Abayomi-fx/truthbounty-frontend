@@ -144,6 +144,20 @@ const DashboardPage = () => {
             Open treasury UX
           </Link>
         </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-[#232329] bg-[#18181b] px-6 py-4">
+          <div>
+            <p className="text-sm font-medium text-white">Public Dispute Register</p>
+            <p className="text-xs text-[#a1a1aa]">
+              Provisional and final dispute outcomes with bonds, deadlines, and freshness labels.
+            </p>
+          </div>
+          <Link
+            href="/disputes"
+            className="text-sm font-semibold text-[#5b5bf6] underline underline-offset-2"
+          >
+            Open dispute register
+          </Link>
+        </div>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2">
             <ActivityAndNodes isLoading={claimsLoading && !hasData} />
