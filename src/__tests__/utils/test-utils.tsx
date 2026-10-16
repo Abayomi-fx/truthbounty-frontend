@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
-import { wagmiConfig } from '@/config/wagmi'
+import { wagmmConfig } from '@/config/wagmi'
 import { WebSocketProvider } from '@/components/providers/WebSocketProvider'
 import type { Claim, ClaimStatus } from '@/app/types/claim'
 
@@ -30,7 +30,7 @@ const AllTheProviders = ({ children, queryClient, wsConfig }: AllTheProvidersPro
   const testQueryClient = queryClient || createTestQueryClient()
   
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmmConfig}>
       <QueryClientProvider client={testQueryClient}>
         <WebSocketProvider config={wsConfig || { url: 'ws://test:8080' }}>
           {children}
@@ -126,7 +126,7 @@ export const waitForWebSocket = async (delay = 100) => {
 
 // Mock fetch response helpers
 export const mockFetchSuccess = (data: any) => {
-  ;(global.fetch as jest.Mock).mockImplementationOnce(() =>
+  ;;(global.fetch as jest.Mock).mockImplementationOnce(() =>
     Promise.resolve({
       ok: true,
       json: () => Promise.resolve(data),
@@ -135,7 +135,7 @@ export const mockFetchSuccess = (data: any) => {
 }
 
 export const mockFetchError = (message = 'An error occurred') => {
-  ;(global.fetch as jest.Mock).mockImplementationOnce(() =>
+  ;;(global.fetch as jest.Mock).mockImplementationOnce(() =>
     Promise.resolve({
       ok: false,
       status: 500,
@@ -155,7 +155,7 @@ export const mockWebSocketEvent = (eventType: string, payload: any) => {
   })
   
   // Find WebSocket instances and trigger the event
-  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } })?.mock?.instances || []
+  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } }) ?.mock?.instances || []
   wsInstances.forEach((ws: any) => {
     const onMessageHandler = ws.addEventListener?.mock?.calls?.find(
       ([event]: [string]) => event === 'message'
