@@ -66,7 +66,7 @@ export const ApiFreshnessIndicator = memo(function ApiFreshnessIndicator({
   }, [data, isLoading, error]);
 
   const StatusIcon = status === 'loading' ? Loader2 : statusIcons[status] ?? AlertTriangle;
-  const statusClass = statusStyles[status] ?? statusStyles.critical;
+  const statusClass = statusStyles[status] ?? statusStyles['critical'];
 
   if (compact) {
     return (
@@ -331,10 +331,7 @@ function DependencyBadge({ dependency }: DependencyBadgeProps) {
       aria-label={`${dependency.name}: ${dependency.status}`}
     >
       <StatusIcon className="w-3 h-3" aria-hidden="true" />
-      <span className="capitalize">{dependency.name.replace('_', ' ')}</span>
-      {dependency.latencyMs && (
-        <span className="text-[10px] opacity-70 font-mono">{dependency.latencyMs}ms</span>
-      )}
+      <span>{dependency.name}</span>
     </span>
   );
 }

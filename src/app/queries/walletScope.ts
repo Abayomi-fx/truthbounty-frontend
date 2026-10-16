@@ -4,6 +4,11 @@
  * When the connected address or chain changes, only wallet-scoped query
  * namespaces are removed — never a cache-wide clear that would thrash
  * unrelated projections.
+ *
+ * These helpers are purely a cache-hygiene concern. They must not be
+ * construed as authorization: a wallet connection or chain selection is a
+ * context selection, not a capability grant. Contract state remains
+ * canonical for mutations; API data is a freshness-labelled projection.
  */
 
 import type { QueryClient } from '@tanstack/react-query';
@@ -32,7 +37,7 @@ export const WALLET_SCOPED_ROOTS = [
 export function keysForWalletScope(
   address: string | null | undefined,
   chainId: number | null | undefined,
-) {
+): readonly unknown[] {
   const scope = walletScope(address, chainId);
   if (!scope) return [] as const;
 
@@ -67,6 +72,10 @@ export function invalidateWalletScope(
 /**
  * On account or chain change: drop the previous scope, keep the new one cold.
  * Callers must pass the *previous* scope that is leaving the session.
+ *
+ * This is a cache-invalidation signal only. It must not be used to
+ * grant or revoke authority, and it must not assume the next scope is
+ * valid or authorized. The next scope is reported as a context label only.
  */
 export function onWalletScopeChange(
   queryClient: QueryClient,
