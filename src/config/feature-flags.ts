@@ -25,6 +25,7 @@ export type FeatureFlag =
   | 'TRUST_SCORE_DISPLAY'
   | 'NOTIFICATION_BELL'
   | 'ADVANCED_FILTERS'
+  | 'PERFORMANCE_BUDGETS'
   | 'BETA_FEATURES'
   /** V2-FE-149: Privacy-safe error and incident telemetry. */
   | 'PRIVACY_SAFE_TELEMETRY';
@@ -41,6 +42,7 @@ export const FEATURE_FLAG_KEYS = [
   'TRUST_SCORE_DISPLAY',
   'NOTIFICATION_BELL',
   'ADVANCED_FILTERS',
+  'PERFORMANCE_BUDGETS',
   'BETA_FEATURES',
 ] as const satisfies readonly FeatureFlag[];
 
@@ -286,6 +288,11 @@ export const FLAG_METADATA: Record<FeatureFlag, FeatureFlagMeta> = {
     description: 'Enable privacy-safe error and incident telemetry (V2-FE-149). All events are redacted before transport.',
     defaultValue: false,
     category: 'experimental',
+    owner: 'platform-team',
+    environments: ALL_ENVS,
+    expiresAt: null,
+    safeFallback: false,
+    protocolInvariantProtected: false,
   },
 };
 

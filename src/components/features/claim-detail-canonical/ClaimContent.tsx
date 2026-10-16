@@ -13,8 +13,8 @@
 import { sanitizeText, sanitizeEvidenceList } from '@/lib/security/evidence-sanitizer';
 import { PrivateEvidenceLink } from '@/components/security/PrivateEvidenceLink';
 import { PrivateTimestamp } from '@/components/security/PrivateTimestamp';
-import { sanitizeText, sanitizeEvidenceList } from '@/lib/security/evidence-sanitizer';
 import { SafeExternalLink } from '@/components/security/SafeExternalLink';
+import { DeferredMedia } from '@/components/ui/DeferredMedia';
 import type { ClaimDetailProjection } from '@/app/types/claim-detail-projection';
 
 export interface ClaimContentProps {
@@ -79,29 +79,29 @@ export function ClaimContent({ claim }: ClaimContentProps) {
             {evidence.map((ev, idx) => (
               <li key={idx} className="text-xs">
                 {ev.kind === 'link' && (
-                  <PrivateEvidenceLink
-                    href={ev.href}
-                    className="text-blue-400 hover:text-blue-300 underline break-all transition-colors"
-                    ariaLabel={`Evidence link ${idx + 1} (truncated for privacy, click to copy full URL)`}
-                    showIcon={true}
-                    showCopyButton={true}
-                  />
-                  <SafeExternalLink
-                    href={ev.href}
-                    className="text-blue-400 hover:text-blue-300 underline break-all transition-colors"
-                    aria-label={`Evidence link ${idx + 1}: ${ev.text} (opens in new tab)`}
-                  >
-                    {ev.text}
-                  </SafeExternalLink>
+                  <>
+                    <PrivateEvidenceLink
+                      href={ev.href}
+                      className="text-blue-400 hover:text-blue-300 underline break-all transition-colors"
+                      ariaLabel={`Evidence link ${idx + 1} (truncated for privacy, click to copy full URL)`}
+                      showIcon={true}
+                      showCopyButton={true}
+                    />
+                    <SafeExternalLink
+                      href={ev.href}
+                      className="text-blue-400 hover:text-blue-300 underline break-all transition-colors"
+                      aria-label={`Evidence link ${idx + 1}: ${ev.text} (opens in new tab)`}
+                    >
+                      {ev.text}
+                    </SafeExternalLink>
+                  </>
                 )}
                 {ev.kind === 'image' && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <DeferredMedia
                     src={ev.src}
                     alt={`Evidence image ${idx + 1}`}
                     className="rounded max-h-60 w-auto border border-[#232329]"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
+                    placeholderClassName="max-h-60 border border-[#232329]"
                   />
                 )}
                 {ev.kind === 'text' && (

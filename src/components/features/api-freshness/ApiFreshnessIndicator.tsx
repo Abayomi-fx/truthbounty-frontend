@@ -6,6 +6,8 @@ import React, { memo, useMemo } from 'react';
 import { useApiFreshness } from '@/app/queries/freshness.queries';
 import { formatLag, formatLastUpdate, getFreshnessStatus, FRESHNESS_THRESHOLDS } from '@/app/types/api-freshness';
 import { Wifi, AlertTriangle, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useReducedData } from '@/hooks/useReducedData';
+import { SyncFreshnessBadge } from '@/components/ui/SyncFreshnessBadge';
 
 export interface ApiFreshnessIndicatorProps {
   /** Whether to show detailed breakdown */
@@ -54,6 +56,7 @@ export const ApiFreshnessIndicator = memo(function ApiFreshnessIndicator({
   className = '',
   pollInterval = 30_000,
 }: ApiFreshnessIndicatorProps) {
+  const { isReducedData } = useReducedData();
   const { data, isLoading, error, isDegraded, refetch } = useApiFreshness({
     pollInterval,
   });
@@ -182,6 +185,18 @@ export const ApiFreshnessIndicator = memo(function ApiFreshnessIndicator({
           </span>
         </div>
       </div>
+
+      {/* UI-FE-082 — when auto-refresh is stretched by data-saver mode, make
+          the last-synced time and a manual refresh affordance explicit. */}
+      {isReducedData && (
+        <SyncFreshnessBadge
+          lastSyncedAt={freshness.lastUpdate}
+          isDeferred
+          onRefresh={() => refetch()}
+          isRefreshing={isLoading}
+          label="API freshness"
+        />
+      )}
 
       {showDetails && (
         <>
