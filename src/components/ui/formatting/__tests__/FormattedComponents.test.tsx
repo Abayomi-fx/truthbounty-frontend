@@ -124,7 +124,7 @@ describe("Accessible Formatting UI Components", () => {
       render(<FormattedAddress address={testAddress} copyable />);
 
       const button = screen.getByRole("button", {
-        name: new RegExp(`Copy address ${testAddress}`, "i"),
+        name: new RegExp(`Copy full address: ${testAddress}`, "i"),
       });
       expect(button).toBeInTheDocument();
 
