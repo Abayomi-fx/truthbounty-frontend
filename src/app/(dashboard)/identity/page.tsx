@@ -2,26 +2,17 @@
 
 import { useState } from 'react';
 import { WorldcoinVerificationPanel } from '@/components/features/worldcoin';
-import { Button } from '@/components/ui/button';
-import { Wallet, Info } from 'lucide-react';
+import { SiweSessionPanel } from '@/components/auth';
+import { useAccount } from '@/hooks/useAccount';
+import { Info } from 'lucide-react';
 
 export default function IdentityPage() {
-  const [walletAddress, setWalletAddress] = useState<string | undefined>();
+  const account = useAccount();
   const [isVerified, setIsVerified] = useState(false);
 
-  const handleConnectWallet = () => {
-    // Mock wallet connection
-    const mockAddress = '0x' + Math.random().toString(16).substring(2, 42);
-    setWalletAddress(mockAddress);
-  };
-
-  const handleDisconnectWallet = () => {
-    setWalletAddress(undefined);
-    setIsVerified(false);
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -47,41 +38,12 @@ export default function IdentityPage() {
           </div>
         </div>
 
-        {/* Wallet Connection */}
+        {/* Secure wallet sign-in (EIP-4361) */}
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Step 1: Connect Wallet
+            Step 1: Sign in with Ethereum
           </h2>
-          
-          {walletAddress ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Connected Wallet
-                </p>
-                <p className="font-mono text-sm text-gray-900 dark:text-gray-100">
-                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                </p>
-              </div>
-              <Button
-                onClick={handleDisconnectWallet}
-                variant="outline"
-                size="sm"
-              >
-                Disconnect
-              </Button>
-            </div>
-          ) : (
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Connect your Ethereum wallet to begin the verification process
-              </p>
-              <Button onClick={handleConnectWallet}>
-                <Wallet />
-                Connect Wallet
-              </Button>
-            </div>
-          )}
+          <SiweSessionPanel />
         </div>
 
         {/* Worldcoin Verification */}
@@ -89,9 +51,9 @@ export default function IdentityPage() {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Step 2: Verify Identity
           </h2>
-          
+
           <WorldcoinVerificationPanel
-            walletAddress={walletAddress}
+            walletAddress={account?.address}
             onVerificationChange={setIsVerified}
           />
         </div>
@@ -127,5 +89,6 @@ export default function IdentityPage() {
         )}
       </div>
     </div>
+    </MainLayout>
   );
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports -- test doubles and dynamic module access */
 // Simple mock server implementation without MSW dependency
 export const mockHandlers = {
   get: (url: string, response: any) => {

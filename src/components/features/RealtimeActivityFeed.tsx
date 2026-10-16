@@ -4,6 +4,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWebSocketContext } from '@/components/providers/WebSocketProvider';
+import { FormattedTime } from '@/components/ui/formatting';
+import { useReducedMotion } from '@/components/hooks/useReducedMotion';
 import type {
   ClaimCreatedEvent,
   ClaimStatusChangedEvent,
@@ -21,6 +23,7 @@ interface ActivityItem {
 
 export function RealtimeActivityFeed() {
   const { subscribe, isConnected } = useWebSocketContext();
+  const reducedMotion = useReducedMotion();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const feedRef = useRef<HTMLDivElement>(null);
 
@@ -94,11 +97,6 @@ export function RealtimeActivityFeed() {
     };
   }, [isConnected, subscribe, addActivity]);
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString();
-  };
-
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'claim_created':
@@ -150,8 +148,13 @@ export function RealtimeActivityFeed() {
         >
           <span
             className={`size-2 rounded-full ${
-              isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+              isConnected
+                ? reducedMotion
+                  ? 'bg-green-500'
+                  : 'bg-green-500 animate-pulse'
+                : 'bg-gray-400'
             }`}
+            aria-hidden="true"
           />
           {isConnected ? 'Live' : 'Disconnected'}
         </span>
@@ -188,7 +191,7 @@ export function RealtimeActivityFeed() {
                 {activity.message}
               </span>
               <span className="text-gray-400 text-[10px] whitespace-nowrap">
-                {formatTime(activity.timestamp)}
+                <FormattedTime date={activity.timestamp} mode="time" />
               </span>
             </div>
           ))

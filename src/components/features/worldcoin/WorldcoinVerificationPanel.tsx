@@ -54,7 +54,7 @@ export function WorldcoinVerificationPanel({
 
   if (compact) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {status === 'SUCCESS' ? (
           <VerificationStatusIndicator
             status={status}
@@ -80,8 +80,8 @@ export function WorldcoinVerificationPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Identity Verification
           </h3>
@@ -91,7 +91,9 @@ export function WorldcoinVerificationPanel({
               : 'Verify your identity with Worldcoin to unlock full platform access'}
           </p>
         </div>
-        <WorldcoinInfoTooltip />
+        <div className="shrink-0">
+          <WorldcoinInfoTooltip />
+        </div>
       </div>
 
       {showSuccess && verifiedAt && (

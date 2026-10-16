@@ -22,6 +22,7 @@ This frontend translates complex cryptoeconomic systems into a **human-centered 
 ## 🚀 Features
 
 - ✅ **Submit & Verify Claims** - Community-driven fact-checking interface
+- ✅ **Event-Derived Lifecycle Timeline** - Canonical claim state tracking with real-time updates (V2-FE-014)
 - 🎯 **Reputation Dashboard** - Real-time reputation scoring and leaderboard
 
 ### Trust & Sybil warnings
@@ -71,6 +72,19 @@ TruthBounty Frontend is aligned with open-source and public-good ecosystems:
 - **Drips Network** – sustainable open-source maintenance
 
 The UI is intentionally chain-agnostic, enabling seamless expansion across ecosystems without redesign.
+
+## 🔐 Security & Threat Model
+
+TruthBounty Frontend publishes its security posture as reviewable V2 artifacts:
+
+- **[docs/THREAT_MODEL.md](./docs/THREAT_MODEL.md)** — trust boundaries, threat actors, threat/mitigation matrix, fail-closed posture, telemetry redaction rules, and maintainer sign-off.
+- **[docs/UI_STATE_MODEL.md](./docs/UI_STATE_MODEL.md)** — canonical UI state model (loading, empty, stale, rejected, failed, pending, confirmed, finalized, reorged) with per-surface applicability and accessibility contracts.
+
+**Authority model:** smart contracts are authoritative for protocol mutation; the API is a projection / read layer; the frontend never fabricates protocol outcomes and fails closed on integrity uncertainty.
+
+**Privacy protections:** Evidence URLs and metadata are displayed in privacy-preserving format to prevent tracking and metadata leakage while maintaining verifiability. Full URLs available via clipboard. See [EVIDENCE_PRIVACY_MODEL.md](./docs/EVIDENCE_PRIVACY_MODEL.md) and [IMPLEMENTATION_V2_FE_EVIDENCE_PRIVACY.md](./IMPLEMENTATION_V2_FE_EVIDENCE_PRIVACY.md).
+
+Related security references: [SECURITY_HEADERS.md](./docs/SECURITY_HEADERS.md), [SIWE_AUTH.md](./docs/SIWE_AUTH.md), [CONTRACT_ARTIFACTS.md](./docs/CONTRACT_ARTIFACTS.md).
 
 ## ⚙️ Tech Stack
 

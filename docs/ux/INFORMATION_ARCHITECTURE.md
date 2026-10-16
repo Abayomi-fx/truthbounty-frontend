@@ -62,9 +62,13 @@
 - Desktop: content column, contextual action rail and lifecycle timeline.
 - At 200% zoom, no two-dimensional scrolling is required except genuine data tables.
 
+Implementation and per-workflow coverage: see [RESPONSIVE_WORKFLOWS.md](./RESPONSIVE_WORKFLOWS.md).
+
 ## Information-state requirements
 
 Every route defines loading, empty, partial, stale, degraded, error, offline and unauthorized states. Protocol actions additionally define wrong-chain, approval-required, signature-requested, rejected, submitted, replaced, confirming, finalized, reverted, dropped and reorged states.
+
+API-backed views must expose stale or degraded projections with clear labels and explanatory helper text. A stale projection is one that no longer matches the canonical chain state or has not confirmed after a transaction is mined; a degraded projection is an incomplete or partially trusted API response that cannot be reconciled with the canonical transaction or protocol metadata.
 
 ## Content rules
 

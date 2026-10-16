@@ -12,6 +12,7 @@ import {
   FinalizationRequirements,
   StateValidation,
 } from '@/app/types/settlement';
+import { getReleaseChainId } from '@/lib/contracts/registry';
 
 interface UseFinalizationDetectionConfig {
   claimId: string;
@@ -39,7 +40,7 @@ const DEFAULT_POLL_INTERVAL = 5000; // 5 seconds
 export function useFinalizationDetection(
   config: UseFinalizationDetectionConfig
 ): FinalizationDetectionResult {
-  const { claimId, contractAddress, expectedChainId = OPTIMISM_MAINNET_CHAIN_ID, pollInterval = DEFAULT_POLL_INTERVAL } = config;
+  const { claimId, contractAddress, expectedChainId = getReleaseChainId(), pollInterval = DEFAULT_POLL_INTERVAL } = config;
   
   const { address: userAddress, isConnected } = useAccount();
   const currentChainId = useChainId();
@@ -100,15 +101,7 @@ export function useFinalizationDetection(
         // 3. Verify no active appeals exist
         // 4. Calculate time remaining in finalization window
         
-        const mockRequirements: FinalizationRequirements = {
-          claimId,
-          allSettlementsCompleted: true,
-          noActiveAppeals: true,
-          finalizationWindowOpen: true,
-          timeRemaining: 86400, // 24 hours
-        };
-
-        return mockRequirements;
+        throw new Error('Not implemented');
       } catch (err) {
         throw new Error(`Failed to fetch finalization requirements: ${err instanceof Error ? err.message : String(err)}`);
       }

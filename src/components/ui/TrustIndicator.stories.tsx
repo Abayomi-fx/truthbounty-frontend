@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import TrustIndicator from './TrustIndicator';
 
 const meta: Meta<typeof TrustIndicator> = {

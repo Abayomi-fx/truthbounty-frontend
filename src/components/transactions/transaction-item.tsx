@@ -61,6 +61,13 @@ const statusConfig = {
   },
 };
 
+/**
+ * Single transaction status row (pending/confirming/confirmed/failed).
+ *
+ * Responsive behaviour: the header and footer wrap below `sm` so the
+ * status badge, amount, hash reference and action buttons stay reachable
+ * without horizontal overflow on narrow viewports.
+ */
 export function TransactionItem({
   type,
   status,
@@ -79,25 +86,30 @@ export function TransactionItem({
 
   return (
     <div className="border border-slate-700 rounded-lg p-6 bg-slate-900/50 hover:bg-slate-900/70 transition-colors">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-start gap-3 flex-1">
-          <span className={`text-2xl ${typeInfo.color}`}>{typeInfo.icon}</span>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-white">{title}</h3>
+      {/* Header — wraps on narrow viewports */}
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div className="flex min-w-0 items-start gap-3 flex-1">
+          <span className={`text-2xl ${typeInfo.color}`} aria-hidden="true">
+            {typeInfo.icon}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h3 className="font-semibold text-white break-words">{title}</h3>
               <span
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
                 className={`text-xs px-2 py-1 rounded ${statusInfo.color} ${statusInfo.borderColor} border`}
               >
                 {statusInfo.label}
               </span>
             </div>
-            <p className="text-sm text-slate-400">{description}</p>
+            <p className="text-sm text-slate-400 break-words">{description}</p>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-semibold text-white mb-1">{amount}</div>
-          <div className="text-xs text-slate-400">{timeAgo}</div>
+          <div className="text-lg font-semibold text-white mb-1 font-mono tabular-nums">{amount}</div>
+          <div className="text-xs text-slate-400 font-mono tabular-nums">{timeAgo}</div>
         </div>
       </div>
 
@@ -110,7 +122,12 @@ export function TransactionItem({
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-xs text-slate-400 mt-2">
+          <p
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="text-xs text-slate-400 mt-2"
+          >
             Confirmations: {progress}%
           </p>
         </div>
@@ -118,16 +135,23 @@ export function TransactionItem({
 
       {/* Error message */}
       {errorMessage && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded flex items-start gap-2">
-          <span className="text-red-400 mt-0.5">⚠️</span>
+        <div
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded flex items-start gap-2"
+        >
+          <span className="text-red-400 mt-0.5" aria-hidden="true">
+            ⚠️
+          </span>
           <p className="text-sm text-red-400 break-words">{errorMessage}</p>
         </div>
       )}
 
-      {/* Footer with hash and actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <code className="text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded font-mono">
+      {/* Footer with hash and actions — wraps on narrow viewports */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <code className="text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded font-mono break-all">
             {hash.slice(0, 10)}...{hash.slice(-5)}
           </code>
           <Button

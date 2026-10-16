@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Shield, Calendar, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatLocalDateTime, formatUtcDateTime } from '@/app/lib/format';
 
 interface VerificationSuccessCardProps {
   verificationLevel: 'orb' | 'device';
@@ -16,20 +17,24 @@ export function VerificationSuccessCard({
   expiresAt,
   onClose,
 }: VerificationSuccessCardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const formatVerified = (iso: string) => {
+    const local = formatLocalDateTime(iso);
+    if (local === '—') return '—';
+    // Seconds are included so the absolute UTC reference is unambiguous and
+    // two renders of the same ISO value can never be confused.
+    return `${local} (${formatUtcDateTime(iso, { includeSeconds: true })})`;
   };
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
+    <div
+      role="status"
+      aria-live="polite"
+      className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-lg p-6"
+    >
       <div className="flex items-start gap-4">
         <div className="flex-shrink-0">
           <div className="size-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-            <CheckCircle2 className="size-6 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="size-6 text-green-600 dark:text-green-400" aria-hidden="true" data-testid="decorative-icon" />
           </div>
         </div>
         
@@ -45,7 +50,7 @@ export function VerificationSuccessCard({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
-              <Shield className="size-4" />
+              <Shield className="size-4" aria-hidden="true" data-testid="decorative-icon" />
               <span>
                 <span className="font-medium">Level:</span>{' '}
                 {verificationLevel === 'orb' ? 'Orb (Highest)' : 'Device'}
@@ -53,19 +58,19 @@ export function VerificationSuccessCard({
             </div>
             
             <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
-              <Calendar className="size-4" />
+              <Calendar className="size-4" aria-hidden="true" data-testid="decorative-icon" />
               <span>
                 <span className="font-medium">Verified:</span>{' '}
-                {formatDate(verifiedAt)}
+                {formatVerified(verifiedAt)}
               </span>
             </div>
 
             {expiresAt && (
               <div className="flex items-center gap-2 text-green-800 dark:text-green-200 sm:col-span-2">
-                <Award className="size-4" />
+                <Award className="size-4" aria-hidden="true" data-testid="decorative-icon" />
                 <span>
                   <span className="font-medium">Valid until:</span>{' '}
-                  {formatDate(expiresAt)}
+                  {formatVerified(expiresAt)}
                 </span>
               </div>
             )}

@@ -2,6 +2,7 @@ import React from "react";
 import { ClaimData } from "@/app/types/dispute";
 import { CheckCircle2, Shield } from "lucide-react";
 import { getCategoryIcon } from "@/lib/category-icons";
+import { formatCurrency, formatNumber } from "@/lib/format";
 
 export const ClaimStats = ({ data }: { data: ClaimData }) => {
   const IconComponent = getCategoryIcon(data.category);
@@ -11,11 +12,11 @@ export const ClaimStats = ({ data }: { data: ClaimData }) => {
       <div className="space-y-5">
         <div className="flex justify-between items-center pb-4 border-b border-gray-800/60">
           <span className="text-sm text-gray-400 flex items-center"><Shield size={16} className="mr-2" /> Total Staked</span>
-          <span className="text-sm font-medium text-indigo-400">${data.totalStaked.toLocaleString()}</span>
+          <span className="text-sm font-medium text-indigo-400 font-mono tabular-nums">{formatCurrency(data.totalStaked)}</span>
         </div>
         <div className="flex justify-between items-center pb-4 border-b border-gray-800/60">
           <span className="text-sm text-gray-400 flex items-center"><CheckCircle2 size={16} className="mr-2" /> Verifiers</span>
-          <span className="text-sm font-medium text-white">{data.verifiersCount}</span>
+          <span className="text-sm font-medium text-white font-mono tabular-nums">{formatNumber(data.verifiersCount)}</span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-400 flex items-center">{React.createElement(IconComponent, { size: 16, className: "mr-2" })} Category</span>

@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useDisputeContext } from '@/hooks/useDisputeContext';
 import { useDisputeSubmission, formatBondAmount } from '@/hooks/useDisputeSubmission';
+import { useWriteReadiness } from '@/hooks/useWriteReadiness';
 import { getContractAddress } from '@/lib/contracts/registry';
 import type { DisputeSubmissionPayload } from '@/app/types/dispute';
 
@@ -17,9 +19,12 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
   const [reason, setReason] = useState('');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
+  // onSuccess is only invoked after a real on-chain write returns a dispute id.
+  // Projected/simulated IDs are never treated as success (V2-FE-100).
+  const handleRealSuccess = onSuccess;
+
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLTextAreaElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
 
   // Fetch dispute context
   const contractAddress = getContractAddress('TruthBountyWeighted');
@@ -38,10 +43,19 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
   const {
     validateDispute,
     simulateDispute,
+    submitDispute,
     isSimulating,
     isSubmitting,
     error: submissionHookError,
+    isDisputeSupported,
   } = useDisputeSubmission();
+
+  // V2-FE-100: fail-closed wallet/chain readiness for the Confirm action
+  const readiness = useWriteReadiness({
+    targetAddress: contractAddress,
+    requireCanonicalMatch: true,
+    enabled: isOpen,
+  });
 
   // Clear errors when modal opens
   useEffect(() => {
@@ -50,58 +64,29 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen) {
-      previousActiveElement.current = document.activeElement as HTMLElement;
-    }
-    return () => {
-      if (!isOpen) {
-        previousActiveElement.current?.focus();
-      }
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      firstFocusableRef.current?.focus();
-    }
-  }, [isOpen]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-    }
-  }, [onClose]);
-
-  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== "Tab") return;
-
-    const focusableElements = modalRef.current?.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-
-    if (!focusableElements || focusableElements.length === 0) return;
-
-    const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-    if (e.shiftKey) {
-      if (document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      }
-    } else if (document.activeElement === lastElement) {
-      e.preventDefault();
-      firstElement.focus();
-    }
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // The canonical ABI is the authority. Guarded here as well as on the
+    // button so a direct form submit cannot bypass the gate.
+    if (!isDisputeSupported) {
+      const reason =
+        'Dispute opening is unavailable: the deployed contract does not expose a dispute function.';
+      setSubmissionError(reason);
+      onError?.(reason);
+      return;
+    }
+
     if (!context || !context.walletPosition.userAddress) {
       setSubmissionError('Wallet not connected or context not loaded');
+      return;
+    }
+
+    // V2-FE-100: fail closed when wallet/chain is not ready
+    if (!readiness.isReady) {
+      const reason = readiness.message || 'Wallet is not ready to submit this dispute.';
+      setSubmissionError(reason);
+      onError?.(reason);
       return;
     }
 
@@ -132,14 +117,14 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
         return;
       }
 
-      // In production, this would call writeContract via Wagmi
-      // For now, we show success with the projected dispute ID
-      const projectedDisputeId = simulation.projectedState?.disputeId || 'dispute-pending';
-      
-      onSuccess?.(projectedDisputeId);
-      onClose();
-      setReason(''); // Clear form
-      
+      // Never invent a dispute ID or success state without a real on-chain write.
+      // submitDispute fails closed until wallet writeContract is integrated.
+      const tx = await submitDispute(context, payload);
+      if (tx?.transactionHash) {
+        handleRealSuccess?.(tx.disputeId ?? tx.transactionHash);
+        onClose();
+        setReason('');
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to submit dispute';
       setSubmissionError(errorMsg);
@@ -149,9 +134,28 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
 
   // Combined loading state
   const isLoading = isLoadingContext || isSimulating || isSubmitting;
+  const closeIfIdle = () => {
+    if (!isLoading) onClose();
+  };
+  useDialogFocus(isOpen, modalRef, firstFocusableRef, closeIfIdle);
 
   // Combined error
   const displayError = submissionError || contextError || submissionHookError;
+
+  // The canonical ABI is the authority. When it declares no dispute-opening
+  // entrypoint there is no correct calldata to send, so the flow is blocked
+  // rather than submitted against a guessed selector.
+  const disputeUnavailableReason = isDisputeSupported
+    ? null
+    : 'Dispute opening is unavailable: the deployed contract does not expose a dispute function.';
+
+  // V2-FE-100: block submit until readiness passes; expose reason accessibly
+  const canSubmit =
+    isDisputeSupported &&
+    readiness.isReady &&
+    Boolean(context?.isEligible) &&
+    Boolean(reason.trim()) &&
+    !isLoading;
 
   if (!isOpen) return null;
 
@@ -159,15 +163,15 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
     <div
       className="fixed inset-0 z-50 modal-shell bg-black/80 backdrop-blur-sm"
       role="presentation"
-      onKeyDown={handleFocusTrap}
     >
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape/focus-trap keydown handling on the dialog container */}
       <div
         ref={modalRef}
         className="modal-panel border border-zinc-800 bg-[#111111] shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="dispute-modal-title"
-        onKeyDown={handleKeyDown}
+        tabIndex={-1}
       >
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-2 text-red-500">
@@ -175,7 +179,8 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
             <h2 id="dispute-modal-title" className="text-base sm:text-lg font-bold text-white">Open Dispute</h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={closeIfIdle}
+            disabled={isLoading}
             className="text-zinc-500 hover:text-white p-1"
             aria-label="Close dispute modal"
           >
@@ -216,10 +221,10 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
           {context && (
             <div className="rounded-lg bg-zinc-900/50 border border-zinc-700 p-3">
               <div className="text-sm text-zinc-400 mb-1">Required Challenge Bond</div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white font-mono tabular-nums">
                 {formatBondAmount(context.bond.bondAmount)} ETH
               </div>
-              <div className="text-xs text-zinc-500 mt-1">
+              <div className="text-xs text-zinc-500 mt-1 font-mono tabular-nums">
                 Your balance: {formatBondAmount(context.walletPosition.currentBalance)} ETH
               </div>
             </div>
@@ -248,10 +253,33 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
             </div>
           </div>
 
+          {/* Canonical ABI gate — fail closed with an accessible reason */}
+          {disputeUnavailableReason && (
+            <div
+              data-testid="dispute-unavailable-reason"
+              id="dispute-unavailable-reason"
+              className="rounded-lg bg-amber-950/30 border border-amber-900/50 p-3 text-sm text-amber-300"
+              role="status"
+            >
+              {disputeUnavailableReason}
+            </div>
+          )}
+
+          {/* Readiness gate (V2-FE-100) — fail closed with accessible reason */}
+          {isOpen && !readiness.isReady && readiness.message && (
+            <div
+              data-testid="write-readiness-reason"
+              className="rounded-lg bg-amber-950/30 border border-amber-900/50 p-3 text-sm text-amber-300"
+              role="status"
+            >
+              {readiness.message}
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
             <button
               type="button"
-              onClick={onClose}
+              onClick={closeIfIdle}
               disabled={isLoading}
               className="px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
               aria-label="Cancel dispute"
@@ -260,12 +288,33 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
             </button>
             <button
               type="submit"
-              disabled={isLoading || !context?.isEligible || !reason.trim()}
+              disabled={!canSubmit}
               className="px-4 py-2.5 sm:py-2 rounded-lg bg-red-600 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-              aria-label={isLoading ? "Submitting dispute..." : "Confirm dispute"}
+              aria-label={
+                isLoading
+                  ? "Submitting dispute..."
+                  : disputeUnavailableReason
+                    ? disputeUnavailableReason
+                    : !readiness.isReady
+                      ? readiness.message || "Wallet not ready to submit dispute"
+                      : "Confirm dispute"
+              }
+              aria-describedby={
+                disputeUnavailableReason
+                  ? "dispute-unavailable-reason"
+                  : !readiness.isReady
+                    ? "write-readiness-reason"
+                    : undefined
+              }
             >
               {isLoading && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-              {isSimulating ? 'Simulating...' : isSubmitting ? 'Submitting...' : 'Confirm Dispute'}
+              {disputeUnavailableReason
+                ? 'Dispute Unavailable'
+                : isSimulating
+                  ? 'Simulating...'
+                  : isSubmitting
+                    ? 'Submitting...'
+                    : 'Confirm Dispute'}
             </button>
           </div>
         </form>
