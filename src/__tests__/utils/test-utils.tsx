@@ -30,7 +30,7 @@ const AllTheProviders = ({ children, queryClient, wsConfig }: AllTheProvidersPro
   const testQueryClient = queryClient || createTestQueryClient()
   
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmjConfig}>
       <QueryClientProvider client={testQueryClient}>
         <WebSocketProvider config={wsConfig || { url: 'ws://test:8080' }}>
           {children}
@@ -126,7 +126,7 @@ export const waitForWebSocket = async (delay = 100) => {
 
 // Mock fetch response helpers
 export const mockFetchSuccess = (data: any) => {
-  ;(global.fetch as jest.Mock).mockImplementationOnce(() =>
+  ;(window.fetch as jest.Mock).mockImplementationOnce(() =>
     Promise.resolve({
       ok: true,
       json: () => Promise.resolve(data),
@@ -155,7 +155,7 @@ export const mockWebSocketEvent = (eventType: string, payload: any) => {
   })
   
   // Find WebSocket instances and trigger the event
-  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } })?.mock?.instances || []
+  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } }) ?.mock?.instances || []
   wsInstances.forEach((ws: any) => {
     const onMessageHandler = ws.addEventListener?.mock?.calls?.find(
       ([event]: [string]) => event === 'message'

@@ -2,13 +2,13 @@
 
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { AdminDashboard } from '@/components/features/admin-dashboard';
+import { HelpTroubleshooting } from '@/components/features/support/HelpTroubleshooting';
 
-export default function AdminRoutePage() {
+export default function AdminPage() {
   return (
     <MainLayout>
       <div className="mx-auto max-w-7xl">
-        <AdminDashboard />
+        <HelpTroubleshooting />
       </div>
     </MainLayout>
   );

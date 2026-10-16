@@ -1,6 +1,7 @@
 import { test as base, expect, type Page } from '@playwright/test';
 import { seededClaims, seededClaimById } from './claims';
 import type { ClaimListItem, ClaimsListEnvelope } from '../../src/app/types/claim-list';
+import { supportTopics, supportTopicById } from './topics';
 
 const STATUS_QUERY_MAP: Record<string, string> = {
   verified: 'VERIFIED',
@@ -61,6 +62,39 @@ function claimsListEnvelope(params: URLSearchParams): ClaimsListEnvelope {
     pagination: { page, pageSize, total, totalPages },
     projection: { freshness: 'fresh', generatedAt: '2024-01-02T00:00:00.000Z' },
   };
+}
+
+/**
+ * Serve the approved troubleshooting topic fixtures under `/support`.
+ *
+ * Topics are static, versioned content; the stub never invents escalation
+ * endpoints, contacts, or SLAs. Unavailable escalation is served explicitly so
+ * the UI can render the "unavailable" state rather than a placeholder channel.
+ */
+export async function stubSupportApi(page: Page) {
+  await page.route('**/api/support/topics/*', async (route) => {
+    const id = new URL(route.request().url()).pathname.split('/').pop() ?? '';
+    const topic = supportTopicById.get(id);
+    await route.fulfill(topic ? json(topic) : json({ message: 'Not found' }, 404));
+  });
+
+  await page.route('**/api/support/topics', async (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const category = params.get('category');
+    // Escalation is served as explicitly unavailable: no approved channel,
+    // contact, or SLA exists, so the UI must render the unavailable state
+    // rather than a placeholder endpoint.
+    const matched = category
+      ? supportTopics.filter((topic) => topic.category === category)
+      : supportTopics;
+    await route.fulfill(
+      json({
+        items: matched,
+        escalation: { available: false, reason: 'unapproved-channel' },
+        projection: { freshness: 'fresh', generatedAt: '2024-01-02T00:00:00.000Z' },
+      }),
+    );
+  });
 }
 
 function json(body: unknown, status = 200) {
@@ -128,6 +162,7 @@ export const test = base.extend<{ stubbedApi: void }>({
   stubbedApi: [
     async ({ page }, use) => {
       await stubClaimsApi(page);
+      await stubSupportApi(page);
       await use();
     },
     { auto: true },
