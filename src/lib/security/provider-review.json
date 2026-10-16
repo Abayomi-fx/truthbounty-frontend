@@ -290,6 +290,10 @@
     "src/hooks/useFeatureFlag.ts": [
       "network:dff4d80982138d0fad908e35c2531c99c86b95825de22f2a3c2b300c26030d07"
     ],
+    "src/hooks/useReceipt.ts": [
+      "network:52c8df441431d8b4eb3f6f94e578f1e2ce6cf20435ce9b5507379f707b1b6d68",
+      "network:8222cb2c1f0317e9ecbd8abf2c22e93037ab2aba58c8aa003b20303b95ef8c2e"
+    ],
     "src/hooks/useRewardsClaim.ts": [
       "network:236861287ad713f2e65183a94a772e6a0baf40b4fa6116ca85314524cf3b79a7"
     ],
