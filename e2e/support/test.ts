@@ -1,6 +1,7 @@
 import { test as base, expect, type Page } from '@playwright/test';
 import { seededClaims, seededClaimById } from './claims';
 import type { ClaimListItem, ClaimsListEnvelope } from '../../src/app/types/claim-list';
+import { assertProductionEnv } from '../../src/app/lib/env';
 
 const STATUS_QUERY_MAP: Record<string, string> = {
   verified: 'VERIFIED',
@@ -72,6 +73,10 @@ function json(body: unknown, status = 200) {
 }
 
 export async function stubClaimsApi(page: Page) {
+  // Fail closed if the e2e run is misconfigured for a production-like build.
+  // This mirrors the production build contract enforced by the env validator.
+  assertProductionEnv(process.env);
+
   await page.route('**/api/claims/*', async (route) => {
     const id = new URL(route.request().url()).pathname.split('/').pop() ?? '';
     const claim = seededClaimById.get(id);
@@ -127,6 +132,10 @@ export async function stubClaimsApi(page: Page) {
 export const test = base.extend<{ stubbedApi: void }>({
   stubbedApi: [
     async ({ page }, use) => {
+      // Re-assert the environment contract per test so a production build
+      // cannot silently run against placeholder or wrong-chain configuration.
+      assertProductionEnv(process.env);
+
       await stubClaimsApi(page);
       await use();
     },
