@@ -11,6 +11,8 @@
  *  3. Fail closed on unsupported address / chain inputs (null scope).
  *  4. Existing key shapes are preserved for backward compatibility.
  *  5. No fabricated calldata, hashes, receipts, or mock-wallet values.
+ *  6. Release-scoped keys always include the release id so cache entries
+ *     cannot leak across release switches (UI-FE-055).
  */
 
 /** EIP-155 chain id. */
@@ -45,6 +47,40 @@ export function walletScope(
   return { address: normalized, chainId };
 }
 
+/**
+ * Release identifier for the active frontend/release channel.
+ * Fail closed when missing or malformed.
+ */
+export type ReleaseId = string;
+
+/**
+ * Normalize a release id for cache-key stability.
+ * Returns null (fail closed) when the release id is missing or malformed.
+ */
+export function normalizeReleaseId(
+  releaseId: string | null | undefined,
+): string | null {
+  if (typeof releaseId !== 'string') return null;
+  const trimmed = releaseId.trim();
+  if (!/^[a-zA-Z0-9._-]{1,64}$/.test(trimmed)) return null;
+  return trimmed.toLowerCase();
+}
+
+/**
+ * Validate full request scope (wallet + chain + release). Returns null when
+ * any part is unsupported so callers fail closed instead of issuing requests.
+ */
+export function requestScope(
+  address: string | null | undefined,
+  chainId: number | null | undefined,
+  releaseId: string | null | undefined,
+): { address: string; chainId: number; releaseId: string } | null {
+  const scope = walletScope(address, chainId);
+  const release = normalizeReleaseId(releaseId);
+  if (!scope || !release) return null;
+  return { address: scope.address, chainId: scope.chainId, releaseId: release };
+}
+
 export type ClaimListFilters = {
   status?: string | null;
   category?: string;
@@ -53,6 +89,52 @@ export type ClaimListFilters = {
   sort?: unknown;
   [key: string]: unknown;
 };
+
+// ---------------------------------------------------------------------------
+// Request lifecycle (UI-FE-055)
+// ---------------------------------------------------------------------------
+/**
+ * Canonical request-lifecycle key namespace. Used by the bounded API request
+ * adapter to scope cancellation, retry budgets, and stale-response suppression
+ * to the active route/account/chain/release context.
+ */
+export const requestKeys = {
+  all: ['request'] as const,
+  /** Root for a full request scope — use for scoped invalidation/abort. */
+  scope: (
+    address: string | null | undefined,
+    chainId: number | null | undefined,
+    releaseId: string | null | undefined,
+  ) => {
+    const scope = requestScope(address, chainId, releaseId);
+    return scope
+      ? ([ 'request', 'scope', scope.address, scope.chainId, scope.releaseId ] as const)
+      : ([ 'request', 'scope', 'invalid' ] as const);
+  },
+  /** Per-operation lifecycle key (correlation + idempotency tracking). */
+  operation: (
+    operationId: string,
+    address: string | null | undefined,
+    chainId: number | null | undefined,
+    releaseId: string | null | undefined,
+  ) => {
+    const scope = requestScope(address, chainId, releaseId);
+    return scope
+      ? ([ 'request', 'operation', operationId, scope.address, scope.chainId, scope.releaseId ] as const)
+      : ([ 'request', 'operation', operationId, 'invalid' ] as const);
+  },
+  /** Retry-budget accounting key (bounded, visible per scope). */
+  retryBudget: (
+    address: string | null | undefined,
+    chainId: number | null | undefined,
+    releaseId: string | null | undefined,
+  ) => {
+    const scope = requestScope(address, chainId, releaseId);
+    return scope
+      ? ([ 'request', 'retryBudget', scope.address, scope.chainId, scope.releaseId ] as const)
+      : ([ 'request', 'retryBudget', 'invalid' ] as const);
+  },
+} as const;
 
 // ---------------------------------------------------------------------------
 // Chain
@@ -221,6 +303,12 @@ export const reputationKeys = {
 export const projectionWatermarkKeys = {
   all: ['projectionWatermark'] as const,
   byChain: (chainId: ChainId) => ['projectionWatermark', 'chain', chainId] as const,
+  byRelease: (releaseId: string, chainId: ChainId) => {
+    const release = normalizeReleaseId(releaseId);
+    return release
+      ? (['projectionWatermark', 'release', release, chainId] as const)
+      : (['projectionWatermark', 'release', 'invalid', chainId] as const);
+  },
   byNamespace: (namespace: string, chainId: ChainId) =>
     ['projectionWatermark', namespace, chainId] as const,
   entity: (namespace: string, entityId: string, chainId: ChainId) =>
@@ -250,6 +338,12 @@ export const finalityKeys = {
   all: ['finality'] as const,
   byTx: (txHash: string, chainId: ChainId) =>
     ['finality', 'tx', txHash.toLowerCase(), chainId] as const,
+  byRelease: (txHash: string, chainId: ChainId, releaseId: string) => {
+    const release = normalizeReleaseId(releaseId);
+    return release
+      ? (['finality', 'tx', txHash.toLowerCase(), chainId, release] as const)
+      : (['finality', 'tx', txHash.toLowerCase(), chainId, 'invalid'] as const);
+  },
   byEntity: (entityType: string, entityId: string, chainId: ChainId) =>
     ['finality', 'entity', entityType, entityId, chainId] as const,
   level: (entityType: string, entityId: string, chainId: ChainId) =>

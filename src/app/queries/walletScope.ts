@@ -4,6 +4,10 @@
  * When the connected address or chain changes, only wallet-scoped query
  * namespaces are removed — never a cache-wide clear that would thrash
  * unrelated projections.
+ *
+ * UI-FE-055: also exposes the bounded lifecycle scope signature used by the
+ * API request lifecycle adapter to abort in-flight reads on route, account,
+ * chain, or release changes.
  */
 
 import type { QueryClient } from '@tanstack/react-query';
@@ -16,6 +20,39 @@ import {
   walletKeys,
   walletScope,
 } from './queryKeys';
+
+/**
+ * Lifecycle scope signature. Any change to these fields must abort in-flight
+ * reads and suppress late responses from the previous scope.
+ */
+export interface LifecycleScope {
+  address: string | null;
+  chainId: number | null;
+  route: string | null;
+  release: string | null;
+}
+
+/**
+ * Build a stable, fail-closed signature for the current lifecycle scope.
+ * Returns null when any required dimension is missing so callers can abort
+ * rather than attach a partial scope to a request.
+ */
+export function lifecycleScopeSignature(
+  scope: Partial<LifecycleScope> | null | undefined,
+): string | null {
+  if (!scope) return null;
+  const address = normalizeAddress(scope.address ?? null);
+  const chainId = typeof scope.chainId === 'number' ? scope.chainId : null;
+  const route = typeof scope.route === 'string' && scope.route.length > 0
+    ? scope.route
+    : null;
+  const release = typeof scope.release === 'string' && scope.release.length > 0
+    ? scope.release
+    : null;
+
+  if (!address || !chainId || !route || !release) return null;
+  return `${address}:${chainId}:${route}:${release}`;
+}
 
 /** Roots that are inherently wallet / chain scoped. */
 export const WALLET_SCOPED_ROOTS = [
@@ -62,6 +99,34 @@ export function invalidateWalletScope(
     queryClient.removeQueries({ queryKey: [...queryKey] });
   }
   return keys.length;
+}
+
+/**
+ * UI-FE-055: on any lifecycle scope change (route, account, chain, release),
+ * drop the previous wallet scope so late responses cannot overwrite the new
+ * context. Returns whether the scope actually changed.
+ */
+export function onLifecycleScopeChange(
+  queryClient: QueryClient,
+  previous: Partial<LifecycleScope> | null,
+  next: Partial<LifecycleScope> | null,
+): { changed: boolean; previousSignature: string | null; nextSignature: string | null } {
+  const previousSignature = lifecycleScopeSignature(previous);
+  const nextSignature = lifecycleScopeSignature(next);
+
+  if (previousSignature === nextSignature) {
+    return { changed: false, previousSignature, nextSignature };
+  }
+
+  const prevAddr = normalizeAddress(previous?.address ?? null);
+  const prevChain =
+    typeof previous?.chainId === 'number' ? previous.chainId : null;
+
+  if (prevAddr && prevChain) {
+    invalidateWalletScope(queryClient, prevAddr, prevChain);
+  }
+
+  return { changed: true, previousSignature, nextSignature };
 }
 
 /**

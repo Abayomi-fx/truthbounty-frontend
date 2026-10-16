@@ -1,6 +1,7 @@
 // src/app/api/claims.api.ts
 
 import { Claim } from '@/app/types/claim';
+import { createBoundedRequest } from '@/app/api/bounded-request';
 import {
   CLAIMS_LIST_MAX_PAGE_SIZE,
   CLAIMS_LIST_MIN_PAGE_SIZE,
@@ -10,6 +11,8 @@ import {
   type ClaimsListEnvelope,
   type ClaimsListParams,
 } from '@/app/types/claim-list';
+
+const claimsRequest = createBoundedRequest({ namespace: 'claims' });
 
 type EvidenceItem = Record<string, unknown>;
 type RoundItem = Record<string, unknown>;
@@ -24,20 +27,27 @@ export interface ClaimSubmissionData {
 }
 
 export async function fetchClaims(): Promise<Claim[]> {
-  const res = await fetch('/api/claims');
+  const res = await claimsRequest('/api/claims', {
+    method: 'GET',
+    idempotent: true,
+  });
   if (!res.ok) throw new Error('Failed to fetch claims');
   return res.json();
 }
 
 export async function fetchClaimDetail(claimId: string): Promise<Claim> {
-  const res = await fetch(`/api/claims/${claimId}`);
+  const res = await claimsRequest(`/api/claims/${claimId}`, {
+    method: 'GET',
+    idempotent: true,
+  });
   if (!res.ok) throw new Error('Failed to fetch claim detail');
   return res.json();
 }
 
 export async function submitClaim(payload: ClaimSubmissionData): Promise<Claim> {
-  const res = await fetch('/api/claims', {
+  const res = await claimsRequest('/api/claims', {
     method: 'POST',
+    idempotent: false,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
@@ -46,7 +56,10 @@ export async function submitClaim(payload: ClaimSubmissionData): Promise<Claim> 
 }
 
 export async function fetchClaimsByStatus(status: string): Promise<Claim[]> {
-  const res = await fetch(`/api/claims?status=${encodeURIComponent(status)}`);
+  const res = await claimsRequest(`/api/claims?status=${encodeURIComponent(status)}`, {
+    method: 'GET',
+    idempotent: true,
+  });
   if (!res.ok) throw new Error('Failed to fetch claims by status');
   return res.json();
 }
@@ -56,13 +69,19 @@ export async function fetchClaimsByStatus(status: string): Promise<Claim[]> {
 // ---------------------------------------------------------------------------
 
 export async function fetchEvidence(claimId: string): Promise<EvidenceItem[]> {
-  const res = await fetch(`/api/claims/${encodeURIComponent(claimId)}/evidence`);
+  const res = await claimsRequest(
+    `/api/claims/${encodeURIComponent(claimId)}/evidence`,
+    { method: 'GET', idempotent: true }
+  );
   if (!res.ok) throw new Error('Failed to fetch evidence');
   return res.json();
 }
 
 export async function fetchEvidenceDetail(evidenceId: string): Promise<EvidenceItem> {
-  const res = await fetch(`/api/evidence/${encodeURIComponent(evidenceId)}`);
+  const res = await claimsRequest(`/api/evidence/${encodeURIComponent(evidenceId)}`, {
+    method: 'GET',
+    idempotent: true,
+  });
   if (!res.ok) throw new Error('Failed to fetch evidence detail');
   return res.json();
 }
@@ -72,13 +91,19 @@ export async function fetchEvidenceDetail(evidenceId: string): Promise<EvidenceI
 // ---------------------------------------------------------------------------
 
 export async function fetchRoundsByClaim(claimId: string): Promise<RoundItem[]> {
-  const res = await fetch(`/api/claims/${encodeURIComponent(claimId)}/rounds`);
+  const res = await claimsRequest(
+    `/api/claims/${encodeURIComponent(claimId)}/rounds`,
+    { method: 'GET', idempotent: true }
+  );
   if (!res.ok) throw new Error('Failed to fetch rounds');
   return res.json();
 }
 
 export async function fetchRoundDetail(roundId: string): Promise<RoundItem> {
-  const res = await fetch(`/api/rounds/${encodeURIComponent(roundId)}`);
+  const res = await claimsRequest(`/api/rounds/${encodeURIComponent(roundId)}`, {
+    method: 'GET',
+    idempotent: true,
+  });
   if (!res.ok) throw new Error('Failed to fetch round detail');
   return res.json();
 }
@@ -195,7 +220,7 @@ export async function fetchClaimsList(
 
   let res: Response;
   try {
-    res = await fetch(`/api/claims?${buildClaimsListQuery(clamped)}`, {
+    res = await claimsRequest(`/api/claims?${buildClaimsListQuery(clamped)}`, {
       signal,
       headers: { Accept: 'application/json' },
     });

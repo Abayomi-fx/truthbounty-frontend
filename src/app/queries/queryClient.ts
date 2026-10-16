@@ -1,6 +1,7 @@
 // src/app/queries/queryClient.ts
 import { QueryClient } from '@tanstack/react-query';
 import { readLowBandwidth } from '@/hooks/useNetworkStatus';
+import { isRetryableStatus } from '@/app/lib/apiLifecycle';
 
 const BASE_STALE_TIME = 1000 * 60 * 5; // 5 mins
 const LOW_BANDWIDTH_STALE_TIME = 1000 * 60 * 15; // 15 mins when data-saver/slow
@@ -12,8 +13,22 @@ function isBrowser(): boolean {
 }
 
 /** Skip futile retries while the browser reports offline. */
-function shouldRetry(failureCount: number): boolean {
+function shouldRetry(failureCount: number, error: unknown): boolean {
   if (isBrowser() && navigator.onLine === false) return false;
+  // Never retry non-idempotent operations or context/stale-response failures.
+  if (error && typeof error === 'object' && 'code' in error) {
+    const code = (error as { code?: string }).code;
+    if (
+      code === 'CONTEXT_CHANGED' ||
+      code === 'CONTEXT_MISMATCH' ||
+      code === 'CONTEXT_REQUIRED' ||
+      code === 'STALE_RESPONSE' ||
+      code === 'ABORTED' ||
+      code === 'OFFLINE'
+    ) {
+      return false;
+    }
+  }
   return failureCount < MAX_RETRY;
 }
 
@@ -38,8 +53,10 @@ export const queryClient = new QueryClient({
       retryDelay,
     },
     mutations: {
+      // Mutations are non-idempotent by default and must never be retried automatically.
+      retry: false,
       onError: (error) => console.error('Mutation error:', error),
-      networkMode: 'online',
+      networkMode: 'olline',
     },
   },
 });
