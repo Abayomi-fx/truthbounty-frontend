@@ -116,7 +116,7 @@ describe('TermsVersionSelector', () => {
   it('shows source badge for board approved', () => {
     render(<TermsVersionSelector versions={mockVersions} currentVersion="1.1.0" network="testnet" onVersionChange={onVersionChange} />);
 
-    expect(screen.getAllByText('Board Approved')).toHaveLength(2);
+    expect(screen.getAllByText('Board')).toHaveLength(2);
   });
 
   it('shows testnet badge for testnet versions', () => {
@@ -151,7 +151,7 @@ describe('TermsVersionSelector', () => {
     render(<TermsVersionSelector versions={mainnetVersions} currentVersion="1.0.0" network="mainnet" onVersionChange={onVersionChange} />);
 
     expect(screen.getByText('Mainnet')).toBeInTheDocument();
-    expect(screen.getByText('Governance Approved')).toBeInTheDocument();
+    expect(screen.getByText('Governance')).toBeInTheDocument();
   });
 
   it('has correct ARIA labels', () => {

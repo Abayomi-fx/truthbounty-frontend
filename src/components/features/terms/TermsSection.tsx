@@ -94,7 +94,7 @@ export function TermsSection({ clause, sectionId, network }: TermsSectionProps) 
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>Last reviewed: {new Date(clause.lastReviewedAt).toLocaleDateString()}</span>
+          <span>Last reviewed: {( () => { const d = new Date(clause.lastReviewedAt!); return isNaN(d.getTime()) ? clause.lastReviewedAt! : d.toLocaleDateString(); })() }</span>
         </div>
       )}
 

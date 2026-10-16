@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { getTermsMetadata, getTerms } from '@/data/terms';
 import { TermsPageClient } from './TermsPageClient';
 
@@ -7,11 +8,17 @@ interface TermsPageProps {
   searchParams: Promise<{ network?: string; version?: string }>;
 }
 
+function isValidNetwork(network: string): network is 'testnet' | 'mainnet' {
+  return network === 'testnet' || network === 'mainnet';
+}
+
 export async function generateMetadata({ params, searchParams }: TermsPageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   
-  const network = (resolvedParams.network ?? resolvedSearchParams.network ?? 'testnet') as 'testnet' | 'mainnet';
+  const networkParam = resolvedParams.network ?? resolvedSearchParams.network ?? 'testnet';
+  const network = isValidNetwork(networkParam) ? networkParam : 'testnet';
+  
   const metadata = getTermsMetadata(network);
   const currentVersion = getTerms(network, metadata.currentVersion);
 
@@ -28,23 +35,25 @@ export async function generateMetadata({ params, searchParams }: TermsPageProps)
   };
 }
 
-export async function generateStaticParams() {
-  return [
-    { network: 'testnet' },
-    { network: 'mainnet' },
-  ];
-}
-
 export default async function TermsPage({ params, searchParams }: TermsPageProps) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   
-  const network = (resolvedParams.network ?? resolvedSearchParams.network ?? 'testnet') as 'testnet' | 'mainnet';
-  const version = resolvedParams.version ?? resolvedSearchParams.version;
+  const networkParam = resolvedParams.network ?? resolvedSearchParams.network ?? 'testnet';
+  const network = isValidNetwork(networkParam) ? networkParam : 'testnet';
+  
+  const versionParam = resolvedParams.version ?? resolvedSearchParams.version;
   
   const metadata = getTermsMetadata(network);
-  const currentVersion = getTerms(network, version);
-  const allVersions = getTermsMetadata(network).versions;
+  const allVersions = metadata.versions;
+  
+  // Validate requested version exists for this network
+  let currentVersion: ReturnType<typeof getTerms>;
+  if (versionParam && allVersions.some((v) => v.version === versionParam)) {
+    currentVersion = getTerms(network, versionParam);
+  } else {
+    currentVersion = getTerms(network, metadata.currentVersion);
+  }
 
   return <TermsPageClient 
     network={network} 

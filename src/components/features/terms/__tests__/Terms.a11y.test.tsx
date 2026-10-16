@@ -303,8 +303,3 @@ describe('TermsRenderer accessibility', () => {
     expect(screen.getByRole('button', { name: 'Collapse All' })).toBeInTheDocument();
   });
 });
-
-// Helper to check for text content in buttons
-HTMLElement.prototype.hasText = function(text: string) {
-  return this.textContent?.includes(text) ?? false;
-};

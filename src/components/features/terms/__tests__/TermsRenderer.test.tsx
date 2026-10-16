@@ -71,7 +71,7 @@ describe('TermsRenderer', () => {
     const headers = screen.getAllByRole('banner');
     expect(within(headers[0]).getByText(/Effective:/)).toBeInTheDocument();
     expect(within(headers[0]).getByText('Testnet')).toBeInTheDocument();
-    expect(within(headers[0]).getByText('Board Approved')).toBeInTheDocument();
+    expect(within(headers[0]).getByText('Board')).toBeInTheDocument();
     expect(within(headers[0]).getByText('Published')).toBeInTheDocument();
   });
 

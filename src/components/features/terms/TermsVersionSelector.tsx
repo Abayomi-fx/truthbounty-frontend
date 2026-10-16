@@ -101,24 +101,24 @@ interface VersionListItemProps {
 }
 
 function VersionListItem({ version, isCurrent, onSelect, network }: VersionListItemProps) {
-  const effectiveDate = new Date(version.effectiveDate).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const effectiveDate = formatDate(version.effectiveDate);
 
   const publishedAt = version.publishedAt
-    ? new Date(version.publishedAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+    ? formatDate(version.publishedAt)
     : null;
 
   const sourceLabels: Record<string, { label: string; className: string }> = {
-    board: { label: 'Board Approved', className: 'bg-blue-900/30 text-blue-400 border-blue-700' },
-    governance: { label: 'Governance Approved', className: 'bg-purple-900/30 text-purple-400 border-purple-700' },
-    legal: { label: 'Legal Review', className: 'bg-green-900/30 text-green-400 border-green-700' },
+    board: { label: 'Board', className: 'bg-blue-900/30 text-blue-400 border-blue-700' },
+    governance: { label: 'Governance', className: 'bg-purple-900/30 text-purple-400 border-purple-700' },
+    legal: { label: 'Legal', className: 'bg-green-900/30 text-green-400 border-green-700' },
   };
 
   const sourceInfo = sourceLabels[version.source] || { label: version.source, className: 'bg-gray-700 text-gray-300 border-gray-600' };
@@ -145,7 +145,7 @@ function VersionListItem({ version, isCurrent, onSelect, network }: VersionListI
             )}
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${sourceInfo.className}`}
-              aria-label={sourceInfo.label}
+              aria-label={`Source: ${sourceInfo.label}`}
             >
               {sourceInfo.label}
             </span>
@@ -225,11 +225,15 @@ interface DraftVersionListItemProps {
 }
 
 function DraftVersionListItem({ version, network }: DraftVersionListItemProps) {
-  const effectiveDate = new Date(version.effectiveDate).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const effectiveDate = formatDate(version.effectiveDate);
 
   return (
     <article className="p-4 rounded-lg border bg-surface/50 border-yellow-700/30">

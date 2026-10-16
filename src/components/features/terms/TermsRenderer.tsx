@@ -37,13 +37,35 @@ export function TermsRenderer({ version, allVersions, network, onVersionChange }
   }, [version.clauses]);
 
   const sortedClauses = useMemo(() => {
-    return TERMS_SECTIONS.map((sectionId) => clauseMap.get(sectionId)).filter(Boolean) as TermsClause[];
+    return TERMS_SECTIONS.map((sectionId) => {
+      const clause = clauseMap.get(sectionId);
+      if (clause) return clause;
+      // Synthetic unavailable clause for missing sections
+      return {
+        id: sectionId,
+        title: SECTION_TITLES[sectionId as TermsSectionId],
+        content: 'This clause is currently unavailable. It may be pending legal review, regulatory approval, or governance voting.',
+        status: 'unavailable' as ClauseStatus,
+      };
+    });
   }, [clauseMap]);
 
   const safeVersionTitle = sanitizeText(version.version, 50);
   const safeEffectiveDate = sanitizeText(version.effectiveDate, 50);
   const safeMaterialChanges = sanitizeText(version.materialChanges, 5000);
   const safeSource = sanitizeText(version.source, 50);
+
+  // Validate dates to prevent "Invalid Date" display
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString; // Fallback to raw string if invalid
+    }
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const effectiveDateFormatted = formatDate(version.effectiveDate);
+  const publishedAtFormatted = version.publishedAt ? formatDate(version.publishedAt) : null;
 
   return (
     <div className="tb-content space-y-8">
@@ -59,7 +81,7 @@ export function TermsRenderer({ version, allVersions, network, onVersionChange }
           <div className="flex flex-wrap items-center gap-3">
             <span
               className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-900/30 text-green-400 border border-green-700"
-              aria-label="This version is published and legally effective"
+              aria-label="This version is published"
             >
               Published
             </span>
@@ -69,7 +91,7 @@ export function TermsRenderer({ version, allVersions, network, onVersionChange }
                   ? 'bg-blue-900/30 text-blue-400 border-blue-700'
                   : 'bg-purple-900/30 text-purple-400 border-purple-700'
               }`}
-              aria-label={network === 'testnet' ? 'Testnet terms — no real value at stake' : 'Mainnet terms — real value at stake'}
+              aria-label={network === 'testnet' ? 'Testnet terms' : 'Mainnet terms'}
             >
               {network === 'testnet' ? 'Testnet' : 'Mainnet'}
             </span>
@@ -83,7 +105,7 @@ export function TermsRenderer({ version, allVersions, network, onVersionChange }
               }`}
               aria-label={`Source: ${safeSource}`}
             >
-              {safeSource === 'governance' ? 'Governance Approved' : safeSource === 'board' ? 'Board Approved' : 'Legal Review'}
+              {safeSource === 'governance' ? 'Governance' : safeSource === 'board' ? 'Board' : 'Legal'}
             </span>
           </div>
         </div>
@@ -107,14 +129,14 @@ export function TermsRenderer({ version, allVersions, network, onVersionChange }
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span>Effective: {new Date(version.effectiveDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span>Effective: {effectiveDateFormatted}</span>
           </div>
-          {version.publishedAt && (
+          {publishedAtFormatted && (
             <div className="flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Published: {new Date(version.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span>Published: {publishedAtFormatted}</span>
             </div>
           )}
           {version.previousVersion && (
@@ -238,15 +260,15 @@ export function TermsRenderer({ version, allVersions, network, onVersionChange }
         <p className="tb-small text-ink-muted max-w-2xl mx-auto">
           {network === 'mainnet' ? (
             <>
-              These Mainnet Terms govern your use of the TruthBounty protocol on Optimism Mainnet (Chain ID: 10).
-              Only approved clauses sourced from governance are legally binding. Draft content is not legally effective.
+              These Mainnet Terms govern your use of the TruthBounty protocol on Optimism Mainnet.
+              Only approved clauses are considered effective. Draft content is not effective.
               <br />
               For questions, contact the protocol team via official channels.
             </>
           ) : (
             <>
-              These Testnet Terms govern your use of the TruthBounty testnet on Optimism Sepolia (Chain ID: 11155420).
-              Testnet tokens have no monetary value. Only approved clauses sourced from the board are effective.
+              These Testnet Terms govern your use of the TruthBounty testnet on Optimism Sepolia.
+              Testnet tokens have no monetary value. Only approved clauses are effective.
               <br />
               For questions, contact the protocol team via official channels.
             </>

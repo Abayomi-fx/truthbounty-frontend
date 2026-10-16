@@ -179,7 +179,7 @@ describe('TermsReviewSummary', () => {
     );
 
     expect(screen.getByText(/Mainnet:/)).toBeInTheDocument();
-    expect(screen.getByText(/governance approval is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/governance process is required/i)).toBeInTheDocument();
   });
 
   it('shows testnet disclaimer for testnet', () => {
@@ -193,7 +193,7 @@ describe('TermsReviewSummary', () => {
     );
 
     expect(screen.getByText(/Testnet:/)).toBeInTheDocument();
-    expect(screen.getByText(/board approval is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/board process is required/i)).toBeInTheDocument();
   });
 
   it('has correct ARIA region label', () => {

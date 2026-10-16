@@ -160,14 +160,14 @@ export function TermsReviewSummary({ clauses, network, className = '' }: TermsRe
           <p className="tb-small text-ink-muted mt-3">
             {network === 'mainnet' && (
               <>
-                <strong>Mainnet:</strong> Only approved clauses are legally effective. Clauses under review or unavailable
-                do not create binding obligations. Governance approval is required for mainnet clause changes.
+                <strong>Mainnet:</strong> Only approved clauses are considered effective. Clauses under review or unavailable
+                do not create binding obligations. Governance process is required for mainnet clause changes.
               </>
             )}
             {network === 'testnet' && (
               <>
                 <strong>Testnet:</strong> Only approved clauses are effective for testnet participation. Clauses under review
-                are not binding. Board approval is required for testnet clause changes.
+                are not binding. Board process is required for testnet clause changes.
               </>
             )}
           </p>
