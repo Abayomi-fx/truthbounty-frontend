@@ -15,5 +15,10 @@ The boundary is enforced in three places:
 
 Keep wallet mocks under `src/__tests__/mocks/wagmi`. Add new fixture factories
 under a test-only path, use deterministic values, and import them only from test
-files. Viem `simulateContract` is a canonical RPC preflight and is not a mock;
-client-generated receipts, transaction hashes, gas, rewards, or finality are.
+files. The shared UI-FE-088 factory library and canonical scenario catalogue live
+under `src/testing/fixtures` — see [`docs/TEST_FIXTURES.md`](./TEST_FIXTURES.md)
+for usage and for the determinism contract enforced by
+`pnpm verify:fixture-determinism` (CI fails on nondeterministic clocks or random
+identifiers in fixture builders). Viem `simulateContract` is a canonical RPC
+preflight and is not a mock; client-generated receipts, transaction hashes, gas,
+rewards, or finality are.
