@@ -5,6 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { providers, validateProviders, assertReviewedEndpoint } from '../src/lib/security/provider-policy.mjs';
 
+import { requiredProviderUsage } from '../src/lib/security/provider-usage.mjs';
+import { verifyUsageBindings } from './provider-usage-verification.mjs';
+
 const ts = createRequire(import.meta.url)('typescript');
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 export const digest = (value) => createHash('sha256').update(value.replace(/\r\n/g, '\n')).digest('hex');
@@ -61,8 +64,9 @@ export function inventory(directory = root) {
   return Object.fromEntries(Object.entries(result).sort(([a], [b]) => a.localeCompare(b)));
 }
 
-export function verify(directory = root, entries = providers) {
+export function verify(directory = root, entries = providers, requirements = requiredProviderUsage) {
   validateProviders(entries);
+  verifyUsageBindings(entries, requirements);
   for (const key of ['NEXT_PUBLIC_API_URL', 'NEXT_PUBLIC_WS_URL', 'NEXT_PUBLIC_OPTIMISM_RPC_URL', 'NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL']) assertReviewedEndpoint(process.env[key]);
   for (const entry of entries) {
     const source = resolve(directory, entry.source);

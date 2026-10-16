@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { stripTypeScriptTypes } from 'node:module';
 import { providers, validateProviders, assertReviewedEndpoint } from '../../src/lib/security/provider-policy.mjs';
+import { requiredProviderUsage } from '../../src/lib/security/provider-usage.mjs';
+import { verifyUsageBindings, verifyObservedUsage } from '../provider-usage-verification.mjs';
 import { inspectSource, verify } from '../verify-provider-drift.mjs';
 
 const policyUrl = new URL('../../src/lib/security/provider-policy.mjs', import.meta.url).href;
@@ -62,7 +64,7 @@ test('AST inventory detects undeclared providers, escaped literals, dynamic call
 });
 
 test('unused origins and deliberate source drift fail the actual CI verifier', () => {
-  assert.throws(() => verify(undefined, [{ ...providers[0], evidence: 'REMOVED_PROVIDER' }]), /Unused provider/);
+  assert.throws(() => verify(undefined, providers.map((p, i) => i ? p : { ...p, evidence: 'REMOVED_PROVIDER' })), /Unused provider/);
   const root = mkdtempSync(join(tmpdir(), 'csp-drift-'));
   try {
     for (const folder of ['src/lib/security', 'public']) mkdirSync(join(root, folder), { recursive: true });
@@ -71,9 +73,9 @@ test('unused origins and deliberate source drift fail the actual CI verifier', (
     writeFileSync(join(root, 'middleware.ts'), '');
     writeFileSync(join(root, 'next.config.ts'), '');
     writeFileSync(join(root, 'src/lib/security/provider-review.json'), JSON.stringify({ ...original, sources: { 'middleware.ts': [], 'next.config.ts': [] } }));
-    verify(root, []);
+    verify(root, [], []);
     writeFileSync(join(root, 'src/new-provider.ts'), 'fetch("https://undeclared.invalid")');
-    assert.throws(() => verify(root, []), /Provider usage drift/);
+    assert.throws(() => verify(root, [], []), /Provider usage drift/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -96,4 +98,32 @@ test('legacy and Reporting API reports cannot put URLs, samples or arbitrary tex
   } finally { console.warn = original; }
   assert.equal((await report.POST(new Request('https://app.invalid', { method: 'POST', body: '{}' }))).status, 400);
   assert.equal((await report.POST(new Request('https://app.invalid', { method: 'POST', body: 'a'.repeat(17000) }))).status, 413);
+});
+
+
+test('appending an unused exact origin to a valid provider fails the CI verifier', () => {
+  const changed = structuredClone(providers);
+  changed[0].origins.push('https://unused.example');
+  assert.throws(() => verify(undefined, changed), /Missing per-origin\/directive usage binding/);
+});
+
+test('an existing origin cannot inherit permission for another directive', () => {
+  const changed = structuredClone(providers);
+  changed[0].directives.push('img-src');
+  assert.throws(() => verify(undefined, changed), /Missing per-origin\/directive usage binding/);
+});
+
+test('declaring a scenario cannot pass runtime verification without an observed request', () => {
+  const observations = requiredProviderUsage.map((row) => ({ ...row, success: true }));
+  verifyObservedUsage(providers, observations);
+  for (let index = 0; index < requiredProviderUsage.length; index++) {
+    const missing = observations.filter((_, i) => i !== index);
+    assert.throws(() => verifyObservedUsage(providers, missing), /Unused or unverified/);
+    assert.throws(() => verifyObservedUsage(providers, observations.map((row, i) => i === index ? { ...row, success: false } : row)), /Unused or unverified/);
+  }
+  const changed = structuredClone(providers);
+  changed[0].origins.push('https://unused.example');
+  const requirements = [...requiredProviderUsage, { provider: changed[0].id, origin: 'https://unused.example', directive: 'connect-src', scenario: 'rpc' }];
+  verifyUsageBindings(changed, requirements);
+  assert.throws(() => verifyObservedUsage(changed, observations, requirements), /Unused or unverified/);
 });
