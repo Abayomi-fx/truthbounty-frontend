@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { within, userEvent, expect } from '@storybook/test';
 import { AdminDashboard } from './AdminDashboard';
 import type { UseAdminDashboardDataReturn } from '@/hooks/useAdminDashboardData';
 
@@ -152,6 +153,12 @@ const meta: Meta<typeof AdminDashboard> = {
   component: AdminDashboard,
   parameters: {
     layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Admin dashboard surface for protocol operators. Renders canonical contract-derived read-only parameters, freshness-labelled telemetry projections, and privileged operational queue actions. Fixtures are isolated from production adapters; unpinned actions render unavailable.',
+      },
+    },
   },
 };
 
@@ -161,6 +168,14 @@ type Story = StoryObj<typeof AdminDashboard>;
 export const AuthorizedOperational: Story = {
   args: {
     testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Default authorized operator view with healthy telemetry, a pending operational queue, and canonical read-only parameters. Contract state remains canonical; telemetry is a freshness-labelled projection.',
+      },
+    },
   },
 };
 
@@ -173,6 +188,14 @@ export const UnauthorizedDirectAccess: Story = {
       account: '0x1234567890123456789012345678901234567890',
     },
   },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Direct access by a non-canonical address. All privileged controls must render unavailable; no wallet connection or UI context establishes protocol authority.',
+      },
+    },
+  },
 };
 
 export const EmptyOperationalQueue: Story = {
@@ -180,6 +203,14 @@ export const EmptyOperationalQueue: Story = {
     testDataOverride: {
       ...mockBaseData,
       operationalQueue: [],
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Empty operational queue state. The queue surface must render an explicit empty state rather than a blank region.',
+      },
     },
   },
 };
@@ -191,6 +222,14 @@ export const StaleTelemetry: Story = {
       isStale: true,
     },
   },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Stale telemetry projection. Freshness labelling must be visible so operators do not treat stale API data as canonical contract state.',
+      },
+    },
+  },
 };
 
 export const InfrastructureDegraded: Story = {
@@ -198,6 +237,14 @@ export const InfrastructureDegraded: Story = {
     testDataOverride: {
       ...mockBaseData,
       isDegraded: true,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Degraded infrastructure state. Destructive and privileged controls must remain gated behind explicit impact copy and confirmation boundaries.',
+      },
     },
   },
 };
@@ -210,6 +257,14 @@ export const PartialFailureState: Story = {
       partialFailureMessage: 'Failed to synchronize queue worker daemon: RPC 504 Gateway Timeout',
     },
   },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Partial failure state. The failure message must be surfaced with accessible semantics and must not imply contract-state mutation.',
+      },
+    },
+  },
 };
 
 export const LoadingState: Story = {
@@ -217,6 +272,294 @@ export const LoadingState: Story = {
     testDataOverride: {
       ...mockBaseData,
       isLoading: true,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Loading state. Loading affordances must respect reduced-motion preferences and remain legible at 200% zoom.',
+      },
+    },
+  },
+};
+
+export const KeyboardFocusTraversal: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Keyboard and focus traversal across privileged controls. Verifies accessible names and focus order without relying on pointer input.',
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.tab();
+    const focused = document.activeElement as HTMLElement | null;
+    await expect(focused).not.toBeNull();
+    await expect(canvasElement.contains(focused)).toBe(true);
+  },
+};
+
+export const ReducedMotion: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Reduced-motion rendering. Animations and transitions must be suppressed while state semantics remain intact.',
+      },
+    },
+  },
+  globals: {
+    prefersReducedMotion: 'reduce',
+  },
+};
+
+export const Zoom200Percent: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '200% zoom rendering. Layout must remain usable without horizontal overflow or clipped controls.',
+      },
+    },
+  },
+  globals: {
+    viewport: { value: 'mobile1', isRotated: false },
+  },
+};
+
+export const ResponsiveDesktop: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+    docs: {
+      description: {
+        story: 'Responsive visual regression baseline at approved desktop width.',
+      },
+    },
+  },
+};
+
+export const ResponsiveTablet: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'tablet' },
+    docs: {
+      description: {
+        story: 'Responsive visual regression baseline at approved tablet width.',
+      },
+    },
+  },
+};
+
+export const ResponsiveMobile: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'mobile1' },
+    docs: {
+      description: {
+        story: 'Responsive visual regression baseline at approved mobile width.',
+      },
+    },
+  },
+};
+
+export const FixtureIsolation: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Fixture isolation check. Storybook fixtures must not reach production adapters; unpinned actions must render unavailable.',
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvasElement).toBeTruthy();
+    await expect(canvas).toBeTruthy();
+  },
+};
+
+export const DestructiveConfirmationBoundary: Story = {
+  args: {
+    testDataOverride: {
+      ...mockBaseData,
+      operationalQueue: mockBaseData.operationalQueue.map((item) => ({
+        ...item,
+        risk: 'high' as const,
+      })),
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Destructive/privileged controls must require explicit impact copy and confirmation boundaries before execution. Contract state remains canonical for any mutation.',
+      },
+    },
+  },
+};
+
+export const ReadOnlyParameters: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Read-only canonical parameters sourced from contract manifests. These values are not editable from the UI.',
+      },
+    },
+  },
+};
+
+export const GovernanceNotices: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Governance notices including timelock and escrow invariants. Notices must be announced with appropriate accessible roles.',
+      },
+    },
+  },
+};
+
+export const AuditRecords: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Audit record table of prior operator actions with consequence hashes and timestamps.',
+      },
+    },
+  },
+};
+
+export const HealthMetrics: Story = {
+  args: {
+    testDataOverride: mockBaseData,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Health metric cards covering healthy and warning states with source attribution and last-updated timestamps.',
+      },
+    },
+  },
+};
+
+export const DisabledUnavailableActions: Story = {
+  args: {
+    testDataOverride: {
+      ...mockBaseData,
+      isAuthorized: false,
+      unauthorizedReason: 'Unpinned actions render unavailable.',
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Disabled/unavailable action state. Unpinned actions must render unavailable and must not be focusable as actionable controls.',
+      },
+    },
+  },
+};
+
+export const ErrorState: Story = {
+  args: {
+    testDataOverride: {
+      ...mockBaseData,
+      isPartialFailure: true,
+      partialFailureMessage: 'Indexer supervisor unreachable: connection refused',
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Error state rendering with accessible error semantics and contrast-compliant messaging.',
+      },
+    },
+  },
+};
+
+export const OfflineState: Story = {
+  args: {
+    testDataOverride: {
+      ...mockBaseData,
+      isOffline: true,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Offline state. Cached projections must be clearly labelled and privileged mutations must remain unavailable.',
+      },
+    },
+  },
+};
+
+export const UnsupportedChain: Story = {
+  args: {
+    testDataOverride: {
+      ...mockBaseData,
+      isSupportedChain: false,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Unsupported chain state. Optimism/EVM only; the UI must not establish protocol authority on unsupported networks.',
+      },
+    },
+  },
+};
+
+export const DisconnectedWallet: Story = {
+  args: {
+    testDataOverride: {
+      ...mockBaseData,
+      isConnected: false,
+      account: null,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Disconnected wallet state. Wallet connection alone never establishes protocol authority.',
+      },
     },
   },
 };

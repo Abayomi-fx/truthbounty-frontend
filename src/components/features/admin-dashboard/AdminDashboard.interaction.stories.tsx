@@ -8,6 +8,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect } from '@storybook/jest';
 import { within, userEvent, waitFor } from '@storybook/testing-library';
+import { fn } from '@storybook/test';
 import { AdminDashboard } from './AdminDashboard';
 import type { UseAdminDashboardDataReturn } from '@/hooks/useAdminDashboardData';
 
@@ -16,6 +17,30 @@ const meta: Meta<typeof AdminDashboard> = {
   component: AdminDashboard,
   parameters: {
     layout: 'fullscreen',
+    docs: {
+      description: {
+        component:
+          'Admin dashboard for privileged operations. All mutations require explicit impact copy and confirmation boundaries. Fixtures are isolated from production adapters; unpinned actions render unavailable.',
+      },
+    },
+  },
+  argTypes: {
+    data: {
+      control: false,
+      description: 'Freshness-labelled projection of admin dashboard state. Never establishes protocol authority.',
+    },
+    onExecuteOperation: {
+      action: 'executeOperation',
+      description: 'Bounded privileged operation. Requires confirmation boundary.',
+    },
+    onRefresh: {
+      action: 'refresh',
+      description: 'Refresh API projection. Does not mutate contract state.',
+    },
+  },
+  args: {
+    onExecuteOperation: fn(),
+    onRefresh: fn(),
   },
 };
 
@@ -71,6 +96,7 @@ const authorizedBaseData: UseAdminDashboardDataReturn = {
 // ── 1. Operations Context Interaction Tests ──────────────────────────────────
 
 export const AuthorizedOperationExecution: Story = {
+  name: 'Authorized — Operation Execution (default)',
   args: {
     data: authorizedBaseData,
   },
@@ -121,6 +147,7 @@ export const AuthorizedOperationExecution: Story = {
 };
 
 export const UnauthorizedWalletDenial: Story = {
+  name: 'Unauthorized — Wallet Denial (error)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -154,6 +181,7 @@ export const UnauthorizedWalletDenial: Story = {
 };
 
 export const DisconnectedWalletGate: Story = {
+  name: 'Disconnected — Wallet Gate (disabled)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -183,6 +211,7 @@ export const DisconnectedWalletGate: Story = {
 };
 
 export const AccountChangeRecoveryFlow: Story = {
+  name: 'Account Change — Recovery Flow (active)',
   args: {
     data: authorizedBaseData,
   },
@@ -229,6 +258,7 @@ export const AccountChangeRecoveryFlow: Story = {
 };
 
 export const ChainChangeUnsupportedNetwork: Story = {
+  name: 'Chain Change — Unsupported Network (error)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -257,6 +287,7 @@ export const ChainChangeUnsupportedNetwork: Story = {
 };
 
 export const StaleApiDataWarning: Story = {
+  name: 'Stale API — Warning (loading)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -299,6 +330,7 @@ export const StaleApiDataWarning: Story = {
 };
 
 export const CriticallyStaleApiBlocks: Story = {
+  name: 'Critically Stale — Writes Blocked (disabled)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -330,6 +362,7 @@ export const CriticallyStaleApiBlocks: Story = {
 };
 
 export const OfflineNetworkFailure: Story = {
+  name: 'Offline — Network Failure (error)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -362,6 +395,7 @@ export const OfflineNetworkFailure: Story = {
 };
 
 export const DirectUrlAccessWithoutAuth: Story = {
+  name: 'Direct URL — Without Auth (disabled)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -392,6 +426,7 @@ export const DirectUrlAccessWithoutAuth: Story = {
 // ── 2. Bounded Operations Invariant Tests ────────────────────────────────────
 
 export const BoundedOperationsOnly: Story = {
+  name: 'Bounded Operations — Read-only Invariant',
   args: {
     data: authorizedBaseData,
   },

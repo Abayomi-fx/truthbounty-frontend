@@ -19,6 +19,7 @@
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:storybook": "vitest --config vitest.storybook.config.ts --run",
     "test:a11y": "jest --runInBand src/__tests__/accessibility",
     "verify:accessibility": "node scripts/verify-accessibility.mjs",
     "verify:staging-smoke": "node scripts/verify-staging-smoke.mjs"
