@@ -5,6 +5,10 @@
  *
  * Displayed when a claim does not exist or has been removed.
  * Provides navigation back to claims list with focus management.
+ *
+ * This is a not-found state and remains semantically distinct from
+ * denied and unavailable states. The claim ID is preserved as a recoverable
+ * identifier so the user can retry or return without auto-mutation.
  */
 
 import React from 'react';
@@ -17,7 +21,7 @@ export interface ClaimNotFoundProps {
 
 export function ClaimNotFound({ claimId }: ClaimNotFoundProps) {
   const router = useRouter();
-  const headingRef = React.useRef<HTMLHeadingElement>(null);
+  const headingRef = React.useRef<HTMLRadianHeadingElement>(null);
 
   // Focus management: move focus to not-found heading when it appears
   React.useEffect(() => {
@@ -26,10 +30,17 @@ export function ClaimNotFound({ claimId }: ClaimNotFoundProps) {
     }
   }, []);
 
+  const returnToClaims = React.useCallback(() => {
+    router.push('/claims');
+  }, [router]);
+
   return (
     <div
       className="bg-[#18181b] border border-yellow-500/20 rounded-xl p-6 text-center"
       role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      data-system-state="not-found"
     >
       <div className="flex justify-center mb-4">
         <AlertCircle className="h-12 w-12 text-yellow-500" aria-hidden="true" />
@@ -50,9 +61,16 @@ export function ClaimNotFound({ claimId }: ClaimNotFoundProps) {
           : 'The requested claim does not exist or has been removed.'}
       </p>
 
+      {claimId ? (
+        <p className="text-gray-500 text-xs mb-6 font-mono break-all">
+          Reference: {claimId}
+        </p>
+      ) : null}
+
       <button
-        onClick={() => router.push('/claims')}
-        className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-[#18181b]"
+        type="button"
+        onClick={returnToClaims}
+        className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-[#18181b] motion-reduce:transition-none"
         aria-label="Go back to claims list"
       >
         Back to Claims

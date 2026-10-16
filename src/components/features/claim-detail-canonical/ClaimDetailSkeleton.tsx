@@ -14,7 +14,7 @@ export function ClaimDetailSkeleton() {
 
   return (
     <div
-      className="bg-[#18181b] border border-[#232329] rounded-xl p-4 sm:p-6 space-y-4"
+      className="bg-[18181b] border border-[#232329] rounded-xl p-4 sm:p-6 space-y-4"
       role="status"
       aria-busy="true"
       aria-label="Loading claim details"
