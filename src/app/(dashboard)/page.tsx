@@ -5,7 +5,7 @@ import Link from "next/link";
 import MainLayout from "@/components/layout/MainLayout";
 import ActivityAndNodes from "@/components/features/ActivityAndNodes";
 import VerificationNodes from "@/components/features/VerificationNodes";
-import ActiveClaimsTable from "@/components/features/ActiveClaimsTable";
+import { ActiveClaimsTableContainer } from "@/components/features/ActiveClaimsTableContainer";
 import { useClaims } from "@/app/queries/claims.queries";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -152,7 +152,7 @@ const DashboardPage = () => {
             <VerificationNodes isLoading={claimsLoading && !hasData} />
           </div>
         </div>
-        <ActiveClaimsTable isLoading={claimsLoading && !hasData} />
+        <ActiveClaimsTableContainer />
       </div>
     </MainLayout>
   );

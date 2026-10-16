@@ -1,167 +1,163 @@
-// src/hooks/useClaimsList.ts
-'use client';
-
 /**
- * V2-FE-109 — Canonical claims list projection hook.
+ * Canonical claims list projection hook (V2-FE-109)
  *
- * Maps the React Query lifecycle onto explicit, user-visible states so the
- * components can render loading, ready, stale, empty, and error views without
- * guessing at query internals. The API is a projection/read layer: this hook
- * never fabricates rows, totals, or freshness.
+ * Owns all query state for the claims list: search, filters, pagination, sort.
+ * Maps React Query internals to explicit view states so presentational
+ * components never branch on isLoading/isFetching themselves.
+ *
+ * This is the single source of truth for claim list fetching in the UI.
  */
 
-import { keepPreviousData, useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { queryKeys } from '@/app/queries/queryKeys';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { fetchClaimsList } from '@/app/api/claims.api';
-import {
-  CLAIMS_LIST_DEFAULTS,
-  createClaimsListError,
-  validateClaimsListParams,
-  type ClaimsListEnvelope,
-  type ClaimsListError,
-  type ClaimsListParams,
-  type ClaimsListViewState,
+import { queryKeys } from '@/app/queries/queryKeys';
+import type {
+  ClaimsListEnvelope,
+  ClaimsListError,
+  ClaimsListParams,
+  ClaimsListViewState,
 } from '@/app/types/claim-list';
+import type { ClaimStatus } from '@/app/types/claim';
 
-export interface UseClaimsListOptions {
-  /** Debounced search text (already trimmed upstream by the consumer). */
-  search?: string;
-  status?: ClaimsListParams['filters']['status'];
-  highImpact?: boolean;
-  sort?: ClaimsListParams['sort'];
-  page?: number;
+const DEFAULTS = {
+  pageSize: 10,
+  debounceMs: 250,
+  staleAfterMs: 60_000,
+};
+
+export interface UseClaimsListParams {
+  initialPage?: number;
   pageSize?: number;
-  /** How long a successful projection is displayed as fresh (ms). */
-  staleAfterMs?: number;
-  /** Disable the query (e.g. unsupported filter state). Default: false. */
-  enabled?: boolean;
 }
 
-export interface ClaimsListState {
-  /** Explicit UI state; see ClaimsListViewState. */
+export interface UseClaimsListResult {
+  // View state
   viewState: ClaimsListViewState;
-  /** Page rows when `ready`/`ready-stale`, otherwise undefined. */
-  data: ClaimsListEnvelope | undefined;
-  /** Last successfully validated envelope, even while a refetch is in flight. */
-  lastValid: ClaimsListEnvelope | undefined;
-  /** Canonical error for `error` view state. */
-  error: ClaimsListError | undefined;
-  /** True while fetching with no previous data to show. */
-  isLoading: boolean;
-  /** True while any fetch (initial or background refetch) is in flight. */
-  isFetching: boolean;
-  /** Refetch after a failure; no-ops while not in `error`. */
-  retry: () => void;
+  envelope: ClaimsListEnvelope | undefined;
+  error: ClaimsListError | null;
+
+  // Search & filters
+  search: string;
+  setSearch: (value: string) => void;
+  statusFilter: ClaimStatus | undefined;
+  setStatusFilter: (status: ClaimStatus | undefined) => void;
+  highImpactFilter: boolean;
+  setHighImpactFilter: (value: boolean) => void;
+  clearFilters: () => void;
+  hasActiveFilters: boolean;
+
+  // Pagination
+  page: number;
+  setPage: (page: number) => void;
+  canGoNext: boolean;
+  canGoPrevious: boolean;
+  goNext: () => void;
+  goPrevious: () => void;
+
+  // Actions
+  refetch: () => void;
 }
 
-/**
- * Classify a thrown value into the view state the UI should present.
- * Exported for deterministic testing of the mapping rules.
- */
-export function classifyClaimsListError(error: unknown): ClaimsListViewState {
-  const code = (error as ClaimsListError | undefined)?.code;
-  if (code === 'PROJECTION_STALE') return 'ready-stale';
-  if (
-    code === 'PROJECTION_UNAVAILABLE' ||
-    code === 'PROJECTION_MALFORMED' ||
-    code === 'UNSUPPORTED_REQUEST'
-  ) {
-    return 'error';
+function deriveViewState(
+  isPending: boolean,
+  isError: boolean,
+  envelope: ClaimsListEnvelope | undefined,
+): ClaimsListViewState {
+  if (isPending && !envelope) return 'loading';
+  if (isError && !envelope) return 'error';
+  if (!envelope) return 'empty';
+  if (envelope.projection.freshness === 'stale' || envelope.projection.freshness === 'degraded') {
+    return 'ready-stale';
   }
-  return 'error';
+  if (envelope.items.length === 0) return 'empty';
+  return 'ready';
 }
 
-export function useClaimsList(options: UseClaimsListOptions = {}): ClaimsListState {
-  const {
-    search = '',
-    status,
-    highImpact,
-    page = 1,
-    pageSize = CLAIMS_LIST_DEFAULTS.pageSize,
-    sort = { field: 'createdAt', direction: 'desc' },
-    staleAfterMs = CLAIMS_LIST_DEFAULTS.staleAfterMs,
-    enabled = true,
-  } = options;
+export function useClaimsList(params: UseClaimsListParams = {}): UseClaimsListResult {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ClaimStatus | undefined>(undefined);
+  const [highImpactFilter, setHighImpactFilter] = useState(false);
+  const [page, setPage] = useState(params.initialPage ?? 1);
 
-  const params: ClaimsListParams = {
-    search,
-    filters: { status, highImpact },
-    pagination: { page, pageSize },
-    sort,
-  };
+  const debouncedSearch = useDebounce(search, DEFAULTS.debounceMs);
 
-  const problems = validateClaimsListParams(params);
-  // Fail closed on invalid request shapes: never hit the wire, and surface a
-  // canonical error instead of an indefinite loading state.
-  const paramError =
-    problems.length > 0
-      ? createClaimsListError(
-          'UNSUPPORTED_REQUEST',
-          `Invalid claims list request: ${problems.join('; ')}`
-        )
-      : undefined;
-  const queryEnabled = enabled && problems.length === 0;
+  const queryParams: ClaimsListParams = useMemo(
+    () => ({
+      search: debouncedSearch,
+      filters: {
+        status: statusFilter,
+        highImpact: highImpactFilter || undefined,
+      },
+      pagination: {
+        page,
+        pageSize: params.pageSize ?? DEFAULTS.pageSize,
+      },
+      sort: {
+        field: 'createdAt',
+        direction: 'desc',
+      },
+    }),
+    [debouncedSearch, statusFilter, highImpactFilter, page, params.pageSize]
+  );
 
-  const query: UseQueryResult<ClaimsListEnvelope, ClaimsListError> = useQuery({
-    queryKey: queryKeys.claims.list({ search, status: status ?? null, highImpact: highImpact ?? null, page, pageSize, sort }),
-    queryFn: ({ signal }) => fetchClaimsList(params, signal),
-    enabled: queryEnabled,
-    // Paginated read path: keep the previous page rendered while the next
-    // page loads, so the table never collapses to a spinner between pages.
-    placeholderData: keepPreviousData,
-    // Read-path retry policy: transient unavailability is retried; malformed
-    // projections are not (they will not heal on retry).
-    retry: (failureCount, error) =>
-      failureCount < 2 &&
-      (error.code === 'PROJECTION_UNAVAILABLE' || error.code === 'UNKNOWN'),
-    staleTime: staleAfterMs,
-    refetchOnWindowFocus: true,
+  const queryResult = useQuery<ClaimsListEnvelope, ClaimsListError>({
+    queryKey: queryKeys.claims.list(queryParams),
+    queryFn: ({ signal }) => fetchClaimsList(queryParams, signal),
+    retry: false,
+    staleTime: DEFAULTS.staleAfterMs,
   });
 
-  const lastValid = query.data;
-  const envelope = query.data;
+  const viewState = deriveViewState(
+    queryResult.isPending,
+    queryResult.isError,
+    queryResult.data,
+  );
 
-  // Freshness rules, applied purely from validated envelope data:
-  // - The API may report `stale`/`degraded` projection freshness.
-  // - A projection older than `staleAfterMs` is presented as stale as well,
-  //   because presenting old critical data as fresh is a protocol-accuracy bug.
-  let freshnessState: ClaimsListViewState = 'ready';
-  if (envelope) {
-    const generatedAtMs = Date.parse(envelope.projection.generatedAt);
-    const age = Number.isFinite(generatedAtMs) ? Date.now() - generatedAtMs : Infinity;
-    if (
-      envelope.projection.freshness !== 'fresh' ||
-      age > staleAfterMs
-    ) {
-      freshnessState = 'ready-stale';
-    }
-  }
+  const hasActiveFilters =
+    search.trim().length > 0 || statusFilter !== undefined || highImpactFilter;
 
-  const queryError = (query.error as ClaimsListError | undefined) ?? undefined;
-  const error = paramError ?? queryError;
-  // While a page transition is in flight (keepPreviousData), `envelope` holds
-  // the placeholder page: stay in `ready` instead of collapsing to a spinner.
-  const viewState: ClaimsListViewState = paramError
-    ? 'error'
-    : query.isPending && !envelope
-      ? 'loading'
-      : queryError
-        ? classifyClaimsListError(queryError)
-        : envelope
-          ? envelope.items.length === 0
-            ? 'empty'
-            : freshnessState
-          : 'loading';
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter(undefined);
+    setHighImpactFilter(false);
+    setPage(1);
+  };
+
+  const totalPages = queryResult.data?.pagination.totalPages ?? 1;
+  const canGoNext = page < totalPages;
+  const canGoPrevious = page > 1;
+
+  const goNext = () => {
+    if (canGoNext) setPage(page + 1);
+  };
+
+  const goPrevious = () => {
+    if (canGoPrevious) setPage(page - 1);
+  };
 
   return {
     viewState,
-    data: envelope,
-    lastValid,
-    error,
-    isLoading: query.isPending,
-    isFetching: query.isFetching,
-    retry: () => {
-      if (error) query.refetch();
-    },
+    envelope: queryResult.data,
+    error: queryResult.error ?? null,
+
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    highImpactFilter,
+    setHighImpactFilter,
+    clearFilters,
+    hasActiveFilters,
+
+    page,
+    setPage,
+    canGoNext,
+    canGoPrevious,
+    goNext,
+    goPrevious,
+
+    refetch: () => void queryResult.refetch(),
   };
 }
