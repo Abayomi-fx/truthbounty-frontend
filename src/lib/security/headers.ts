@@ -1,3 +1,5 @@
+import { providerSources, assertReviewedEndpoint } from './provider-policy.mjs';
+
 /**
  * V2-FE-131 — Content Security Policy and browser security headers.
  *
@@ -34,28 +36,6 @@ export interface BuildCspOptions {
   isDevelopment?: boolean;
 }
 
-/** Origins required for RainbowKit / WalletConnect / Optimism RPC / IDKit. */
-const WALLET_CONNECT_HOSTS = [
-  'https://*.walletconnect.com',
-  'https://*.walletconnect.org',
-  'wss://*.walletconnect.com',
-  'wss://*.walletconnect.org',
-  'https://verify.walletconnect.com',
-  'https://verify.walletconnect.org',
-  'https://explorer-api.walletconnect.com',
-] as const;
-
-const WORLDCOIN_HOSTS = [
-  'https://id.worldcoin.org',
-  'https://*.worldcoin.org',
-] as const;
-
-const OPTIMISM_RPC_FALLBACKS = [
-  'https://mainnet.optimism.io',
-  'https://sepolia.optimism.io',
-  'https://*.optimism.io',
-] as const;
-
 /**
  * Build a production-oriented CSP string.
  * Scripts rely on nonce + strict-dynamic; inline theme bootstrap uses the same nonce.
@@ -64,7 +44,7 @@ export function buildContentSecurityPolicy({
   nonce,
   isDevelopment = false,
 }: BuildCspOptions): string {
-  if (!nonce || typeof nonce !== 'string') {
+  if (typeof nonce !== 'string' || !/^[A-Za-z0-9+/_-]+={0,2}$/.test(nonce)) {
     throw new Error('CSP nonce is required; refusing to emit an open script-src policy');
   }
 
@@ -81,14 +61,15 @@ export function buildContentSecurityPolicy({
     scriptSrc.push("'unsafe-eval'");
   }
 
-  const connectSrc = [
-    "'self'",
-    'https:',
-    'wss:',
-    ...WALLET_CONNECT_HOSTS,
-    ...WORLDCOIN_HOSTS,
-    ...OPTIMISM_RPC_FALLBACKS,
+  // Explicit property access also works with Next's build-time public env inlining.
+  const endpoints = [
+    process.env.NEXT_PUBLIC_API_URL,
+    process.env.NEXT_PUBLIC_WS_URL,
+    process.env.NEXT_PUBLIC_OPTIMISM_RPC_URL,
+    process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL,
   ];
+  for (const endpoint of endpoints) assertReviewedEndpoint(endpoint, 'connect-src', isDevelopment);
+  const connectSrc = ["'self'", ...providerSources('connect-src')];
 
   if (isDevelopment) {
     connectSrc.push('http://localhost:*', 'ws://localhost:*', 'http://127.0.0.1:*', 'ws://127.0.0.1:*');
@@ -102,16 +83,12 @@ export function buildContentSecurityPolicy({
     'form-action': ["'self'"],
     'script-src': scriptSrc,
     // Tailwind + Radix use inline styles; keep style-src pragmatic but scoped
-    'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-    'img-src': ["'self'", 'data:', 'blob:', 'https:'],
-    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
+    'style-src': ["'self'", "'unsafe-inline'", ...providerSources('style-src')],
+    'img-src': ["'self'", 'data:', 'blob:', ...providerSources('img-src')],
+    'font-src': ["'self'", 'data:', ...providerSources('font-src')],
     'connect-src': connectSrc,
-    'frame-src': [
-      "'self'",
-      ...WALLET_CONNECT_HOSTS.filter((h) => h.startsWith('https://')),
-      ...WORLDCOIN_HOSTS,
-    ],
-    'worker-src': ["'self'", 'blob:'],
+    'frame-src': ["'self'", ...providerSources('frame-src')],
+    'worker-src': ["'self'", 'blob:', ...providerSources('worker-src')],
     'manifest-src': ["'self'"],
     'media-src': ["'self'", 'blob:'],
     'report-to': ['csp-endpoint'],
