@@ -70,8 +70,9 @@ local-resource exceptions, not arbitrary remote-origin grants.
   allowed host, or fallback to a synthetic page. A separate production-page test
   checks the blob-worker permission and the app's analytics consent controls.
 
-The prebuild and dedicated CI job enforce the gate. For provider changes, inspect
-new call sites and SDK endpoints, update scoped provider entries and smoke tests,
+The prebuild and unprivileged PR CI job enforce the static gate. The separate
+manual CSP rehearsal enforces runtime usage; a green PR job is not runtime evidence.
+For provider changes, inspect new call sites and SDK endpoints, update scoped provider entries and smoke tests,
 then explicitly update the reviewed source inventory/dependency hashes. Do not
 blindly regenerate it to make CI pass. `inventory()` and `digest()` exported by
 `scripts/verify-provider-drift.mjs` provide deterministic values (CRLF normalized).
@@ -130,10 +131,10 @@ This profile is operator-supplied test input, not permission to expand CSP.
 Real public wallet/RPC/API/World ID configuration and any server-side RP context
 must also be available to the production build/server. A local `CSP_STORAGE_STATE`
 file may provide an authorized test session; never commit it or print its values.
-The CI job reads the flow profile and public deployment settings from repository
-variables and the existing WalletConnect project secret. Fork runs will need
-maintainer authorization and appropriate configuration. A storage state does not
-replace an actual wallet connector or identity authorization. Profiles that
+Fork PR workflows cannot receive repository secrets, even after workflow approval.
+The PR provider job therefore runs only the static verifier and policy tests.
+Credentialed browser coverage lives in `csp-rehearsal.yml`, with no PR trigger.
+A storage state does not replace an actual wallet connector or identity authorization. Profiles that
 cannot reach the installed SDK flow fail; they do not silently skip it.
 
 No approved flow profile, live wallet fixture or canonical post-dependency
@@ -150,3 +151,42 @@ integrate upstream without rewriting this published branch, supply the canonical
 profile, run the full requested repository and wallet suites, and request human
 security review on the resulting exact head. The earlier synthetic smoke result
 must not be reported as evidence for this replacement suite.
+
+### Maintainer-controlled rehearsal setup
+
+This is a proposed execution path, not an activated environment or a passing run.
+After #559/#566/#623, lockfile repair and explicit task activation, an upstream
+maintainer must:
+
+1. Land the reviewed rehearsal workflow on upstream `main` (it must exist on the
+   default branch to dispatch). Protect the upstream `csp-rehearsal` branch and
+   place the reviewed candidate commit there. Preserve the exact PR SHA when
+   possible; a merge/cherry-pick produces a different SHA and is not exact-head
+   evidence for the PR.
+2. Create the `csp-rehearsal` GitHub environment with required security reviewers,
+   prevent self-review, and restrict deployment branches to `main`. Workflow YAML
+   alone does not configure these protections. Do not approve an unreviewed
+   candidate, including its install/build scripts and dependencies.
+3. Set environment variables `CSP_REHEARSAL_ACTIVATED=true`, `CSP_APPROVED_SHA`
+   (the full reviewed candidate SHA), `CSP_FLOW_PROFILE`, and canonical public
+   RPC/API/WS/World ID settings. Store `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` as
+   an environment secret. If needed, store an authorized Playwright storage-state
+   JSON as `CSP_STORAGE_STATE_JSON`; never include wallet keys or production-user
+   sessions. The workflow writes it only to a temporary file and removes it on exit.
+4. Dispatch **CSP production rehearsal** from `main`, supplying `reviewed_sha`.
+   The job rejects inactive/missing approval, mismatched SHAs, and candidates not
+   at the tip of upstream `csp-rehearsal` before checking out or executing code.
+   Checkout uses the immutable SHA with credentials persistence disabled. The
+   read-only job does not fetch fork refs, restore PR caches or upload session,
+   browser trace, or build artifacts.
+5. After environment approval, the job performs the frozen install, static checks,
+   lint, type-check, unit/integration tests, production build (via the CSP browser
+   configuration), and real browser rehearsal. Record its run URL and tested SHA
+   alongside the separately required repository wallet/provider and E2E results.
+   A dispatch result does not automatically satisfy PR required checks or replace
+   exact-head human security approval. Any new commit needs a new approved SHA/run.
+
+Do not use `pull_request_target` to execute contributor code with secrets. The
+existing repository-wide E2E job also uses a repository WalletConnect secret;
+its fork behavior is pre-existing and requires a separate canonical CI decision.
+This change only moves the CSP rehearsal added by #631 out of fork PR execution.
