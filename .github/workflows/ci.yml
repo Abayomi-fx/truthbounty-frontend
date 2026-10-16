@@ -29,6 +29,10 @@ jobs:
           node-version: 24
       - name: Verify contract release artifacts (drift fails here)
         run: node scripts/verify-artifacts.mjs
+      - name: Verify fixture determinism (nondeterministic clocks/random ids fail here)
+        run: |
+          node scripts/verify-fixture-determinism.mjs
+          node --test scripts/__tests__/verify-fixture-determinism.test.mjs
 
   lint:
     name: Lint & Style
