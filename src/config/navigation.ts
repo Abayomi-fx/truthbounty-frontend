@@ -8,6 +8,7 @@ import {
   MdCardGiftcard,
   MdAdminPanelSettings,
   MdBadge,
+  MdReceiptLong,
 } from 'react-icons/md';
 import { HiOutlineQuestionMarkCircle } from 'react-icons/hi';
 import type { FeatureFlag } from '@/config/feature-flags';
@@ -23,7 +24,8 @@ export const APP_ROUTES = {
   TREASURY: '/treasury',
   TREASURY_STAKE: '/treasury/stake',
   IDENTITY: '/identity',
-  REWARDS: '/rewards',
+  REWARDS: '/dashboard/rewards',
+  TRANSACTIONS: '/dashboard/transactions',
   VERIFIER: '/verifier',
   DISPUTES: '/disputes',
   ANALYTICS: '/analytics',
@@ -87,6 +89,14 @@ export const NAV_ITEMS: readonly NavigationItem[] = [
     requiresAuth: true,
   },
   // Verifier Group
+  {
+    id: 'transactions',
+    label: 'Transactions',
+    href: APP_ROUTES.TRANSACTIONS,
+    icon: MdReceiptLong,
+    group: 'personal',
+    requiresAuth: true,
+  },
   {
     id: 'verifier-queue',
     label: 'Verification Queue',
@@ -201,6 +211,10 @@ export function isRouteAllowed(
     pathname === APP_ROUTES.IDENTITY ||
     pathname.startsWith('/identity/') ||
     pathname === APP_ROUTES.REWARDS ||
+    pathname.startsWith(APP_ROUTES.REWARDS + '/') ||
+    pathname === APP_ROUTES.TRANSACTIONS ||
+    pathname.startsWith(APP_ROUTES.TRANSACTIONS + '/') ||
+    pathname === '/rewards' ||
     pathname.startsWith('/rewards/')
   ) {
     if (!isConnected) {
