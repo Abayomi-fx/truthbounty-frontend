@@ -1,7 +1,7 @@
 'use client';
 
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import type { ClaimDetailProjection } from '@/app/types/claim-detail-projection';
+import type { ClaimDetailProjection, ClaimStatus } from '@/app/types/claim-detail-projection';
 import { ConfidenceMeter } from '@/components/ui/primitives/ConfidenceMeter';
 import { OutcomeBadge } from '@/components/ui/primitives/OutcomeBadge';
 import { StakeWeightDisplay } from '@/components/ui/primitives/StakeWeightDisplay';
@@ -10,25 +10,33 @@ export interface ClaimVerificationsProps {
   claim: ClaimDetailProjection;
 }
 
-export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
-  const { verifications, voteCounts, confidenceScore } = claim;
-  const totalVotes = voteCounts.support + voteCounts.reject;
-  const supportPercentage = totalVotes > 0 ? (voteCounts.support / totalVotes) * 100 : 0;
-  const rejectPercentage = totalVotes > 0 ? (voteCounts.reject / totalVotes) * 100 : 0;
-
-  // Determine outcome based on vote counts
-  let outcomeKind: 'verified' | 'disputed' | 'rejected' | 'inconclusive' | 'provisional' = 'inconclusive';
-  if (totalVotes > 0) {
-    if (voteCounts.support > voteCounts.reject) {
-      outcomeKind = 'verified';
-    } else if (voteCounts.reject > voteCounts.support) {
-      outcomeKind = 'rejected';
-    } else {
-      outcomeKind = 'disputed';
-    }
+function mapClaimStatusToOutcome(status: ClaimStatus): 'verified' | 'disputed' | 'rejected' | 'inconclusive' | 'provisional' {
+  switch (status) {
+    case 'VERIFIED':
+      return 'verified';
+    case 'REJECTED':
+      return 'rejected';
+    case 'DISPUTED':
+      return 'disputed';
+    case 'UNDER_REVIEW':
+    case 'OPEN':
+      return 'provisional';
+    default:
+      return 'inconclusive';
   }
-  // Check if outcome is provisional (not finalized)
-  const isProvisional = verifications.some((v) => !v.finalizedAt);
+}
+
+export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
+  const { verifications, voteCounts, confidenceScore, settlement, status } = claim;
+  const totalVotes = voteCounts.support + voteCounts.reject;
+
+  // Use canonical projected status from the projection (authoritative)
+  // instead of deriving from vote counts in the UI
+  const outcomeKind = mapClaimStatusToOutcome(status);
+  const isProvisional = !settlement.isFinalized;
+
+  // Use canonical settlement timestamp for provenance
+  const determinedAt = settlement.settledAt ?? verifications[0]?.timestamp;
 
   return (
     <div className="space-y-4 pt-4 border-t border-[#232329]">
@@ -37,7 +45,7 @@ export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
         kind={outcomeKind}
         provisional={isProvisional}
         source="Canonical Projection"
-        determinedAt={verifications[0]?.timestamp}
+        determinedAt={determinedAt}
       />
 
       {/* Vote Counts & Stake Weights */}

@@ -23,9 +23,9 @@ export interface ConfidenceMeterProps
   min?: number;
   /** Maximum value (default: 100). */
   max?: number;
-  /** Low threshold (default: 33). */
+  /** Low threshold (default: 33.33). */
   low?: number;
-  /** High threshold (default: 66). */
+  /** High threshold (default: 66.66). */
   high?: number;
   /** Optimum value (default: 100). */
   optimum?: number;
@@ -35,7 +35,7 @@ export interface ConfidenceMeterProps
   source?: string;
   /** Timestamp when the confidence was computed. */
   computedAt?: string;
-  /** Custom confidence bands (default: low/medium/high). */
+  /** Custom confidence bands (default: low/medium/high with continuous ranges). */
   bands?: ConfidenceBand[];
   /** Additional CSS classes. */
   className?: string;
@@ -49,20 +49,20 @@ const DEFAULT_BANDS: ConfidenceBand[] = [
   {
     label: 'Low',
     min: 0,
-    max: 33,
+    max: 33.33,
     tone: 'danger',
     icon: <span aria-hidden="true">▼</span>,
   },
   {
     label: 'Medium',
-    min: 34,
-    max: 66,
+    min: 33.33,
+    max: 66.66,
     tone: 'warning',
     icon: <span aria-hidden="true">◆</span>,
   },
   {
     label: 'High',
-    min: 67,
+    min: 66.66,
     max: 100,
     tone: 'success',
     icon: <span aria-hidden="true">▲</span>,
@@ -77,12 +77,27 @@ const TONE_STYLES: Record<ConfidenceBand['tone'], { track: string; text: string 
 };
 
 function getBand(value: number, bands: ConfidenceBand[]): ConfidenceBand | undefined {
-  return bands.find((b) => value >= b.min && value <= b.max);
+  // Bands are continuous, find the one where value >= min and value < max (or <= max for last band)
+  for (let i = 0; i < bands.length; i++) {
+    const band = bands[i];
+    const isLastBand = i === bands.length - 1;
+    if (value >= band.min && (isLastBand ? value <= band.max : value < band.max)) {
+      return band;
+    }
+  }
+  return undefined;
 }
 
 function formatValue(value: number | null): string {
   if (value === null) return '—';
   return `${value.toFixed(1)}%`;
+}
+
+function isValidConfidenceValue(value: number | null, min: number, max: number): { valid: boolean; error?: string } {
+  if (value === null) return { valid: true }; // null = unknown, valid state
+  if (!Number.isFinite(value)) return { valid: false, error: 'Confidence value is not a finite number' };
+  if (value < min || value > max) return { valid: false, error: `Confidence value ${value} out of range [${min}, ${max}]` };
+  return { valid: true };
 }
 
 export function ConfidenceMeter({
@@ -91,8 +106,8 @@ export function ConfidenceMeter({
   description,
   min = 0,
   max = 100,
-  low = 33,
-  high = 66,
+  low = 33.33,
+  high = 66.66,
   optimum = 100,
   provisional = false,
   source,
@@ -103,7 +118,9 @@ export function ConfidenceMeter({
   showBandLabel = true,
 }: ConfidenceMeterProps) {
   const isUnknown = value === null;
-  const displayValue = isUnknown ? 0 : Math.max(min, Math.min(max, value));
+  const validation = isValidConfidenceValue(value, min, max);
+  const isInvalid = !validation.valid;
+  const displayValue = isUnknown ? 0 : (isInvalid ? Math.max(min, Math.min(max, value)) : value);
   const currentBand = isUnknown ? undefined : getBand(displayValue, bands);
 
   const meterId = React.useId();
@@ -127,6 +144,8 @@ export function ConfidenceMeter({
   const summaryParts: string[] = [];
   if (isUnknown) {
     summaryParts.push('Confidence unknown');
+  } else if (isInvalid) {
+    summaryParts.push(`Confidence invalid: ${validation.error}`);
   } else {
     summaryParts.push(`Confidence ${formatValue(displayValue)}`);
     if (currentBand) {
@@ -150,6 +169,13 @@ export function ConfidenceMeter({
       aria-label={label}
       aria-describedby={descId}
     >
+      {isInvalid && (
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-3" role="alert" aria-live="assertive">
+          <p className="text-sm text-destructive">Invalid confidence value: {validation.error}</p>
+          <p className="mt-1 text-xs text-destructive/90">Displaying clamped value for visualization only.</p>
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <span id={summaryId} className="sr-only">
           {summaryParts.join('. ')}
@@ -166,26 +192,29 @@ export function ConfidenceMeter({
           className={cn(
             'w-full h-3 appearance-none rounded-full bg-muted',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            isUnknown && 'opacity-50'
+            isUnknown && 'opacity-50',
+            isInvalid && 'ring-2 ring-destructive'
           )}
           aria-label={label}
           aria-describedby={`${descId} ${summaryId}`}
           aria-valuenow={isUnknown ? undefined : displayValue}
           aria-valuemin={min}
           aria-valuemax={max}
-          aria-valuetext={isUnknown ? 'Unknown' : formatValue(displayValue)}
+          aria-valuetext={isUnknown ? 'Unknown' : isInvalid ? `Invalid: ${validation.error}` : formatValue(displayValue)}
         >
           {isUnknown
             ? 'Confidence unknown'
+            : isInvalid
+            ? `Invalid: ${validation.error}`
             : `${formatValue(displayValue)} confidence`}
         </meter>
 
         {showValue && (
           <output
-            for={meterId}
+            htmlFor={meterId}
             className={cn(
               'font-mono tabular-nums text-sm font-medium min-w-[3.5rem] text-right',
-              isUnknown ? 'text-muted-foreground' : currentBand ? TONE_STYLES[currentBand.tone].text : ''
+              isUnknown ? 'text-muted-foreground' : isInvalid ? 'text-destructive' : currentBand ? TONE_STYLES[currentBand.tone].text : ''
             )}
             aria-live="polite"
             aria-atomic="true"
@@ -205,7 +234,7 @@ export function ConfidenceMeter({
         )}
       </div>
 
-      {showBandLabel && currentBand && !isUnknown && (
+      {showBandLabel && currentBand && !isUnknown && !isInvalid && (
         <div
           id={descId}
           className={cn('flex items-center gap-1.5 text-xs', TONE_STYLES[currentBand.tone].text)}
@@ -238,7 +267,6 @@ export function ConfidenceMeter({
         id={tableId}
         data-testid="confidence-bands-table"
         className="w-full text-xs text-muted-foreground border-t border-border pt-2"
-        aria-hidden="true"
         role="table"
         aria-label="Confidence bands reference"
       >

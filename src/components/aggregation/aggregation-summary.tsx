@@ -167,7 +167,6 @@ export function AggregationSummary({ state, onRetry }: AggregationSummaryProps) 
         value={view.total === 0n ? 0 : supportingPct * 100}
         label="Supporting Weight Share"
         source="Aggregation Projection"
-        computedAt={projection.asOfBlock !== null ? new Date(projection.asOfBlock * 1000).toISOString() : undefined}
         provisional={isProvisional}
         showValue={true}
         showBandLabel={true}

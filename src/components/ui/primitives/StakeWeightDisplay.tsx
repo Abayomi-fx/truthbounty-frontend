@@ -37,7 +37,7 @@ export interface StakeWeightDisplayProps {
   /** Show the data table. */
   showTable?: boolean;
   /** Custom formatter for weight values. */
-  formatWeight?: (value: string | bigint | number | null, unit: string) => string;
+  formatWeight?: (value: string | bigint | number | null, unit: string, isValid: boolean) => string;
   /** Additional CSS classes. */
   className?: string;
 }
@@ -48,22 +48,55 @@ const TONE_STYLES: Record<WeightSide['tone'], { bar: string; text: string }> = {
   neutral: { bar: 'bg-muted-foreground/30', text: 'text-muted-foreground' },
 };
 
-function parseWeight(value: string | bigint | number | null): bigint {
-  if (value === null || value === undefined) return 0n;
-  if (typeof value === 'bigint') return value;
-  if (typeof value === 'number') return BigInt(Math.floor(value));
+export type WeightParseResult =
+  | { ok: true; value: bigint }
+  | { ok: false; error: 'null' | 'invalid' | 'overflow' };
+
+function parseWeight(value: string | bigint | number | null): WeightParseResult {
+  if (value === null || value === undefined) return { ok: false, error: 'null' };
+  if (typeof value === 'bigint') return { ok: true, value };
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value) || value < 0) return { ok: false, error: 'overflow' };
+    return { ok: true, value: BigInt(Math.floor(value)) };
+  }
   const str = value.toString().trim();
-  if (!/^\d+$/.test(str)) return 0n;
-  return BigInt(str);
+  if (!/^\d+$/.test(str)) return { ok: false, error: 'invalid' };
+  try {
+    return { ok: true, value: BigInt(str) };
+  } catch {
+    return { ok: false, error: 'overflow' };
+  }
 }
 
 function formatWeightDefault(value: string | bigint | number | null, unit: string): string {
   const parsed = parseWeight(value);
-  if (parsed === 0n) return `0 ${unit}`;
-  const eth = Number(parsed) / 1e18;
-  if (eth >= 1) return `${eth.toFixed(4)} ${unit}`;
-  if (eth >= 0.001) return `${eth.toFixed(6)} ${unit}`;
-  return `${Number(parsed)} wei`;
+  if (!parsed.ok) {
+    if (parsed.error === 'null') return `— ${unit}`;
+    return `Invalid ${unit}`;
+  }
+  const bigintValue = parsed.value;
+  if (bigintValue === 0n) return `0 ${unit}`;
+
+  // Lossless formatting based on unit
+  if (unit.toLowerCase() === 'wei') {
+    return `${bigintValue.toString()} wei`;
+  }
+
+  // For ETH and other 18-decimal units, format losslessly
+  const eth = bigintValue / 1000000000000000000n;
+  const remainder = bigintValue % 1000000000000000000n;
+  if (remainder === 0n) {
+    return `${eth.toString()} ${unit}`;
+  }
+  // Show full precision for fractional values
+  const fractional = remainder.toString().padStart(18, '0').replace(/0+$/, '');
+  return `${eth.toString()}.${fractional} ${unit}`;
+}
+
+function formatPercentage(numerator: bigint, denominator: bigint): string {
+  if (denominator === 0n) return '0.0%';
+  const pct = Number((numerator * 10000n) / denominator) / 100;
+  return `${pct.toFixed(1)}%`;
 }
 
 export function StakeWeightDisplay({
@@ -83,26 +116,37 @@ export function StakeWeightDisplay({
 }: StakeWeightDisplayProps) {
   const supportingParsed = parseWeight(supporting.value);
   const opposingParsed = parseWeight(opposing.value);
-  const totalParsed = total !== undefined ? parseWeight(total) : supportingParsed + opposingParsed;
-  const quorumParsed = quorum !== undefined ? parseWeight(quorum) : null;
+  const totalParsed = total !== undefined ? parseWeight(total) : 
+    (supportingParsed.ok && opposingParsed.ok ? { ok: true, value: supportingParsed.value + opposingParsed.value } : { ok: false, error: 'invalid' as const });
+  const quorumParsed = quorum !== undefined ? parseWeight(quorum) : { ok: true, value: null };
 
-  const supportingPct = totalParsed > 0n ? Number((supportingParsed * 10000n) / totalParsed) / 100 : 0;
-  const opposingPct = totalParsed > 0n ? Number((opposingParsed * 10000n) / totalParsed) / 100 : 0;
-  const quorumReached = quorumParsed !== null && totalParsed >= quorumParsed;
-  const quorumPct = quorumParsed !== null && totalParsed > 0n
-    ? Number((totalParsed * 10000n) / quorumParsed) / 100
+  const supportingValue = supportingParsed.ok ? supportingParsed.value : 0n;
+  const opposingValue = opposingParsed.ok ? opposingParsed.value : 0n;
+  const totalValue = totalParsed.ok ? totalParsed.value : supportingValue + opposingValue;
+  const quorumValue = quorumParsed.ok ? quorumParsed.value : null;
+
+  const supportingPct = totalValue > 0n ? formatPercentage(supportingValue, totalValue) : '0.0%';
+  const opposingPct = totalValue > 0n ? formatPercentage(opposingValue, totalValue) : '0.0%';
+  const quorumReached = quorumValue !== null && totalValue >= quorumValue;
+  const quorumPct = quorumValue !== null && totalValue > 0n
+    ? formatPercentage(totalValue, quorumValue)
     : null;
 
   const regionId = React.useId();
   const tableId = React.useId();
 
+  const supportingDisplay = formatWeight(supporting.value, supporting.unit);
+  const opposingDisplay = formatWeight(opposing.value, opposing.unit);
+  const totalDisplay = formatWeight(totalValue.toString(), supporting.unit);
+  const quorumDisplay = quorumValue !== null ? formatWeight(quorumValue.toString(), supporting.unit) : '—';
+
   const summaryParts = [
-    `Supporting: ${formatWeight(supporting.value, supporting.unit)}`,
-    `Opposing: ${formatWeight(opposing.value, opposing.unit)}`,
-    `Total: ${formatWeight(totalParsed.toString(), supporting.unit)}`,
+    `Supporting: ${supportingDisplay}`,
+    `Opposing: ${opposingDisplay}`,
+    `Total: ${totalDisplay}`,
   ];
-  if (quorumParsed !== null) {
-    summaryParts.push(quorumReached ? 'Quorum reached' : `Quorum not reached (${formatWeight(quorumParsed.toString(), supporting.unit)} required)`);
+  if (quorumValue !== null) {
+    summaryParts.push(quorumReached ? 'Quorum reached' : `Quorum not reached (${quorumDisplay} required)`);
   }
   if (provisional) summaryParts.push('Provisional — not finalized');
   if (stale) summaryParts.push('Data may be stale');
@@ -111,6 +155,11 @@ export function StakeWeightDisplay({
 
   const supportingStyle = TONE_STYLES[supporting.tone];
   const opposingStyle = TONE_STYLES[opposing.tone];
+
+  const isSupportingValid = supportingParsed.ok;
+  const isOpposingValid = opposingParsed.ok;
+  const isTotalValid = totalParsed.ok;
+  const isQuorumValid = quorumValue !== null && quorumParsed.ok;
 
   if (compact) {
     return (
@@ -124,21 +173,23 @@ export function StakeWeightDisplay({
         <div className="flex items-center gap-2">
           <span className={cn('flex items-center gap-1', supportingStyle.text)}>
             <span aria-hidden="true">{supporting.icon}</span>
-            <span className="font-mono tabular-nums">{formatWeight(supporting.value, supporting.unit)}</span>
-            <span className="text-xs text-muted-foreground">({supportingPct.toFixed(1)}%)</span>
+            <span className="font-mono tabular-nums">{supportingDisplay}</span>
+            {!isSupportingValid && <span className="text-xs text-destructive">(invalid)</span>}
+            <span className="text-xs text-muted-foreground">({supportingPct})</span>
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className={cn('flex items-center gap-1', opposingStyle.text)}>
             <span aria-hidden="true">{opposing.icon}</span>
-            <span className="font-mono tabular-nums">{formatWeight(opposing.value, opposing.unit)}</span>
-            <span className="text-xs text-muted-foreground">({opposingPct.toFixed(1)}%)</span>
+            <span className="font-mono tabular-nums">{opposingDisplay}</span>
+            {!isOpposingValid && <span className="text-xs text-destructive">(invalid)</span>}
+            <span className="text-xs text-muted-foreground">({opposingPct})</span>
           </span>
         </div>
-        {quorumParsed !== null && (
+        {quorumValue !== null && (
           <span className={cn('flex items-center gap-1 text-xs', quorumReached ? 'text-success' : 'text-warning')}>
             <span aria-hidden="true">{quorumReached ? '✓' : '⏳'}</span>
-            <span>{quorumReached ? 'Quorum reached' : `Needs ${formatWeight(quorumParsed.toString(), supporting.unit)}`}</span>
+            <span>{quorumReached ? 'Quorum reached' : `Needs ${quorumDisplay}`}</span>
           </span>
         )}
         {(provisional || stale) && (
@@ -177,19 +228,19 @@ export function StakeWeightDisplay({
                 <span aria-hidden="true">{supporting.icon}</span>
                 {supporting.label}
               </span>
-              <span className="font-mono tabular-nums">{formatWeight(supporting.value, supporting.unit)} ({supportingPct.toFixed(1)}%)</span>
+              <span className="font-mono tabular-nums">{supportingDisplay} ({supportingPct})</span>
             </div>
             <div
               role="progressbar"
               aria-label={`${supporting.label} weight share`}
-              aria-valuenow={Math.round(supportingPct)}
+              aria-valuenow={supportingValue > 0n && totalValue > 0n ? Number((supportingValue * 100n) / totalValue) : 0}
               aria-valuemin={0}
               aria-valuemax={100}
               className="h-2 w-full overflow-hidden rounded-full bg-muted"
             >
               <div
                 className={cn('h-full transition-all duration-300', supportingStyle.bar)}
-                style={{ width: `${supportingPct}%` }}
+                style={{ width: `${supportingValue > 0n && totalValue > 0n ? Number((supportingValue * 100n) / totalValue) : 0}%` }}
               />
             </div>
           </div>
@@ -200,24 +251,24 @@ export function StakeWeightDisplay({
                 <span aria-hidden="true">{opposing.icon}</span>
                 {opposing.label}
               </span>
-              <span className="font-mono tabular-nums">{formatWeight(opposing.value, opposing.unit)} ({opposingPct.toFixed(1)}%)</span>
+              <span className="font-mono tabular-nums">{opposingDisplay} ({opposingPct})</span>
             </div>
             <div
               role="progressbar"
               aria-label={`${opposing.label} weight share`}
-              aria-valuenow={Math.round(opposingPct)}
+              aria-valuenow={opposingValue > 0n && totalValue > 0n ? Number((opposingValue * 100n) / totalValue) : 0}
               aria-valuemin={0}
               aria-valuemax={100}
               className="h-2 w-full overflow-hidden rounded-full bg-muted"
             >
               <div
                 className={cn('h-full transition-all duration-300', opposingStyle.bar)}
-                style={{ width: `${opposingPct}%` }}
+                style={{ width: `${opposingValue > 0n && totalValue > 0n ? Number((opposingValue * 100n) / totalValue) : 0}%` }}
               />
             </div>
           </div>
 
-          {quorumParsed !== null && (
+          {quorumValue !== null && (
             <div>
               <div className="flex justify-between text-xs text-muted-foreground mb-1">
                 <span className="flex items-center gap-1">
@@ -225,25 +276,25 @@ export function StakeWeightDisplay({
                   Quorum
                 </span>
                 <span className="font-mono tabular-nums">
-                  {formatWeight(totalParsed.toString(), supporting.unit)} / {formatWeight(quorumParsed.toString(), supporting.unit)}
-                  {quorumPct !== null && ` (${quorumPct.toFixed(1)}%)`}
+                  {totalDisplay} / {quorumDisplay}
+                  {quorumPct !== null && ` (${quorumPct})`}
                 </span>
               </div>
               <div
                 role="progressbar"
                 aria-label="Quorum progress"
-                aria-valuenow={quorumPct !== null ? Math.min(Math.round(quorumPct), 100) : 0}
+                aria-valuenow={quorumValue !== null && totalValue > 0n ? Math.min(Number((totalValue * 100n) / quorumValue), 100) : 0}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 className="h-2 w-full overflow-hidden rounded-full bg-muted"
               >
                 <div
                   className={cn('h-full transition-all duration-300', quorumReached ? 'bg-success' : 'bg-warning')}
-                  style={{ width: `${quorumPct !== null ? Math.min(quorumPct, 100) : 0}%` }}
+                  style={{ width: `${quorumValue !== null && totalValue > 0n ? Math.min(Number((totalValue * 100n) / quorumValue), 100) : 0}%` }}
                 />
               </div>
               <p className={cn('text-xs mt-1', quorumReached ? 'text-success' : 'text-warning')}>
-                {quorumReached ? 'Quorum reached' : `Quorum not reached — needs ${formatWeight(quorumParsed.toString(), supporting.unit)}`}
+                {quorumReached ? 'Quorum reached' : `Quorum not reached — needs ${quorumDisplay}`}
               </p>
             </div>
           )}
@@ -270,6 +321,7 @@ export function StakeWeightDisplay({
               <th scope="col" className="text-left pb-1">Side</th>
               <th scope="col" className="text-right pb-1">Weight</th>
               <th scope="col" className="text-right pb-1">Share</th>
+              <th scope="col" className="text-left pb-1">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -278,30 +330,42 @@ export function StakeWeightDisplay({
                 <span aria-hidden="true">{supporting.icon}</span>
                 <span>{supporting.label}</span>
               </td>
-              <td className="py-1 text-right font-mono tabular-nums">{formatWeight(supporting.value, supporting.unit)}</td>
-              <td className="py-1 text-right font-mono tabular-nums">{supportingPct.toFixed(1)}%</td>
+              <td className="py-1 text-right font-mono tabular-nums">{supportingDisplay}</td>
+              <td className="py-1 text-right font-mono tabular-nums">{supportingPct}</td>
+              <td className="py-1">
+                {!isSupportingValid && <span className="text-xs text-destructive">Invalid input</span>}
+              </td>
             </tr>
             <tr className="border-t border-border/50">
               <td className="py-1 flex items-center gap-1">
                 <span aria-hidden="true">{opposing.icon}</span>
                 <span>{opposing.label}</span>
               </td>
-              <td className="py-1 text-right font-mono tabular-nums">{formatWeight(opposing.value, opposing.unit)}</td>
-              <td className="py-1 text-right font-mono tabular-nums">{opposingPct.toFixed(1)}%</td>
+              <td className="py-1 text-right font-mono tabular-nums">{opposingDisplay}</td>
+              <td className="py-1 text-right font-mono tabular-nums">{opposingPct}</td>
+              <td className="py-1">
+                {!isOpposingValid && <span className="text-xs text-destructive">Invalid input</span>}
+              </td>
             </tr>
             <tr className="border-t border-border/50 font-medium">
               <td className="py-1">Total</td>
-              <td className="py-1 text-right font-mono tabular-nums">{formatWeight(totalParsed.toString(), supporting.unit)}</td>
+              <td className="py-1 text-right font-mono tabular-nums">{totalDisplay}</td>
               <td className="py-1 text-right">100%</td>
+              <td className="py-1">
+                {!isTotalValid && <span className="text-xs text-destructive">Invalid input</span>}
+              </td>
             </tr>
-            {quorumParsed !== null && (
+            {quorumValue !== null && (
               <tr className="border-t border-border/50">
                 <td className="py-1 flex items-center gap-1">
                   <span aria-hidden="true"><Scale size={12} /></span>
                   <span>Quorum Required</span>
                 </td>
-                <td className="py-1 text-right font-mono tabular-nums">{formatWeight(quorumParsed.toString(), supporting.unit)}</td>
-                <td className="py-1 text-right">{quorumPct !== null ? `${quorumPct.toFixed(1)}%` : '—'}</td>
+                <td className="py-1 text-right font-mono tabular-nums">{quorumDisplay}</td>
+                <td className="py-1 text-right">{quorumPct ?? '—'}</td>
+                <td className="py-1">
+                  {!isQuorumValid && <span className="text-xs text-destructive">Invalid input</span>}
+                </td>
               </tr>
             )}
           </tbody>

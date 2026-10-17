@@ -193,7 +193,6 @@ const ActiveClaimsTable = ({
                           label={`Confidence for ${claim.title}`}
                           showValue={true}
                           showBandLabel={false}
-                          showTable={false}
                         />
                       </td>
                       <td className="py-3">

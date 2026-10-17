@@ -1,6 +1,22 @@
 /**
  * V2 Transaction State Selectors & Utilities
  *
+ * @deprecated This implementation is superseded by transaction-machine.
+ * 
+ * Migration path:
+ * - Replace with @/lib/transaction-machine/transaction-machine.types
+ * - Use TransactionStatusBadge component for UI rendering
+ * - Use useTransactionMachine hook for state management
+ * 
+ * This file remains for backward compatibility with existing hooks.
+ * New code should use transaction-machine types and components.
+ * 
+ * Key differences:
+ * - transaction-machine has 11 explicit states vs this file's 6 states
+ * - transaction-machine distinguishes dropped/replaced/reverted failures
+ * - transaction-machine includes preparing/signature-requested states
+ * - transaction-machine has separate indexing state before finalized
+ * 
  * Type-safe selectors for transaction states.
  * Prevents premature success messages or actionable stale state.
  * All selectors validate state transitions and prevent invalid operations.

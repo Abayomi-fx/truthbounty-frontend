@@ -3,12 +3,13 @@ import { readdirSync, statSync, readFileSync, existsSync } from 'fs';
 import { join, relative, resolve } from 'path';
 import { spawnSync } from 'child_process';
 
-const SCAN_EXTS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.md', '.yml', '.yaml']);
+const SCAN_EXTS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.md', '.yml', '.yaml', '.map', '.html', '.txt', '.css']);
 const DEFAULT_DIRS = ['src', 'release', '.next'];
 const ALLOW_MARKER = '// secret-scan-allow:';
 
 const EVMPattern = /(?<![A-Za-z0-9])0x[a-fA-F0-9]{64}(?![A-Za-z0-9])/g;
 const StripePattern = /(?<![A-Za-z0-9])(?:sk|pk)_(?:live|test)_[A-Za-z0-9_\-]{16,}/g;
+const PRIVATE_ENV_NAME_PATTERN = /\b(?:NEXT_PUBLIC_[A-Z0-9_]*(?:SECRET|(?:ACCESS|REFRESH|AUTH|SESSION|BEARER)_?TOKEN|PRIVATE_KEY|PASSWORD|CREDENTIAL|AUTH|API_KEY)[A-Z0-9_]*|[A-Z][A-Z0-9_]*(?:PRIVATE_KEY|PASSWORD|CREDENTIAL|AUTH_TOKEN|API_SECRET)[A-Z0-9_]*)\b/g;
 const NEXT_PUBLIC_MARKERS = ['NEXT_PUBLIC_WORLDCOIN_APP_ID', 'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID'];
 const SUSPICIOUS_SUBSTRINGS = ['private', 'secret', '-----BEGIN', 'Bearer '];
 
@@ -107,6 +108,17 @@ function findMatches(lines, filePath) {
       if (m.index === StripePattern.lastIndex) StripePattern.lastIndex++;
     }
 
+    PRIVATE_ENV_NAME_PATTERN.lastIndex = 0;
+    while ((m = PRIVATE_ENV_NAME_PATTERN.exec(line)) !== null) {
+      matches.push({
+        line: lineIndex + 1,
+        col: m.index + 1,
+        type: 'SENSITIVE_ENV_NAME',
+        reason: 'sensitive environment variable name must not be exposed to browser code',
+      });
+      if (m.index === PRIVATE_ENV_NAME_PATTERN.lastIndex) PRIVATE_ENV_NAME_PATTERN.lastIndex++;
+    }
+
     for (const marker of NEXT_PUBLIC_MARKERS) {
       let pos = 0;
       while ((pos = line.indexOf(marker, pos)) !== -1) {
@@ -135,7 +147,8 @@ export function scanDirectories(dirs, { cwd = process.cwd() } = {}) {
   for (const d of dirs) {
     const abs = resolve(cwd, d);
     if (!existsSync(abs)) continue;
-    walk(abs, files, gitIgnored, cwd);
+    if (statSync(abs).isFile()) files.push(abs);
+    else walk(abs, files, gitIgnored, cwd);
   }
 
   const findings = [];
