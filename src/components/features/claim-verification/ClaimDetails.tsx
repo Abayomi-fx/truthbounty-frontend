@@ -11,6 +11,7 @@ import {
   sanitizeText,
 } from '@/lib/security/evidence-sanitizer';
 import { PrivateEvidenceLink } from '@/components/security/PrivateEvidenceLink';
+import { DeferredMedia } from '@/components/ui/DeferredMedia';
 
 export interface ClaimDetailsProps {
   claimId?: string;
@@ -19,47 +20,18 @@ export interface ClaimDetailsProps {
   onNotFound?: () => void;
 }
 
-export function ClaimDetails({ claimId, claim: initialClaim, isLoading: externalLoading = false, onNotFound }: ClaimDetailsProps) {
-  const projection = useClaimDetailProjection(initialClaim ? undefined : claimId);
-  const claim = initialClaim || projection.data?.claim;
-  const isLoading = externalLoading || (!initialClaim && projection.viewState === 'loading');
-  const notFound = !initialClaim && projection.viewState === 'not-found';
+interface ClaimDetailsViewProps {
+  claim: Claim;
+  isLoading?: boolean;
+  stale?: boolean;
+}
 
-  useEffect(() => {
-    if (notFound) onNotFound?.();
-  }, [notFound, onNotFound]);
-
-  const proposerAddress = claim?.proposer || claim?.claimantAddress;
+function ClaimDetailsView({ claim, isLoading = false, stale = false }: ClaimDetailsViewProps) {
+  const proposerAddress = claim.proposer || claim.claimantAddress;
   const proposerTrust = useTrustForAddress(proposerAddress);
 
-  if (isLoading && !notFound) {
+  if (isLoading) {
     return <ClaimDetailsSkeleton />;
-  }
-
-  if (notFound) {
-    return (
-      <div className="bg-[#18181b] border border-red-500/20 rounded-xl p-6 text-center">
-        <h3 className="text-lg font-bold text-red-500 mb-2">Claim Not Found</h3>
-        <p className="text-gray-400 text-sm">The requested claim does not exist or has been removed.</p>
-      </div>
-    );
-  }
-
-  if (!claim) {
-    const staleProjection = projection.error?.code === 'PROJECTION_STALE';
-    return (
-      <div className={`rounded-xl border p-6 text-center ${staleProjection ? 'border-amber-500/30 bg-amber-500/10' : 'border-red-500/20 bg-[#18181b]'}`} role="alert">
-        <h3 className={`mb-2 text-lg font-bold ${staleProjection ? 'text-amber-300' : 'text-red-500'}`}>
-          {staleProjection ? 'Claim projection is stale' : 'Claim details unavailable'}
-        </h3>
-        <p className="text-sm text-gray-400">
-          {staleProjection ? 'The projection service is rebuilding. No claim state is being presented as current.' : 'The canonical claim projection could not be verified.'}
-        </p>
-        <button type="button" onClick={projection.retry} className="mt-4 rounded-md border border-gray-600 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
-          Try again
-        </button>
-      </div>
-    );
   }
 
   // V2-FE-075 — claim content arrives from the API and is untrusted.
@@ -67,7 +39,6 @@ export function ClaimDetails({ claimId, claim: initialClaim, isLoading: external
   const safeDescription = sanitizeText(claim.description, 5000);
   const safeCategory = claim.category ? sanitizeText(claim.category, 100) : null;
   const evidence = sanitizeEvidenceList(claim.evidence);
-  const isStale = !initialClaim && projection.viewState === 'ready-stale';
 
   return (
     <div className="bg-[#18181b] border border-[#232329] rounded-xl p-4 sm:p-6 space-y-4">
@@ -77,6 +48,12 @@ export function ClaimDetails({ claimId, claim: initialClaim, isLoading: external
           {claim.status}
         </span>
       </div>
+
+      {stale && (
+        <p className="text-sm text-amber-400" role="status">
+          Claim projection may be outdated. Review before relying on it.
+        </p>
+      )}
 
       <div className="space-y-2">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Description</h3>
@@ -116,13 +93,11 @@ export function ClaimDetails({ claimId, claim: initialClaim, isLoading: external
                   />
                 )}
                 {ev.kind === 'image' && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <DeferredMedia
                     src={ev.src}
                     alt="Evidence image"
                     className="rounded max-h-40 w-auto"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
+                    placeholderClassName="max-h-40"
                   />
                 )}
                 {ev.kind === 'text' && <span>{ev.text}</span>}
@@ -137,5 +112,81 @@ export function ClaimDetails({ claimId, claim: initialClaim, isLoading: external
         </div>
       )}
     </div>
+  );
+}
+
+function ProjectedClaimDetails({
+  claimId,
+  externalLoading = false,
+  onNotFound,
+}: {
+  claimId?: string;
+  externalLoading?: boolean;
+  onNotFound?: () => void;
+}) {
+  const projection = useClaimDetailProjection({
+    claimId: claimId ?? '',
+    enabled: !!claimId,
+  });
+  const claim = projection.data?.claim;
+  const isLoading = externalLoading || projection.viewState === 'loading';
+  const notFound = projection.viewState === 'not-found';
+
+  useEffect(() => {
+    if (notFound) onNotFound?.();
+  }, [notFound, onNotFound]);
+
+  if (isLoading && !notFound) {
+    return <ClaimDetailsSkeleton />;
+  }
+
+  if (notFound) {
+    return (
+      <div className="bg-[#18181b] border border-red-500/20 rounded-xl p-6 text-center">
+        <h3 className="text-lg font-bold text-red-500 mb-2">Claim Not Found</h3>
+        <p className="text-gray-400 text-sm">The requested claim does not exist or has been removed.</p>
+      </div>
+    );
+  }
+
+  if (!claim) {
+    const staleProjection = projection.errorCode === 'PROJECTION_STALE';
+    return (
+      <div className={`rounded-xl border p-6 text-center ${staleProjection ? 'border-amber-500/30 bg-amber-500/10' : 'border-red-500/20 bg-[#18181b]'}`} role="alert">
+        <h3 className={`mb-2 text-lg font-bold ${staleProjection ? 'text-amber-300' : 'text-red-500'}`}>
+          {staleProjection ? 'Claim projection is stale' : 'Claim details unavailable'}
+        </h3>
+        <p className="text-sm text-gray-400">
+          {staleProjection ? 'The projection service is rebuilding. No claim state is being presented as current.' : 'The canonical claim projection could not be verified.'}
+        </p>
+        <button type="button" onClick={projection.refetch} className="mt-4 rounded-md border border-gray-600 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <ClaimDetailsView
+      claim={claim}
+      isLoading={externalLoading}
+      stale={projection.viewState === 'ready-stale'}
+    />
+  );
+}
+
+export function ClaimDetails(props: ClaimDetailsProps) {
+  // Supplying a claim avoids a canonical projection fetch entirely, which also
+  // keeps prop-driven renderers usable without a QueryClient.
+  if (props.claim) {
+    return <ClaimDetailsView claim={props.claim} isLoading={props.isLoading} />;
+  }
+
+  return (
+    <ProjectedClaimDetails
+      claimId={props.claimId}
+      externalLoading={props.isLoading}
+      onNotFound={props.onNotFound}
+    />
   );
 }

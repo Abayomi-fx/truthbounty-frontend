@@ -4,6 +4,7 @@
 
 import { QueryClient } from '@tanstack/react-query';
 import {
+  buildProtocolContextKey,
   invalidateWalletScope,
   keysForWalletScope,
   onWalletScopeChange,
@@ -79,5 +80,39 @@ describe('invalidateWalletScope / onWalletScopeChange', () => {
   it('invalidateWalletScope returns 0 for invalid inputs', () => {
     const client = new QueryClient();
     expect(invalidateWalletScope(client, 'nope', 10)).toBe(0);
+  });
+
+  it('builds a release-aware protocol context key for failing closed invalidation', () => {
+    expect(
+      buildProtocolContextKey({
+        address: ADDR_A,
+        chainId: 10,
+        releaseId: 'v2.0.0-sepolia',
+        deploymentBlock: 12345,
+        artifactChecksum: 'abc123',
+      }),
+    ).toBe('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd:10:v2.0.0-sepolia:12345:abc123');
+  });
+
+  it('clears in-flight mutation state when the wallet or chain scope changes', () => {
+    const client = new QueryClient();
+    client.getMutationCache().add({
+      mutationId: 'mut-1',
+      mutationKey: ['mutations', 'flow'],
+      state: { status: 'pending', data: undefined, error: null, variables: undefined, context: undefined },
+      options: { mutationFn: async () => ({ ok: true }) },
+      submit: () => undefined,
+      reset: () => undefined,
+      mutate: () => undefined,
+      execute: () => Promise.resolve({ ok: true }),
+    } as never);
+
+    onWalletScopeChange(
+      client,
+      { address: ADDR_A, chainId: 10 },
+      { address: ADDR_B, chainId: 10 },
+    );
+
+    expect(client.getMutationCache().getAll()).toHaveLength(0);
   });
 });

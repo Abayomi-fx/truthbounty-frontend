@@ -13,7 +13,7 @@
 import { sanitizeText, sanitizeEvidenceList } from '@/lib/security/evidence-sanitizer';
 import { PrivateEvidenceLink } from '@/components/security/PrivateEvidenceLink';
 import { PrivateTimestamp } from '@/components/security/PrivateTimestamp';
-import { sanitizeText, sanitizeEvidenceList } from '@/lib/security/evidence-sanitizer';
+import { DeferredMedia } from '@/components/ui/DeferredMedia';
 import type { ClaimDetailProjection } from '@/app/types/claim-detail-projection';
 
 export interface ClaimContentProps {
@@ -87,13 +87,11 @@ export function ClaimContent({ claim }: ClaimContentProps) {
                   />
                 )}
                 {ev.kind === 'image' && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <DeferredMedia
                     src={ev.src}
                     alt={`Evidence image ${idx + 1}`}
                     className="rounded max-h-60 w-auto border border-[#232329]"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
+                    placeholderClassName="max-h-60 border border-[#232329]"
                   />
                 )}
                 {ev.kind === 'text' && (

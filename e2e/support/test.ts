@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Page, type Locator } from '@playwright/test';
 import { seededClaims, seededClaimById } from './claims';
 import type { ClaimListItem, ClaimsListEnvelope } from '../../src/app/types/claim-list';
 
@@ -122,6 +122,106 @@ export async function stubClaimsApi(page: Page) {
     const normalised = STATUS_QUERY_MAP[status.toLowerCase()] ?? status.toUpperCase();
     await route.fulfill(json(seededClaims.filter((claim) => claim.status === normalised)));
   });
+}
+
+/**
+ * Error categories surfaced by the accessible error-summary primitive.
+ *
+ * These mirror the authoritative source of the failure so summaries never
+ * collapse a server/authorization failure into a client validation error.
+ */
+export type FormErrorCategory =
+  | 'validation'
+  | 'server'
+  | 'simulation'
+  | 'authorization';
+
+export interface FormErrorSummaryEntry {
+  /** Stable id of the invalid control the summary link targets. */
+  fieldId: string;
+  /** Human-readable, non-sensitive label. Never contains protected evidence. */
+  label: string;
+  /** Authoritative category of the failure. */
+  category: FormErrorCategory;
+}
+
+
+/**
+ * Locate the accessible error-summary primitive for a form.
+ *
+ * The summary is expected to expose `role="alert"` (or `aria-live`) and be
+ * linked to invalid controls via `aria-describedby`/`aria-errormessage`.
+ */
+export function errorSummary(page: Page, formId?: string): Locator {
+  const scope = formId ? page.locator(`#${formId}`) : page;
+  return scope
+    .locator('[data-testid="error-summary"], [role="alert"][data-error-summary]')
+    .first();
+}
+
+/**
+ * Assert that a failed submission produced a perceivable summary and that the
+ * summary received focus (or that focus intentionally remained on the
+ * transaction-recovery control).
+ */
+export async function expectErrorSummaryFocused(
+  page: Page,
+  options: { formId?: string; recoveryControlId?: string } = {},
+): Promise<void> {
+  const summary = errorSummary(page, options.formId);
+  await expect(summary).toBeVisible();
+
+  if (options.recoveryControlId) {
+    // Focus must remain on transaction recovery rather than jump to a field.
+    await expect(page.locator(`#${options.recoveryControlId}`)).toBeFocused();
+    return;
+  }
+
+  await expect(summary).toBeFocused();
+}
+
+/**
+ * Click the summary link for the first invalid field and assert that focus
+ * lands on the correct control. Deterministic first-invalid navigation.
+ */
+export async function navigateToFirstInvalidField(
+  page: Page,
+  options: { formId?: string } = {},
+): Promise<Locator> {
+  const summary = errorSummary(page, options.formId);
+  const firstLink = summary.locator('a[href^="#"], [data-error-link]').first();
+  await expect(firstLink).toBeVisible();
+
+  const targetId = await firstLink.evaluate((el) => {
+    const href = el.getAttribute('href');
+    if (href && href.startsWith('#')) return href.slice(1);
+    return el.getAttribute('data-error-link') ?? '';
+  });
+
+  if (!targetId) throw new Error('Error summary link is missing a target field id');
+  await firstLink.click();
+  const target = page.locator(`#${targetId}`);
+  await expect(target).toBeFocused();
+  return target;
+}
+
+/**
+ * Read the summary entries as structured data so tests can assert that error
+ * categories retain their authoritative source.
+ */
+export async function readErrorSummaryEntries(
+  page: Page,
+  options: { formId?: string } = {},
+): Promise<FormErrorSummaryEntry[]> {
+  const summary = errorSummary(page, options.formId);
+  await expect(summary).toBeVisible();
+  return summary.locator('[data-error-entry]').evaluateAll((nodes) =>
+    nodes.map((node) => ({
+      fieldId: node.getAttribute('data-field-id') ?? '',
+      label: node.textContent?.trim() ?? '',
+      category: (node.getAttribute('data-error-category') ?? 'validation') as FormErrorCategory,
+    })),
+  );
 }
 
 export const test = base.extend<{ stubbedApi: void }>({
