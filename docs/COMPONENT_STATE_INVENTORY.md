@@ -5,6 +5,7 @@
 > **Status:** Implementation Baseline / Normative Inventory  
 > **Authority:** Frontend / UX Maintainers  
 > **Companion Documents:**
+> - [Responsive and Accessibility Acceptance Matrix (`docs/RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md) (STAB-DOC-FE-002)
 > - [UI State Model (`docs/UI_STATE_MODEL.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/UI_STATE_MODEL.md)
 > - [V2 Design System (`docs/ux/DESIGN_SYSTEM.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/ux/DESIGN_SYSTEM.md)
 > - [Transaction State Model (`docs/ux/TRANSACTION_STATE_MODEL.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/ux/TRANSACTION_STATE_MODEL.md)

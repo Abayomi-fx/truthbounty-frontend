@@ -14,6 +14,8 @@ import { useAccount, useChainId } from 'wagmi';
 import { OPTIMISM_CHAIN_IDS } from '@/lib/transaction-machine/transaction-machine.types';
 import { useFeatureFlags } from '@/components/providers';
 import { APP_ROUTES, type NavigationGroupType } from '@/config/navigation';
+import { buildProtocolContextKey } from '@/app/queries/walletScope';
+import { getProtocolRelease } from '@/lib/contracts/registry';
 
 export type RouteDenialReason =
   | 'wallet_disconnected'
@@ -126,8 +128,25 @@ export function AppShellProvider({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [invalidationEpoch, setInvalidationEpoch] = useState(0);
 
+  const release = useMemo(() => getProtocolRelease(), []);
+  const protocolContextKey = useMemo(
+    () =>
+      buildProtocolContextKey({
+        address,
+        chainId: rawChainId,
+        releaseId: release.manifest.releaseId,
+        deploymentBlock: release.manifest.deploymentBlock,
+        artifactChecksum:
+          release.checksums.files['abi/TruthBountyWeighted.json'] ??
+          release.checksums.files['manifest.json'] ??
+          'unknown',
+      }),
+    [address, rawChainId, release],
+  );
+
   const prevAccountRef = useRef<string | undefined>(address);
   const prevChainIdRef = useRef<number | undefined>(rawChainId);
+  const prevProtocolContextRef = useRef<string | null>(protocolContextKey);
 
   // Invalidate protected context when account or chain changes
   const invalidateProtectedContext = useCallback(() => {
@@ -135,12 +154,18 @@ export function AppShellProvider({
   }, []);
 
   useEffect(() => {
-    if (address !== prevAccountRef.current || rawChainId !== prevChainIdRef.current) {
+    const accountOrChainChanged =
+      address !== prevAccountRef.current || rawChainId !== prevChainIdRef.current;
+    const protocolContextChanged =
+      protocolContextKey !== prevProtocolContextRef.current;
+
+    if (accountOrChainChanged || protocolContextChanged) {
       prevAccountRef.current = address;
       prevChainIdRef.current = rawChainId;
+      prevProtocolContextRef.current = protocolContextKey;
       invalidateProtectedContext();
     }
-  }, [address, rawChainId, invalidateProtectedContext]);
+  }, [address, rawChainId, protocolContextKey, invalidateProtectedContext]);
 
   // Chain validation
   const chainId = rawChainId;

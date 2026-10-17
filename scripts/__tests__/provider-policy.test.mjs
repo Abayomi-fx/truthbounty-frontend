@@ -127,3 +127,39 @@ test('declaring a scenario cannot pass runtime verification without an observed 
   verifyUsageBindings(changed, requirements);
   assert.throws(() => verifyObservedUsage(changed, observations, requirements), /Unused or unverified/);
 });
+
+test('merged deployment headers preserve scoped CSP and upstream browser boundaries', async () => {
+  const { loadPolicy, runThirdPartyIntegrationTests, verifyHeaders } = await import('../verify-security-headers.mjs');
+  const policy = loadPolicy();
+  for (const environment of ['preview', 'testnet', 'production']) {
+    const result = headers.buildSecurityHeaders({ nonce: 'merge123', environment });
+    const csp = result['Content-Security-Policy'];
+    assert.ok(!csp.includes('*'));
+    assert.doesNotMatch(csp, /localhost|'unsafe-eval'/);
+    assert.ok(runThirdPartyIntegrationTests(result, { environment, policy }).passed);
+    assert.ok(verifyHeaders(result, { environment, policy }).passed);
+    assert.equal(result['Cache-Control'], headers.CACHE_CONTROL_POLICIES.dynamicHtml);
+    assert.equal(result['Permissions-Policy'], headers.PERMISSIONS_POLICY);
+    if (environment === 'production') assert.ok(!csp.includes('https://sepolia.optimism.io'));
+    if (environment === 'testnet') {
+      assert.ok(!csp.includes('https://mainnet.optimism.io'));
+      assert.ok(!csp.includes('https://opt-mainnet.g.alchemy.com'));
+    }
+  }
+  assert.equal(headers.buildApiSecurityHeaders()['Cache-Control'], headers.CACHE_CONTROL_POLICIES.api);
+  assert.equal(headers.buildStaticSecurityHeaders()['Content-Security-Policy'], undefined);
+});
+
+test('local deployment endpoint validation matches its development CSP permissions', () => {
+  const original = process.env.NEXT_PUBLIC_API_URL;
+  try {
+    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+    assert.match(headers.buildContentSecurityPolicy({ nonce: 'local123', environment: 'local' }), /localhost/);
+    for (const environment of ['preview', 'testnet', 'production']) {
+      assert.throws(() => headers.buildContentSecurityPolicy({ nonce: 'local123', environment }));
+    }
+  } finally {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_API_URL;
+    else process.env.NEXT_PUBLIC_API_URL = original;
+  }
+});

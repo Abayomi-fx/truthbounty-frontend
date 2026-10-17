@@ -38,6 +38,7 @@ const FORBIDDEN_RUNTIME_PACKAGES = [
 // production artifact, a test fixture or wallet mock crossed the boundary.
 export const TEST_ONLY_BUNDLE_MARKERS = [
   "TRUTHBOUNTY_TEST_ONLY_WALLET_MOCK_V2_FE_087",
+  "TRUTHBOUNTY_TEST_ONLY_FIXTURE_FACTORY_UI_FE_088",
   "MOCK_TX_HASH_REVERTED",
   "createMockWallet",
   "createMockViemClient",

@@ -17,6 +17,13 @@ export interface PublicEnvSchema {
   NEXT_PUBLIC_WORLDCOIN_APP_ID?: string;
   NEXT_PUBLIC_WORLDCOIN_ACTION: string;
   NEXT_PUBLIC_WORLDCOIN_TEST_MODE: boolean;
+  /**
+   * Canonical site origin for metadata and social preview generation (UI-FE-050).
+   * Must be a valid https:// URL. Used to construct metadataBase, canonical URLs,
+   * and absolute OG image URLs. Defaults to 'https://truthbounty.xyz' if absent.
+   * Must never be derived from request headers or user-controlled input.
+   */
+  NEXT_PUBLIC_APP_URL?: string;
 }
 
 /**
@@ -91,6 +98,10 @@ export function getClientEnv(): PublicEnvSchema {
     NEXT_PUBLIC_WORLDCOIN_APP_ID: process.env.NEXT_PUBLIC_WORLDCOIN_APP_ID,
     NEXT_PUBLIC_WORLDCOIN_ACTION: process.env.NEXT_PUBLIC_WORLDCOIN_ACTION || 'verify-identity',
     NEXT_PUBLIC_WORLDCOIN_TEST_MODE: process.env.NEXT_PUBLIC_WORLDCOIN_TEST_MODE === 'true',
+    // UI-FE-050: canonical site origin for metadata base and social preview URLs.
+    // Undefined when not set; caller falls back to the production default in
+    // src/lib/metadata/canonical-url.ts.
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   };
 }
 
