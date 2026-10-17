@@ -55,7 +55,7 @@ function toReorged(
     chainId: state.chainId as number,
     blockNumber: 'blockNumber' in state && state.blockNumber != null ? state.blockNumber : null,
     confirmations: null,
-    error: 'REORGED',
+    error: 'REORG',
     replacedBy: null,
     orphanedBlockHash: event.orphanedBlockHash ?? null,
   };

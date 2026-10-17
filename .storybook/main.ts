@@ -1,4 +1,9 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from '@storybook/nextjs-vite';
+
+const dirname =
+  typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
   stories: [
@@ -26,6 +31,19 @@ const config: StorybookConfig = {
   // Exclude docs from the production bundle for faster Chromatic builds.
   docs: {
     autodocs: false,
+  "framework": "@storybook/nextjs-vite",
+  "staticDirs": [
+    "../public"
+  ],
+  viteFinal: async (viteConfig) => {
+    viteConfig.resolve = {
+      ...viteConfig.resolve,
+      alias: {
+        ...viteConfig.resolve?.alias,
+        "@": path.resolve(dirname, "../src"),
+      },
+    };
+    return viteConfig;
   },
 };
 export default config;

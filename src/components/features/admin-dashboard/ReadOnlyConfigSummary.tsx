@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Settings, Copy, Check, Lock, FileCode } from 'lucide-react';
+import React from 'react';
+import { Settings, Lock, FileCode } from 'lucide-react';
 import type { ReadOnlyProtocolParameter } from '@/app/types/admin';
+import { CopyableValue } from '@/components/ui/CopyableValue';
 
 export interface ReadOnlyConfigSummaryProps {
   parameters: ReadOnlyProtocolParameter[];
@@ -15,14 +16,6 @@ export function ReadOnlyConfigSummary({
   isLoading = false,
   className = '',
 }: ReadOnlyConfigSummaryProps) {
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  const handleCopy = (key: string, value: string) => {
-    void navigator.clipboard?.writeText(value);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
-
   if (isLoading) {
     return (
       <div className={`rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse ${className}`}>
@@ -56,7 +49,6 @@ export function ReadOnlyConfigSummary({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {parameters.map((param) => {
           const isAddress = param.value.startsWith('0x');
-          const isCopied = copiedKey === param.key;
 
           return (
             <div
@@ -85,18 +77,13 @@ export function ReadOnlyConfigSummary({
                   </span>
 
                   {isAddress && (
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(param.key, param.value)}
-                      aria-label={`Copy ${param.label}`}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                    >
-                      {isCopied ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                      )}
-                    </button>
+                    <CopyableValue
+                      kind="address"
+                      value={param.value}
+                      displayValue=""
+                      label={param.label}
+                      accessibleLabel={`Copy ${param.label}`}
+                    />
                   )}
                 </div>
 

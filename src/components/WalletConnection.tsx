@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAccount } from '@/hooks/useAccount';
 import { useIsMounted } from '@/hooks/useIsMounted';
 import { useWallet, type WalletLifecycleState } from '@/hooks/useWallet';
+import { copyPublicIdentifier } from '@/lib/clipboard';
 import { ConnectButton } from '@/components/ui/ConnectButton';
 import styles from './style.module.css';
 
@@ -44,15 +45,17 @@ export function WalletConnection() {
   };
 
   const handleCopyAddress = async () => {
-    if (account?.address && typeof navigator !== 'undefined' && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(account.address);
-        setCopyStatus('Address copied to clipboard');
-        setTimeout(() => setCopyStatus(''), 3000);
-      } catch (error) {
-        console.error('Failed to copy address:', error);
-      }
-    }
+    if (!account?.address) return;
+    const result = await copyPublicIdentifier(account.address, 'address');
+    setCopyStatus(
+      result === 'copied'
+        ? 'Full wallet address copied. Only public identifiers should be copied; never copy secrets.'
+        : result === 'invalid'
+          ? 'This wallet address is invalid and cannot be copied.'
+          : result === 'denied'
+          ? 'Clipboard access was denied. Select and copy the full address manually.'
+          : 'Clipboard is unavailable. Select and copy the full address manually.',
+    );
   };
 
   return (
@@ -64,7 +67,7 @@ export function WalletConnection() {
             type="button"
             className={styles.card}
             onClick={handleCopyAddress}
-            aria-label={`Copy wallet address ${account.displayName}`}
+            aria-label={`Copy full wallet address ${account.address}`}
           >
             {account.displayName}
           </button>
@@ -84,7 +87,7 @@ export function WalletConnection() {
       )}
 
       {/* Screen-reader feedback for copy + connection lifecycle status */}
-      <span className="sr-only" aria-live="polite" aria-atomic="true">
+      <span className="text-xs text-muted-foreground" aria-live="polite" aria-atomic="true">
         {copyStatus}
       </span>
       <span
