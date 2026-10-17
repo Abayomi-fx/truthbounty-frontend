@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { readLowBandwidth } from '@/hooks/useNetworkStatus';
 import type {
   createPersistedStore,
-  type PersistedKeyRegistryEntry,
+  PersistedKeyRegistryEntry,
 } from '@/app/lib/persistedState';
 
 const BASE_STALE_TIME = 1000 * 60 * 5; // 5 mins
