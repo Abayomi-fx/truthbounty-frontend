@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchApiHealth } from '../api/freshness.api';
+import { useAdaptivePolling } from '@/hooks/useReducedData';
 import type { ApiHealthResponse, UseApiFreshnessResult, UseApiFreshnessConfig } from '@/app/types/api-freshness';
 
 /**
@@ -24,10 +25,17 @@ export function useApiFreshness(config: UseApiFreshnessConfig = {}): UseApiFresh
     maxAcceptableLag = 100,
   } = config;
 
+  // UI-FE-082: freshness/degraded-state polling is observability-only and
+  // non-critical; it is stretched under reduced-data mode.
+  const { pollInterval: adaptivePollInterval } = useAdaptivePolling({
+    baseIntervalMs: pollInterval,
+    critical: false,
+  });
+
   const query = useQuery<ApiHealthResponse, Error>({
     queryKey: freshnessQueryKey,
     queryFn: fetchApiHealth,
-    refetchInterval: pollInterval,
+    refetchInterval: adaptivePollInterval,
     refetchIntervalInBackground: true,
     staleTime: 10_000, // Consider data stale after 10 seconds
     retry: 2,
@@ -57,13 +65,14 @@ export function useApiFreshness(config: UseApiFreshnessConfig = {}): UseApiFresh
  * Useful for lightweight consumers
  */
 export function useFreshnessData() {
+  const { pollInterval } = useAdaptivePolling({ baseIntervalMs: 30_000, critical: false });
   const query = useQuery<ApiHealthResponse['freshness'], Error>({
     queryKey: [...freshnessQueryKey, 'data'],
     queryFn: async () => {
       const response = await fetchApiHealth();
       return response.freshness;
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollInterval,
     refetchIntervalInBackground: true,
     staleTime: 10_000,
   });
@@ -81,13 +90,14 @@ export function useFreshnessData() {
  * Useful for components that only need degradation status
  */
 export function useDegradedState() {
+  const { pollInterval } = useAdaptivePolling({ baseIntervalMs: 30_000, critical: false });
   const query = useQuery<ApiHealthResponse['degradedState'], Error>({
     queryKey: [...freshnessQueryKey, 'degraded'],
     queryFn: async () => {
       const response = await fetchApiHealth();
       return response.degradedState;
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollInterval,
     refetchIntervalInBackground: true,
     staleTime: 10_000,
   });
@@ -105,13 +115,14 @@ export function useDegradedState() {
  * Hook for fetching dependency health only
  */
 export function useDependencyHealth() {
+  const { pollInterval } = useAdaptivePolling({ baseIntervalMs: 60_000, critical: false });
   const query = useQuery<ApiHealthResponse['freshness']['dependencies'], Error>({
     queryKey: [...freshnessQueryKey, 'dependencies'],
     queryFn: async () => {
       const response = await fetchApiHealth();
       return response.freshness.dependencies;
     },
-    refetchInterval: 60_000, // Dependencies change less frequently
+    refetchInterval: pollInterval, // Dependencies change less frequently
     refetchIntervalInBackground: true,
     staleTime: 30_000,
   });
