@@ -418,7 +418,7 @@ Authenticated sessions are bound to the connected wallet scope
 ### 2. Performance
 - **Lazy loading**: Load code as needed
 - **Memoization**: Prevent unnecessary re-renders
-- **Optimistic updates**: Improve perceived performance
+- **Optimistic updates**: Restricted to an explicit safe allowlist; see [OPTIMISTIC_UPDATES.md](./OPTIMISTIC_UPDATES.md)
 
 ### 3. Accessibility
 - **Semantic HTML**: Proper element usage
