@@ -8,6 +8,7 @@ import {
   MdCardGiftcard,
   MdAdminPanelSettings,
   MdBadge,
+  MdDescription,
   MdReceiptLong,
 } from 'react-icons/md';
 import { HiOutlineQuestionMarkCircle } from 'react-icons/hi';
@@ -30,6 +31,9 @@ export const APP_ROUTES = {
   DISPUTES: '/disputes',
   ANALYTICS: '/analytics',
   ADMIN: '/admin',
+  TERMS: '/terms',
+  TERMS_TESTNET: '/terms?network=testnet',
+  TERMS_MAINNET: '/terms?network=mainnet',
 } as const;
 
 export type NavigationGroupType = 'public' | 'personal' | 'verifier' | 'admin';
@@ -69,6 +73,13 @@ export const NAV_ITEMS: readonly NavigationItem[] = [
     label: 'Treasury & Stake',
     href: APP_ROUTES.TREASURY,
     icon: MdDashboard,
+    group: 'public',
+  },
+  {
+    id: 'terms',
+    label: 'Terms of Use',
+    href: APP_ROUTES.TERMS,
+    icon: MdDescription,
     group: 'public',
   },
   // Personal Group
