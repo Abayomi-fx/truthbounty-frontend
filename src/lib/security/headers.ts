@@ -1,5 +1,5 @@
 /**
- * V2-FE-131 — Content Security Policy and browser security headers.
+ * V2-FE-131 & UI-FE-092 (#663) — Content Security Policy and browser security headers.
  *
  * Centralizes header construction so middleware, Next config, and tests
  * share one fail-closed policy. CSP uses a per-request nonce for scripts
@@ -19,10 +19,44 @@ export const SECURITY_HEADER_NAMES = {
   crossOriginOpenerPolicy: 'Cross-Origin-Opener-Policy',
   crossOriginResourcePolicy: 'Cross-Origin-Resource-Policy',
   xDnsPrefetchControl: 'X-DNS-Prefetch-Control',
+  cacheControl: 'Cache-Control',
+  pragma: 'Pragma',
 } as const;
 
 export type SecurityHeaderName =
   (typeof SECURITY_HEADER_NAMES)[keyof typeof SECURITY_HEADER_NAMES];
+
+export type DeploymentEnvironment =
+  | 'local'
+  | 'preview'
+  | 'testnet'
+  | 'production';
+
+export const CACHE_CONTROL_POLICIES = {
+  dynamicHtml: 'no-store, max-age=0, must-revalidate',
+  api: 'no-store, max-age=0, must-revalidate',
+  staticAssets: 'public, max-age=31536000, immutable',
+} as const;
+
+/**
+ * Least-permissive Permissions-Policy.
+ * Camera is strictly limited to self and Worldcoin IDKit for credential verification.
+ * All extraneous device sensors, microphone, geolocation, and payment/display capture APIs are locked down.
+ */
+export const PERMISSIONS_POLICY = [
+  'camera=(self "https://id.worldcoin.org")',
+  'microphone=()',
+  'geolocation=()',
+  'payment=()',
+  'usb=()',
+  'display-capture=()',
+  'screen-wake-lock=()',
+  'accelerometer=()',
+  'gyroscope=()',
+  'magnetometer=()',
+  'midi=()',
+  'encrypted-media=()',
+].join(', ');
 
 export interface BuildCspOptions {
   /** Base64 nonce for script-src / style-src. Required for enforcing CSP. */
@@ -32,10 +66,14 @@ export interface BuildCspOptions {
    * Production always uses the strict connect-src baseline.
    */
   isDevelopment?: boolean;
+  /**
+   * Explicit deployment target environment ('local' | 'preview' | 'testnet' | 'production').
+   */
+  environment?: DeploymentEnvironment;
 }
 
 /** Origins required for RainbowKit / WalletConnect / Optimism RPC / IDKit. */
-const WALLET_CONNECT_HOSTS = [
+export const WALLET_CONNECT_HOSTS = [
   'https://*.walletconnect.com',
   'https://*.walletconnect.org',
   'wss://*.walletconnect.com',
@@ -45,12 +83,22 @@ const WALLET_CONNECT_HOSTS = [
   'https://explorer-api.walletconnect.com',
 ] as const;
 
-const WORLDCOIN_HOSTS = [
+export const WORLDCOIN_HOSTS = [
   'https://id.worldcoin.org',
   'https://*.worldcoin.org',
 ] as const;
 
-const OPTIMISM_RPC_FALLBACKS = [
+export const OPTIMISM_SEPOLIA_RPC = [
+  'https://sepolia.optimism.io',
+  'https://*.optimism.io',
+] as const;
+
+export const OPTIMISM_MAINNET_RPC = [
+  'https://mainnet.optimism.io',
+  'https://*.optimism.io',
+] as const;
+
+export const OPTIMISM_RPC_FALLBACKS = [
   'https://mainnet.optimism.io',
   'https://sepolia.optimism.io',
   'https://*.optimism.io',
@@ -63,10 +111,15 @@ const OPTIMISM_RPC_FALLBACKS = [
 export function buildContentSecurityPolicy({
   nonce,
   isDevelopment = false,
+  environment,
 }: BuildCspOptions): string {
   if (!nonce || typeof nonce !== 'string') {
     throw new Error('CSP nonce is required; refusing to emit an open script-src policy');
   }
+
+  const isDev = isDevelopment || environment === 'local';
+  const isTestnet = environment === 'testnet';
+  const isProduction = environment === 'production';
 
   const scriptSrc = [
     "'self'",
@@ -77,9 +130,16 @@ export function buildContentSecurityPolicy({
   ];
 
   // Development HMR / React refresh still needs eval in some Next setups
-  if (isDevelopment) {
+  if (isDev) {
     scriptSrc.push("'unsafe-eval'");
   }
+
+  // Network targets scoped per environment
+  const rpcHosts = isTestnet
+    ? OPTIMISM_SEPOLIA_RPC
+    : isProduction
+      ? OPTIMISM_MAINNET_RPC
+      : OPTIMISM_RPC_FALLBACKS;
 
   const connectSrc = [
     "'self'",
@@ -87,10 +147,10 @@ export function buildContentSecurityPolicy({
     'wss:',
     ...WALLET_CONNECT_HOSTS,
     ...WORLDCOIN_HOSTS,
-    ...OPTIMISM_RPC_FALLBACKS,
+    ...rpcHosts,
   ];
 
-  if (isDevelopment) {
+  if (isDev) {
     connectSrc.push('http://localhost:*', 'ws://localhost:*', 'http://127.0.0.1:*', 'ws://127.0.0.1:*');
   }
 
@@ -118,7 +178,7 @@ export function buildContentSecurityPolicy({
     'report-uri': ['/api/csp-report'],
   };
 
-  if (!isDevelopment) {
+  if (!isDev) {
     directives['upgrade-insecure-requests'] = [];
   }
 
@@ -130,6 +190,7 @@ export function buildContentSecurityPolicy({
 export interface SecurityHeadersOptions {
   nonce: string;
   isDevelopment?: boolean;
+  environment?: DeploymentEnvironment;
   /**
    * When true, send CSP as Report-Only (for staged rollout).
    * Default false — enforce.
@@ -143,9 +204,10 @@ export interface SecurityHeadersOptions {
 export function buildSecurityHeaders({
   nonce,
   isDevelopment = false,
+  environment,
   reportOnly = false,
 }: SecurityHeadersOptions): Record<string, string> {
-  const csp = buildContentSecurityPolicy({ nonce, isDevelopment });
+  const csp = buildContentSecurityPolicy({ nonce, isDevelopment, environment });
   const cspHeader = reportOnly
     ? SECURITY_HEADER_NAMES.contentSecurityPolicyReportOnly
     : SECURITY_HEADER_NAMES.contentSecurityPolicy;
@@ -160,12 +222,13 @@ export function buildSecurityHeaders({
     [SECURITY_HEADER_NAMES.xFrameOptions]: 'DENY',
     [SECURITY_HEADER_NAMES.referrerPolicy]: 'strict-origin-when-cross-origin',
     // Camera allowed for Worldcoin IDKit; mic/geo stay closed
-    [SECURITY_HEADER_NAMES.permissionsPolicy]:
-      'camera=(self "https://id.worldcoin.org"), microphone=(), geolocation=(), payment=(), usb=()',
+    [SECURITY_HEADER_NAMES.permissionsPolicy]: PERMISSIONS_POLICY,
     // Wallet connect popups must not be blocked by a hard same-origin COOP
     [SECURITY_HEADER_NAMES.crossOriginOpenerPolicy]: 'same-origin-allow-popups',
     [SECURITY_HEADER_NAMES.crossOriginResourcePolicy]: 'same-site',
     [SECURITY_HEADER_NAMES.xDnsPrefetchControl]: 'off',
+    [SECURITY_HEADER_NAMES.cacheControl]: CACHE_CONTROL_POLICIES.dynamicHtml,
+    [SECURITY_HEADER_NAMES.pragma]: 'no-cache',
   };
 }
 
@@ -183,11 +246,21 @@ export function buildStaticSecurityHeaders(): Record<string, string> {
     [SECURITY_HEADER_NAMES.xContentTypeOptions]: 'nosniff',
     [SECURITY_HEADER_NAMES.xFrameOptions]: 'DENY',
     [SECURITY_HEADER_NAMES.referrerPolicy]: 'strict-origin-when-cross-origin',
-    [SECURITY_HEADER_NAMES.permissionsPolicy]:
-      'camera=(self "https://id.worldcoin.org"), microphone=(), geolocation=(), payment=(), usb=()',
+    [SECURITY_HEADER_NAMES.permissionsPolicy]: PERMISSIONS_POLICY,
     [SECURITY_HEADER_NAMES.crossOriginOpenerPolicy]: 'same-origin-allow-popups',
     [SECURITY_HEADER_NAMES.crossOriginResourcePolicy]: 'same-site',
     [SECURITY_HEADER_NAMES.xDnsPrefetchControl]: 'off',
+  };
+}
+
+/**
+ * Security headers for API endpoints, combining static security with anti-caching headers.
+ */
+export function buildApiSecurityHeaders(): Record<string, string> {
+  return {
+    ...buildStaticSecurityHeaders(),
+    [SECURITY_HEADER_NAMES.cacheControl]: CACHE_CONTROL_POLICIES.api,
+    [SECURITY_HEADER_NAMES.pragma]: 'no-cache',
   };
 }
 
