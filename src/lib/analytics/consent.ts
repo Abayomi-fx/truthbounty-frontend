@@ -6,6 +6,12 @@ export const ANALYTICS_EVENT_NAME = "truthbounty:analytics";
 export type AnalyticsConsentChoice = "granted" | "denied";
 export type AnalyticsConsentPreference = AnalyticsConsentChoice | null;
 
+export interface AnalyticsConsentReadResult {
+  storageAvailable: boolean;
+  corrupted: boolean;
+  preference: AnalyticsConsentPreference;
+}
+
 export interface MinimalPageViewEvent {
   version: 1;
   name: "page_view";
@@ -13,26 +19,46 @@ export interface MinimalPageViewEvent {
   occurredAtMinute: number;
 }
 
-type ConsentStorage = Pick<Storage, "getItem" | "setItem">;
+type ConsentStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 type AnalyticsEventTarget = Pick<Window, "dispatchEvent">;
 
 export function readAnalyticsConsent(
-  storage: Pick<ConsentStorage, "getItem">,
-): AnalyticsConsentPreference {
+  storage?: Pick<ConsentStorage, "getItem">,
+): AnalyticsConsentReadResult {
   try {
-    const value = storage.getItem(ANALYTICS_CONSENT_STORAGE_KEY);
-    return value === "granted" || value === "denied" ? value : null;
+    const activeStorage = storage ?? window.localStorage;
+    const value = activeStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY);
+    if (value === "granted" || value === "denied") {
+      return { storageAvailable: true, corrupted: false, preference: value };
+    }
+    if (value === null) {
+      return { storageAvailable: true, corrupted: false, preference: null };
+    }
+    return { storageAvailable: true, corrupted: true, preference: null };
   } catch {
-    return null;
+    return { storageAvailable: false, corrupted: false, preference: null };
   }
 }
 
 export function saveAnalyticsConsent(
   choice: AnalyticsConsentChoice,
-  storage: Pick<ConsentStorage, "setItem">,
+  storage?: Pick<ConsentStorage, "setItem">,
 ): boolean {
   try {
-    storage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, choice);
+    const activeStorage = storage ?? window.localStorage;
+    activeStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, choice);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearAnalyticsConsent(
+  storage?: Pick<ConsentStorage, "removeItem">,
+): boolean {
+  try {
+    const activeStorage = storage ?? window.localStorage;
+    activeStorage.removeItem(ANALYTICS_CONSENT_STORAGE_KEY);
     return true;
   } catch {
     return false;
@@ -47,7 +73,10 @@ export function publishPageView(
 ): boolean {
   try {
     const activeStorage = storage ?? window.localStorage;
-    if (readAnalyticsConsent(activeStorage) !== "granted") return false;
+    const result = readAnalyticsConsent(activeStorage);
+    if (!result.storageAvailable || result.preference !== "granted") {
+      return false;
+    }
 
     const event: MinimalPageViewEvent = {
       version: 1,

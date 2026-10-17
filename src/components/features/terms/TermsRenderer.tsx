@@ -5,7 +5,7 @@ import { sanitizeText } from '@/lib/security/evidence-sanitizer';
 import { TermsSection } from './TermsSection';
 import { TermsVersionSelector } from './TermsVersionSelector';
 import { TermsReviewState, TermsReviewSummary } from './TermsReviewState';
-import type { TermsVersion, TermsClause, TermsSectionId, NetworkType } from '@/app/types/terms';
+import type { TermsVersion, TermsClause, TermsSectionId, NetworkType, ClauseStatus } from '@/app/types/terms';
 import { TERMS_SECTIONS, SECTION_TITLES } from '@/app/types/terms';
 
 interface TermsRendererProps {
@@ -46,6 +46,7 @@ export function TermsRenderer({ version, allVersions, network, onVersionChange }
         title: SECTION_TITLES[sectionId as TermsSectionId],
         content: 'This clause is currently unavailable. It may be pending legal review, regulatory approval, or governance voting.',
         status: 'unavailable' as ClauseStatus,
+        reviewerNotes: undefined,
       };
     });
   }, [clauseMap]);

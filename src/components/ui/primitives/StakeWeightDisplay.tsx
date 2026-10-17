@@ -37,7 +37,7 @@ export interface StakeWeightDisplayProps {
   /** Show the data table. */
   showTable?: boolean;
   /** Custom formatter for weight values. */
-  formatWeight?: (value: string | bigint | number | null, unit: string, isValid: boolean) => string;
+  formatWeight?: (value: string | bigint | number | null, unit: string, isValid?: boolean) => string;
   /** Additional CSS classes. */
   className?: string;
 }
@@ -116,13 +116,19 @@ export function StakeWeightDisplay({
 }: StakeWeightDisplayProps) {
   const supportingParsed = parseWeight(supporting.value);
   const opposingParsed = parseWeight(opposing.value);
-  const totalParsed = total !== undefined ? parseWeight(total) : 
-    (supportingParsed.ok && opposingParsed.ok ? { ok: true, value: supportingParsed.value + opposingParsed.value } : { ok: false, error: 'invalid' as const });
+  const totalParsed: WeightParseResult =
+    total !== undefined
+      ? parseWeight(total)
+      : supportingParsed.ok && opposingParsed.ok
+        ? { ok: true, value: supportingParsed.value + opposingParsed.value }
+        : { ok: false, error: 'invalid' };
   const quorumParsed = quorum !== undefined ? parseWeight(quorum) : { ok: true, value: null };
 
   const supportingValue = supportingParsed.ok ? supportingParsed.value : 0n;
   const opposingValue = opposingParsed.ok ? opposingParsed.value : 0n;
-  const totalValue = totalParsed.ok ? totalParsed.value : supportingValue + opposingValue;
+  const totalValue: bigint = totalParsed.ok
+    ? totalParsed.value
+    : supportingValue + opposingValue;
   const quorumValue = quorumParsed.ok ? quorumParsed.value : null;
 
   const supportingPct = totalValue > 0n ? formatPercentage(supportingValue, totalValue) : '0.0%';
