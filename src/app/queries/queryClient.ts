@@ -1,9 +1,10 @@
 // src/app/queries/queryClient.ts
 import { QueryClient } from '@tanstack/react-query';
 import { readLowBandwidth } from '@/hooks/useNetworkStatus';
-import type {
-  createPersistedStore,
-  type PersistedKeyRegistryEntry,
+import {
+  readPersisted,
+  registerPersistedKey,
+  type PersistedKeyRegistration,
 } from '@/app/lib/persistedState';
 
 const BASE_STALE_TIME = 1000 * 60 * 5; // 5 mins
@@ -40,17 +41,19 @@ function resolveStaleTime(): number {
  * contract receipts, reviewed API projections, signatures, and secrets are never
  * persisted here.
  */
-export const queryCachePersistence: PersistedKeyRegistryEntry = {
+export const queryCachePersistence: PersistedKeyRegistration<unknown> = {
   key: 'tb.queryCache.v1',
-  owner: 'app/queries/queryClient',
-  schemaVersion: 1,
-  retention: {
-    maxAgeMs: GC_TIME,
-    maxBytes: 250 * 1024,
-  },
+  arena: 'localStorage',
+  owner: 'query',
+  version: 1,
+  minVersion: 1,
+  retentionMs: GC_TIME,
+  maxBytes: 250 * 1024,
   sensitivity: 'internal',
-  storage: 'localStorage',
+  validate: (value): value is unknown => value !== undefined,
 };
+
+registerPersistedKey(queryCachePersistence);
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,7 +81,7 @@ export const queryClient = new QueryClient({
 export function rehydrateQueryCache(): void {
   if (!isBrowser()) return;
   try {
-    void createPersistedStore(queryCachePersistence).read();
+    readPersisted(queryCachePersistence.key);
   } catch {
     // Fail closed: drop untrusted persisted state without boot-looping.
   }
