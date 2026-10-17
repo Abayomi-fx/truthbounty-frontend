@@ -12,5 +12,6 @@
  */
 
 export * from './deterministic';
+export * from './authority';
 export * from './factories';
 export * from './scenarios';
