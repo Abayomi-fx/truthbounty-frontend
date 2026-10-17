@@ -34,7 +34,8 @@ describe('PrivateEvidenceLink', () => {
     });
 
     it('strips query parameters from display', () => {
-      const url = 'https://example.com/path/file.pdf?token=secret&session=xyz';
+      const url =
+        'https://example.com/api/v2/files/file.pdf?token=secret&session=xyz';
       render(<PrivateEvidenceLink href={url} />);
 
       const link = screen.getByRole('link');
@@ -49,7 +50,7 @@ describe('PrivateEvidenceLink', () => {
       render(<PrivateEvidenceLink href={url} />);
 
       const link = screen.getByRole('link');
-      expect(link).toHaveTextContent('QmYwAPJz...F8xFk (IPFS)');
+      expect(link).toHaveTextContent('QmYwAPJz...xF8xFk (IPFS)');
       expect(link).not.toHaveTextContent('QmYwAPJzv5CZsnAzt8auVZRn2tQQkDdqBvHThY6WxF8xFk');
     });
 
@@ -143,8 +144,9 @@ describe('PrivateEvidenceLink', () => {
 
       expect(screen.queryByRole('link')).not.toBeInTheDocument();
       expect(
-        screen.getByText(/blocked.*security/i, { selector: 'span' }),
+        screen.getByRole('note', { name: /blocked for security reasons/i }),
       ).toBeInTheDocument();
+      expect(screen.getByText(/unsafe_scheme/i)).toBeInTheDocument();
     });
 
     it('blocks data: URL scheme', () => {
@@ -189,7 +191,8 @@ describe('PrivateEvidenceLink', () => {
       const link = screen.getByRole('link');
       expect(link).toHaveAttribute('aria-label');
       expect(link.getAttribute('aria-label')).toContain('truncated for privacy');
-      expect(link.getAttribute('aria-label')).toContain('click to copy');
+      expect(link.getAttribute('aria-label')?.toLowerCase()).toContain('click to copy');
+      expect(link.getAttribute('aria-label')).toContain('opens example.com');
     });
 
     it('allows custom aria-label', () => {

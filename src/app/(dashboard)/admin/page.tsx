@@ -2,13 +2,14 @@
 
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { AdminDashboard } from '@/components/features/admin-dashboard';
+import ServiceStatusOverview from '@/components/features/service-status/ServiceStatusOverview';
 
 export default function AdminRoutePage() {
   return (
     <MainLayout>
       <div className="mx-auto max-w-7xl">
-        <AdminDashboard />
+        <h1 className="text-2xl font-semibold">Admin</h1>
+        <ServiceStatusOverview />
       </div>
     </MainLayout>
   );

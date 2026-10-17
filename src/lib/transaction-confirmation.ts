@@ -229,7 +229,7 @@ export function canShowDurableSuccess(
   if (!indexerAcknowledged) return false;
 
   // Must not be reorged
-  if (txState.error === 'REORGED') return false;
+  if (txState.status === 'reorged' || txState.error === 'REORGED' || txState.error === 'REORG') return false;
 
   return true;
 }
@@ -264,7 +264,7 @@ export function canShowProvisionalSuccess(
   }
 
   // Must not be reorged
-  if (txState.error === 'REORGED') return false;
+  if (txState.status === 'reorged' || txState.error === 'REORGED' || txState.error === 'REORG') return false;
 
   return true;
 }

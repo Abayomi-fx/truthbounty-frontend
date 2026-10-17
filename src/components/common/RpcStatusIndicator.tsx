@@ -55,11 +55,11 @@ export function RpcStatusIndicator({
       aria-label={cfg.ariaLabel}
       title={cfg.ariaLabel}
       data-testid={`rpc-status-${status}`}
-      className={`inline-flex items-center gap-1.5 ${className}`}
+      className={` inline-flex items-center gap-1.5 ${className}`}
     >
       <span
         aria-hidden="true"
-        className={`inline-block h-2.5 w-2.5 rounded-full ${cfg.dotClass}`}
+        className={` inline-block h-2.5 w-2.5 rounded-full ${cfg.dotClass}`}
       />
       {showLabel && (
         <span className="text-xs text-muted-foreground">{cfg.label}</span>

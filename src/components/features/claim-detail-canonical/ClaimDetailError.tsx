@@ -6,6 +6,10 @@
  * Displays user-friendly error messages with retry capability.
  * Maps canonical error codes to actionable UI. Includes focus management
  * to meet accessibility requirements.
+ *
+ * Note: when this error represents a transaction recovery state (e.g.
+ * pending on-chain submission), focus must remain on the recovery control
+ * rather than jumping to a field. The `preserveFocus` prop enforces this.
  */
 
 import React from 'react';
@@ -16,6 +20,12 @@ export interface ClaimDetailErrorProps {
   error: Error | ClaimDetailErrorType | null;
   errorCode?: string;
   onRetry?: () => void;
+  /**
+   * When true, the component does not move focus on mount. Use this for
+   * transaction recovery states where focus must remain on the recovery
+   * control.
+   */
+  preserveFocus?: boolean;
 }
 
 function getErrorMessage(error: Error | ClaimDetailErrorType | null, errorCode?: string): string {
@@ -36,17 +46,19 @@ function getErrorMessage(error: Error | ClaimDetailErrorType | null, errorCode?:
   }
 }
 
-export function ClaimDetailError({ error, errorCode, onRetry }: ClaimDetailErrorProps) {
+export function ClaimDetailError({ error, errorCode, onRetry, preserveFocus = false }: ClaimDetailErrorProps) {
   const message = getErrorMessage(error, errorCode);
   const canRetry = errorCode !== 'UNSUPPORTED_CHAIN';
   const headingRef = React.useRef<HTMLHeadingElement>(null);
 
-  // Focus management: move focus to error heading when error appears
+  // Focus management: move focus to error heading when error appears.
+  // Skipped when preserveFocus is true (transaction recovery states).
   React.useEffect(() => {
+    if (preserveFocus) return;
     if (headingRef.current) {
       headingRef.current.focus();
     }
-  }, []);
+  }, [preserveFocus]);
 
   return (
     <div
@@ -56,7 +68,7 @@ export function ClaimDetailError({ error, errorCode, onRetry }: ClaimDetailError
     >
       <div className="flex items-start gap-4">
         <XCircle
-          className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5"
+          className="h-6 w-6 text-red-500 flex-shrink-0"
           aria-hidden="true"
         />
 
@@ -75,7 +87,7 @@ export function ClaimDetailError({ error, errorCode, onRetry }: ClaimDetailError
           {canRetry && onRetry && (
             <button
               onClick={onRetry}
-              className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-[#18181b]"
+              className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-[18181b]"
               aria-label="Retry loading claim details"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
