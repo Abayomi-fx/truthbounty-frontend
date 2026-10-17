@@ -19,6 +19,7 @@ import { createIdleState } from './transaction-machine.types';
 
 const STORAGE_KEY_PREFIX = 'tb-tx-v2:';
 const SCHEMA_VERSION = 2 as const;
+export const TRANSACTION_STORAGE_EVENT = 'truthbounty:transaction-storage';
 
 // ---------------------------------------------------------------------------
 // Validation helpers
@@ -128,6 +129,7 @@ export function persistTxState(ctx: TransactionContext): void {
       typeof value === 'bigint' ? value.toString() : value,
     );
     window.localStorage.setItem(storageKey(ctx.id), serialized);
+    window.dispatchEvent(new Event(TRANSACTION_STORAGE_EVENT));
   } catch {
     // Storage quota exceeded or private-browsing restrictions — silently ignore
   }
@@ -162,6 +164,7 @@ export function clearTxState(id: string): void {
   if (!isBrowser()) return;
   try {
     window.localStorage.removeItem(storageKey(id));
+    window.dispatchEvent(new Event(TRANSACTION_STORAGE_EVENT));
   } catch {
     // ignore
   }
