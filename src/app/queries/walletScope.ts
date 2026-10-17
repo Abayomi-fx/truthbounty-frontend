@@ -17,6 +17,32 @@ import {
   walletScope,
 } from './queryKeys';
 
+export interface ProtocolContextSnapshot {
+  address?: string | null;
+  chainId?: number | null;
+  releaseId?: string | null;
+  deploymentBlock?: number | null;
+  artifactChecksum?: string | null;
+}
+
+export function buildProtocolContextKey(
+  context: ProtocolContextSnapshot | null | undefined,
+): string {
+  const address = normalizeAddress(context?.address ?? null) ?? 'unknown';
+  const chainId =
+    typeof context?.chainId === 'number' && Number.isInteger(context.chainId)
+      ? String(context.chainId)
+      : 'unknown';
+  const releaseId = context?.releaseId?.trim() || 'unknown';
+  const deploymentBlock =
+    typeof context?.deploymentBlock === 'number' && Number.isInteger(context.deploymentBlock)
+      ? String(context.deploymentBlock)
+      : 'unknown';
+  const artifactChecksum = context?.artifactChecksum?.trim() || 'unknown';
+
+  return `${address}:${chainId}:${releaseId}:${deploymentBlock}:${artifactChecksum}`;
+}
+
 /** Roots that are inherently wallet / chain scoped. */
 export const WALLET_SCOPED_ROOTS = [
   walletKeys.all,
@@ -58,6 +84,9 @@ export function invalidateWalletScope(
   const keys = keysForWalletScope(address, chainId);
   if (keys.length === 0) return 0;
 
+  queryClient.cancelQueries();
+  queryClient.getMutationCache().clear();
+
   for (const queryKey of keys) {
     queryClient.removeQueries({ queryKey: [...queryKey] });
   }
@@ -83,16 +112,25 @@ export function onWalletScopeChange(
     prevAddr && prevChain ? `${prevAddr}:${prevChain}` : null;
   const nextScope = nextAddr && nextChain ? `${nextAddr}:${nextChain}` : null;
 
+  const releaseAwarePrevious = buildProtocolContextKey({
+    address: prevAddr,
+    chainId: prevChain,
+  });
+  const releaseAwareNext = buildProtocolContextKey({
+    address: nextAddr,
+    chainId: nextChain,
+  });
+
   if (previousScope && previousScope !== nextScope) {
     const removed = invalidateWalletScope(queryClient, prevAddr, prevChain);
-    return { removed, previousScope, nextScope };
+    return { removed, previousScope: releaseAwarePrevious, nextScope: releaseAwareNext };
   }
 
   // Disconnect: clear last known wallet roots without touching global claims.
   if (previousScope && !nextScope) {
     const removed = invalidateWalletScope(queryClient, prevAddr, prevChain);
-    return { removed, previousScope, nextScope };
+    return { removed, previousScope: releaseAwarePrevious, nextScope: releaseAwareNext };
   }
 
-  return { removed: 0, previousScope, nextScope };
+  return { removed: 0, previousScope: releaseAwarePrevious, nextScope: releaseAwareNext };
 }
