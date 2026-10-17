@@ -112,6 +112,22 @@ production failure behaviour for RPC and API projection fallback.
 - `test:e2e` — Playwright E2E tests must pass against canonical mocks.
 - `build` — Next.js production build must succeed.
 
+## Reviewed quorum and failover presentation (UI-FE-077)
+
+`src/lib/rpc-health/` adds a reviewed-quorum boundary on top of the provider
+health model:
+
+- providers must match the reviewed chain and release before contributing to
+  quorum;
+- lagging heads and stale observations do not count;
+- divergent receipts/projections fail closed;
+- mutations are blocked when quorum/confidence is not satisfied;
+- `RpcHealthBanner` renders accessible primary/fallback/degraded/stale/
+  unavailable states with bounded recovery guidance;
+- telemetry contains state and counts only — never endpoints or API keys.
+
+See [`docs/RPC_HEALTH_QUORUM.md`](../RPC_HEALTH_QUORUM.md).
+
 ## Non-goals
 
 - Changing smart-contract or backend protocol authority.
