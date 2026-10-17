@@ -6,10 +6,10 @@
  * Accessible loading indicator with reduced-motion support.
  */
 
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { usePrefersReducedMotion } from '@/hooks/useReducedMotion';
 
 export function ClaimDetailSkeleton() {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const pulseClass = prefersReducedMotion ? '' : 'animate-pulse';
 
   return (
