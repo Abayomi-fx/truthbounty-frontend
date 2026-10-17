@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 
 export const ButtonDocs = () => {
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="p-5">
       <h2>Button Component</h2>
       <p>A reusable button component used across the app.</p>
 
