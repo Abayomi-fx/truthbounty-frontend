@@ -14,12 +14,11 @@
  *   </ChainIntegrityGuard>
  */
 
-import type { ReactNode } from 'react';
-import { useChainId } from 'wagmi';
+import type {ReactNode} from 'react';
+import {useChainId} from 'wagmi';
 import { isSupportedChain } from '@/config/chains';
 import { useRpcFallback } from '@/hooks/useRpcFallback';
 import { FallbackBoundary } from './FallbackBoundary';
-import type { IntegrityStatus } from '@/lib/rpc-fallback/types';
 
 export interface ChainIntegrityGuardProps {
   children: ReactNode;
@@ -45,7 +44,7 @@ export function ChainIntegrityGuard({
 
   const supported = isSupportedChain(chainId);
 
-  let integrityStatus: IntegrityStatus = 'valid';
+  let integrityStatus: 'valid' | 'blocked' | 'error' | 'degraded' = 'valid';
   let statusReason: string | null = null;
 
   if (!supported) {

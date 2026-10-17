@@ -1,5 +1,7 @@
 # V2-FE-140 — Frontend UI State Model
 
+> **Dispute initiation flow (V2-FE-114):** The canonical dispute initiation surface follows this state model. It reads dispute eligibility and evidence from the API projection, constructs the dispute transaction only from canonical contract ABI/address artifacts, and never fabricates calldata, gas estimates, transaction hashes, confirmations, or settlement. See §3 for its surface-specific projection.
+
 > **Companion to:** [THREAT_MODEL.md](./THREAT_MODEL.md)
 > **Rule:** Every surface that shows a transaction, reward, settlement, reputation, or protocol state must render every applicable state below. **No surface may jump directly from `pending` to `finalized`.**
 
@@ -33,7 +35,7 @@ The state model is derived from the actual hooks in this repo (`useTransactionMa
 
 ### 2.1 State transitions (transaction surfaces)
 
-──────────┐
+
 │ loading │
 └────┬─────┘
 │ (user submits)
@@ -59,6 +61,7 @@ The state model is derived from the actual hooks in this repo (`useTransactionMa
 ┌───────────┐
 │ reorged │ ──▶ (reconcile → back to pending/confirmed or failed)
 └───────────┘
+
 
 **Forbidden transitions:**
 - `pending` → `finalized` (must go through `confirmed`)
@@ -86,6 +89,7 @@ Every user-facing surface that touches protocol state must support the applicabl
 | Claim detail | ✅ | — | ✅ | — | ✅ | — | — | — | — |
 | Verification submission | ✅ | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Dispute submission | ✅ | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dispute initiation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Reward claim | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Reputation | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — |
 | Leaderboard | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — |
@@ -94,6 +98,30 @@ Every user-facing surface that touches protocol state must support the applicabl
 | SIWE auth | ✅ | — | — | ✅ | ✅ | ✅ | ✅ | — | — |
 
 **Legend:** ✅ required • — not applicable
+
+### Canonical dispute initiation projection
+
+The dispute initiation surface (V2-FE-114) reads dispute eligibility and
+evidence from the API projection and constructs the dispute transaction only
+from canonical contract ABI/address artifacts. It exposes:
+
+- `loading`: skeleton while eligibility and evidence are requested;
+- `empty`: no disputable claim/evidence is available; the action is disabled
+	with an honest explanation (no sample data is inserted);
+- `stale`: eligibility or evidence is beyond its freshness bound; the submit
+	action is gated until a successful refresh;
+- `rejected`: the user rejected the wallet request; return focus to the submit
+	trigger and allow retry;
+- `failed`: missing/unresolved canonical artifact, unsupported chain, simulation
+	disagreement, or API error; fail closed with a retry and no fabricated state;
+- `pending`: submitted to the mempool; show the real transaction hash;
+- `confirmed`: included in a block; show confirmations, not success;
+- `finalized`: finality reached per chain rules; show explorer link;
+- `reorged`: previously confirmed dispute transaction was reorged out;
+	reconcile before presenting any outcome.
+
+The surface must never jump from `pending` to `finalized`, and must never
+present a dispute as accepted without a validated receipt and finality.
 
 ### Canonical claim detail projection
 
@@ -181,6 +209,7 @@ Every non-terminal state must be **recoverable** without a page reload:
 | `confirmed` | `useReceiptProjection.ts`, `useFinalizationDetection.ts` |
 | `finalized` | `useFinalizationDetection.ts` |
 | `reorged` | `useReorgReconciliation.ts`, `useStateReconciliation.ts` |
+| Dispute initiation | `useDisputeInitiation.ts` (eligibility, simulation, submit, receipt, finality) |
 
 ---
 
