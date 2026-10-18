@@ -1,6 +1,7 @@
 import { test as base, expect, type Page, type Locator } from '@playwright/test';
 import { seededClaims, seededClaimById } from './claims';
 import type { ClaimListItem, ClaimsListEnvelope } from '../../src/app/types/claim-list';
+import { assertProductionEnv } from '../../src/app/lib/env';
 
 /**
  * Local structural mirror of the contract-sourced stake review projection.
@@ -284,6 +285,10 @@ export async function readErrorSummaryEntries(
 export const test = base.extend<{ stubbedApi: void }>({
   stubbedApi: [
     async ({ page }, use) => {
+      // Re-assert the environment contract per test so a production build
+      // cannot silently run against placeholder or wrong-chain configuration.
+      assertProductionEnv(process.env);
+
       await stubClaimsApi(page);
       await use();
     },
