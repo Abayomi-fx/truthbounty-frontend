@@ -28,3 +28,14 @@ export {
   useTelemetryContext,
 } from './TelemetryProvider';
 export type { TelemetryContextValue, TelemetryProviderProps } from './TelemetryProvider';
+
+// Reduced data & constrained network — UI-FE-082
+export {
+  ReducedDataProvider,
+  ReducedDataContext,
+  useReducedDataContext,
+} from './ReducedDataProvider';
+export type {
+  ReducedDataContextValue,
+  ReducedDataProviderProps,
+} from './ReducedDataProvider';

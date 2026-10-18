@@ -5,16 +5,29 @@ import { useSiweAuth } from '@/hooks/useSiweAuth';
 import { useAccount } from '@/hooks/useAccount';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, CheckCircle2, Loader2, LogOut, Wallet } from 'lucide-react';
+import { usePersistedState } from '@/lib/persistence/usePersistedState';
+
+// Local fallback key to avoid a hard dependency on the persistence keys module
+// while the cross-cutting persistence boundary is being migrated.
+const SIWE_AUTH_PERSISTENCE_KEY_LOCAL = 'truthbounty.siwe.ui-prefs.v1';
+
+interface SiwUUiPrefs {
+  /** Last attempted address for display hints only; never authoritative. */
+  lastAddress?: string;
+  /** Whether the user dismissed the introduction copy. */
+  introDismissed?: boolean;
+}
 
 /**
- * SafeSiweAuth provides a secure, user-facing client interface for the Sign-In with Ethereum (SIWE) flow.
- * It manages the UI state model for authentication including connected, disconnected, loading, 
+ * SafeSiwEAuth provides a secure, user-facing client interface for the Sign-In with Ethereum (SIWE) flow.
+ * It manages the UI state model for authentication including connected, disconnected, loading,
  * ready-to-sign, signing, and verified states.
- * 
+ *
  * Security and UX guarantees:
  * - Deterministic, recoverable failure states for user rejections and network errors.
  * - Accessible loading and error announcements (aria-live, role="alert").
  * - Does not invent success states; relies on canonical hook validation.
+ * - Persisted UI preferences are versioned, bounded, and exclude any sensitive material.
  */
 export function SafeSiweAuth() {
   const account = useAccount();
@@ -32,6 +45,30 @@ export function SafeSiweAuth() {
     session,
   } = useSiweAuth();
 
+  // Persisted non-sensitive UI preferences only. The authoritative session lives in the
+  // canonical hook and is never written to browser storage.
+  const { value: uiPrefs, setValue: setUiPrefs } = usePersistedState<SiwUUiPrefs>(
+    SIWE_AUTH_PERSISTENCE_KEY_LOCAL,
+    {},
+  );
+
+  // Record the last address only as a non-authoritative display hint.
+  // This is purely cosmetic and must not be treated as proof of ownership.
+  React.useEffect(() => {
+    if (!address) return;
+    setUiPrefs((prev) => {
+      if (prev.lastAddress === address) return prev;
+      return { ...prev, lastAddress };
+    });
+  }, [address, setUiPrefs]);
+
+  // On explicit sign-out, drop all persisted UI preferences so account switches do not
+  // leak prior address hints to the next user of the browser.
+  const handleSignOut = React.useCallback(() => {
+    setUiPrefs({});
+    clear();
+  }, [clear, setUiPrefs]);
+
   // 1. Wallet is disconnected
   if (!account || account.isDisconnected) {
     return (
@@ -46,7 +83,7 @@ export function SafeSiweAuth() {
           </p>
         </div>
         {session && (
-          <Button variant="outline" onClick={clear} className="w-full gap-2 mt-4" aria-label="Sign out">
+          <Button variant="outline" onClick={handleSignOut} className="w-full gap-2 mt-4" aria-label="Sign out">
             <LogOut className="w-4 h-4" />
             Sign Out
           </Button>
@@ -68,7 +105,7 @@ export function SafeSiweAuth() {
             {address}
           </p>
         </div>
-        <Button variant="outline" onClick={clear} className="w-full gap-2 mt-4" aria-label="Sign out">
+        <Button variant="outline" onClick={handleSignOut} className="w-full gap-2 mt-4" aria-label="Sign out">
           <LogOut className="w-4 h-4" />
           Sign Out
         </Button>
@@ -159,7 +196,7 @@ export function SafeSiweAuth() {
         Begin Sign-In
       </Button>
       {session && (
-        <Button variant="outline" onClick={clear} className="w-full gap-2" aria-label="Sign out">
+        <Button variant="outline" onClick={handleSignOut} className="w-full gap-2" aria-label="Sign out">
           <LogOut className="w-4 h-4" />
           Sign Out
         </Button>

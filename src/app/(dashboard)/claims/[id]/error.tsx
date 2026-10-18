@@ -6,6 +6,13 @@ import { RouteErrorFallback } from '@/components/common/RouteErrorFallback';
 /**
  * Claim-detail segment boundary. Retry is safe and never duplicates
  * on-chain submissions; canonical receipts drive lifecycle state.
+ *
+ * Error categories are preserved from their authoritative source and
+ * surfaced through the shared RouteErrorFallback. This boundary must not
+ * convert backend authorization failures into client validation errors,
+ * and must not steal focus during background refresh. When the failure
+ * is transaction recovery, focus must remain on the recovery affordance
+ * rather than jumping to a field.
  */
 export default function ClaimDetailError({
   error,
@@ -18,5 +25,5 @@ export default function ClaimDetailError({
     console.error('Claim detail route error:', error);
   }, [error]);
 
-  return <RouteErrorFallback error={error} reset={reset} scope="Claim detail" />;
+  return <RouteErrorFallback error=error reset={reset} scope="Claim detail" />;
 }

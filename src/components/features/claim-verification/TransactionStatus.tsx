@@ -6,6 +6,7 @@ export type TransactionStatusValue =
   | 'preparing'
   | 'signature-requested'
   | 'submitted'
+  | 'confirmed'
   | 'confirming'
   | 'safe'
   | 'indexing'
@@ -46,6 +47,7 @@ const busyStatuses = new Set<TransactionStatusValue>([
   'preparing',
   'signature-requested',
   'submitted',
+  'confirmed',
   'confirming',
   'safe',
   'indexing',
@@ -57,7 +59,8 @@ const defaultMessages: Record<TransactionStatusValue, string> = {
   pending: 'Transaction pending...',
   preparing: 'Preparing transaction...',
   'signature-requested': 'Confirm the transaction in your wallet.',
-  submitted: 'Transaction submitted.',
+  submitted: 'Transaction submitted; waiting for confirmation.',
+  confirmed: 'Transaction confirmed; waiting for finality.',
   confirming: 'Transaction confirming...',
   safe: 'Transaction is safe.',
   indexing: 'Transaction confirmed; waiting for indexing.',
@@ -88,6 +91,7 @@ export function TransactionStatus({
       <div
         role="status"
         aria-live="polite"
+        aria-busy="true"
         className="flex items-center space-x-2 text-gray-600 dark:text-gray-300"
       >
         <svg
@@ -114,6 +118,7 @@ export function TransactionStatus({
       <div
         role="alert"
         aria-live="assertive"
+        aria-atomic="true"
         className="flex flex-col space-y-2 text-red-600 dark:text-red-400"
       >
         <p className="text-sm font-medium">{message}</p>
