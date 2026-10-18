@@ -61,7 +61,7 @@ export default function PublicLandingPage() {
             <VerificationNodes isLoading={claimsLoading && !hasData} />
           </div>
         </div>
-        <ActiveClaimsTable isLoading={claimsLoading && !hasData} />
+        <ActiveClaimsTableContainer />
       </div>
     </MainLayout>
   );

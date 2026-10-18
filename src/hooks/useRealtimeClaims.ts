@@ -22,7 +22,7 @@ export function useRealtimeClaim(claimId: string) {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribe = subscribe('CLAIM_STATUS_CHANGED', (payload) => {
+    const unsubscribe = subscribe("CLAIM_STATUS_CHANGED", (payload) => {
       if (payload.claimId === claimId) {
         // Invalidate the claim query to trigger a refetch
         queryClient.invalidateQueries({
@@ -38,7 +38,7 @@ export function useRealtimeClaim(claimId: string) {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribe = subscribe('VERIFICATION_ADDED', (payload) => {
+    const unsubscribe = subscribe("VERIFICATION_ADDED", (payload) => {
       if (payload.claimId === claimId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.verifications.byClaim(claimId),
@@ -56,15 +56,15 @@ export function useRealtimeClaim(claimId: string) {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribeStatus = subscribe('CLAIM_STATUS_CHANGED', (payload) => {
-      if (payload.claimId === claimId && payload.newStatus === 'DISPUTED') {
+    const unsubscribeStatus = subscribe("CLAIM_STATUS_CHANGED", (payload) => {
+      if (payload.claimId === claimId && payload.newStatus === "DISPUTED") {
         queryClient.invalidateQueries({
           queryKey: queryKeys.disputes.byClaim(claimId),
         });
       }
     });
 
-    const unsubscribeDispute = subscribe('DISPUTE_RESOLVED', (payload) => {
+    const unsubscribeDispute = subscribe("DISPUTE_RESOLVED", (payload) => {
       if (payload.claimId === claimId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.claims.detail(claimId),
@@ -84,7 +84,7 @@ export function useRealtimeClaim(claimId: string) {
   // Function to manually request updates
   const requestUpdate = useCallback(() => {
     send({
-      type: 'REQUEST_CLAIM_UPDATE',
+      type: "REQUEST_CLAIM_UPDATE",
       payload: { claimId },
     });
   }, [send, claimId]);
@@ -105,7 +105,7 @@ export function useRealtimeClaimsList() {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribe = subscribe('CLAIM_CREATED', () => {
+    const unsubscribe = subscribe("CLAIM_CREATED", () => {
       // New claim created - invalidate list
       queryClient.invalidateQueries({
         queryKey: queryKeys.claims.lists(),
