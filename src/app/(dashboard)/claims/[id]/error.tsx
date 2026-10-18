@@ -2,10 +2,16 @@
 
 import { useEffect } from 'react';
 import { RouteErrorFallback } from '@/components/common/RouteErrorFallback';
+import { classifyRouteError } from '@/lib/routes/errors';
 
 /**
  * Claim-detail segment boundary. Retry is safe and never duplicates
  * on-chain submissions; canonical receipts drive lifecycle state.
+ *
+ * Errors are classified into authorization, configuration,
+ * dependency, and missing-resource failures so the fallback can render
+ * the correct recovery affordance without ever prompting a signature or
+ * switching network.
  *
  * Error categories are preserved from their authoritative source and
  * surfaced through the shared RouteErrorFallback. This boundary must not
@@ -25,5 +31,14 @@ export default function ClaimDetailError({
     console.error('Claim detail route error:', error);
   }, [error]);
 
-  return <RouteErrorFallback error=error reset={reset} scope="Claim detail" />;
+  const kind = classifyRouteError(error);
+
+  return (
+    <RouteErrorFallback
+      error={error}
+      reset={reset}
+      scope="Claim detail"
+      kind={kind}
+    />
+  );
 }

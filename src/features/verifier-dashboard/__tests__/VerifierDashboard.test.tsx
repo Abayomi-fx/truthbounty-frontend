@@ -98,6 +98,38 @@ describe("VerifierDashboard", () => {
     expect(screen.getByText(/Your choice is sealed/)).toBeTruthy();
   });
 
+  it("never exposes protected evidence or choice during the commit phase", () => {
+    render(
+      <VerifierDashboard
+        {...base}
+        available={ready([
+          item({ protectedEvidence: "SECRET-EVIDENCE", protectedChoice: "SECRET-CHOICE" }),
+        ])}
+      />,
+    );
+    expect(screen.queryByText(/SECRET-EVIDENCE/)).toBeNull();
+    expect(screen.queryByText(/SECRET-CHOICE/)).toBeNull();
+    expect(screen.getByText(/Evidence sealed/)).toBeTruthy();
+    expect(screen.getByText(/Your choice is sealed/)).toBeTruthy();
+  });
+
+  it("reveals protected evidence and choice in the reveal phase", () => {
+    render(
+      <VerifierDashboard
+        {...base}
+        available={ready([
+          item({
+            phase: "reveal",
+            protectedEvidence: "EVIDENCE-OK",
+            protectedChoice: "CHOICE-OK",
+          }),
+        ])}
+      />,
+    );
+    expect(screen.getByText(/EVIDENCE-OK/)).toBeTruthy();
+    expect(screen.getByText(/CHOICE-OK/)).toBeTruthy();
+  });
+
   it("never labels a local submission as completed", () => {
     render(<VerifierDashboard {...base} available={ready([item({ state: "submitted-pending-confirmation" })])} />);
     expect(screen.getByText(/awaiting canonical confirmation/)).toBeTruthy();

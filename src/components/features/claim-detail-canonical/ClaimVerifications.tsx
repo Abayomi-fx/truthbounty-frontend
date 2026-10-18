@@ -1,7 +1,8 @@
 'use client';
 
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import type { ClaimDetailProjection, ClaimStatus } from '@/app/types/claim-detail-projection';
+import type { ClaimDetailProjection } from '@/app/types/claim-detail-projection';
+import type { ClaimStatus } from '@/app/types/claim';
 import { ConfidenceMeter } from '@/components/ui/primitives/ConfidenceMeter';
 import { OutcomeBadge } from '@/components/ui/primitives/OutcomeBadge';
 import { StakeWeightDisplay } from '@/components/ui/primitives/StakeWeightDisplay';

@@ -160,8 +160,7 @@ export function OperationalQueueTable({
                         </button>
                       </td>
                     </tr>
-                  )
-                ))}
+                  ))}
                 </tbody>
               </table>
             </div>

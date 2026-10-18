@@ -1,16 +1,44 @@
-
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MotionSafeStatus } from '@/components/ui/MotionSafeStatus';
+import { resolveLegacyRedirect } from '@/lib/routes/redirects';
+
+/**
+ * Legacy alias boundary for `/claim-detail`.
+ *
+ * The canonical route tree owns the claim detail view at `/claims/:claimId`.
+ * This legacy path only resolves to the claims index when no claim identifier is
+ * present. When a claim identifier is present the redirect is preserved and
+ * forwarded to the canonical claim detail route with query and hash data
+ * intact. No redirect opens a signature, switches network, or discards a draft.
+ */
+
+function buildLegacyTarget(
+  pathname: string,
+  searchParams: URLSearchParams,
+  hash: string,
+): string {
+  const target = resolveLegacyRedirect(pathname, searchParams);
+  const query = searchParams.toString();
+  const withQuery = query ? `${target}?${query}` : target;
+  return hash ? `${withQuery}#${hash}` : withQuery;
+}
 
 export default function ClaimDetailRedirectPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    router.replace('/');
-  }, [router]);
+    const hash =
+      typeof window !== 'undefined' && window.location.hash
+        ? window.location.hash.slice(1)
+        : '';
+    const target = buildLegacyTarget(pathname, searchParams, hash);
+    router.replace(target);
+  }, [pathname, router, searchParams]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 dark:bg-gray-950">
@@ -35,6 +63,7 @@ export default function ClaimDetailRedirectPage() {
             </svg>
           </div>
         </div>
+
 
         {/* Message */}
         <h1 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
