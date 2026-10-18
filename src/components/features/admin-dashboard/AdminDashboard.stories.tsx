@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { within, userEvent, expect } from '@storybook/test';
 import { AdminDashboard } from './AdminDashboard';
 import type { UseAdminDashboardDataReturn } from '@/hooks/useAdminDashboardData';
+import type { HealthObservation } from './healthObservation';
 
 const mockBaseData: UseAdminDashboardDataReturn = {
   isAuthorized: true,
@@ -16,6 +17,81 @@ const mockBaseData: UseAdminDashboardDataReturn = {
   isOffline: false,
   isPartialFailure: false,
   partialFailureMessage: null,
+  healthObservations: [
+    {
+      id: 'obs-api',
+      scope: 'api',
+      label: 'API Projection Service',
+      state: 'healthy',
+      freshness: 'fresh',
+      lastObservedAt: Date.now() - 4000,
+      finalizedBlock: 12345678,
+      finalizedBlockSource: 'Optimism L2 RPC',
+      detail: 'Projection reads within freshness window.',
+      affectedScope: [],
+      isThirdParty: false,
+    },
+    {
+      id: 'obs-rpc',
+      scope: 'rpc',
+      label: 'Optimism RPC Provider',
+      state: 'healthy',
+      freshness: 'fresh',
+      lastObservedAt: Date.now() - 3000,
+      finalizedBlock: 12345678,
+      finalizedBlockSource: 'Optimism Sepolia Sequencer',
+      detail: 'p99 latency 38ms; finalized head advancing.',
+      affectedScope: [],
+      isThirdParty: true,
+    },
+    {
+      id: 'obs-indexer',
+      scope: 'indexer',
+      label: 'Indexer Ingestion',
+      state: 'delayed',
+      freshness: 'fresh',
+      lastObservedAt: Date.now() - 28000,
+      finalizedBlock: 12345664,
+      finalizedBlockSource: 'Graph Node Indexer',
+      detail: '14 blocks behind finalized head; within tolerance.',
+      affectedScope: ['dispute-events', 'challenge-projections'],
+      isThirdParty: false,
+    },
+    {
+      id: 'obs-database',
+      scope: 'database',
+      label: 'Read Projection Database',
+      state: 'healthy',
+      freshness: 'fresh',
+      lastObservedAt: Date.now() - 2000,
+      finalizedBlock: 12345678,
+      finalizedBlockSource: 'Optimism L2 RPC',
+      detail: 'Replica lag 120ms.',
+      affectedScope: [],
+      isThirdParty: false,
+    },
+    {
+      id: 'obs-release',
+      scope: 'release',
+      label: 'Release Manifest Verification',
+      state: 'healthy',
+      freshness: 'fresh',
+      lastObservedAt: Date.now() - 6000,
+      finalizedBlock: 12345678,
+      finalizedBlockSource: 'manifest.json',
+      detail: 'ABI/manifest hash matches deployed proxy 0x7099…79C8.',
+      affectedScope: [],
+      isThirdParty: false,
+    },
+  ],
+  abiManifestVerification: {
+    status: 'verified',
+    manifestHash: '0x9f2c1a4b7e8d0f3a5c6b2e1d4a8f7c3b9e0d1a2b3c4d5e6f708192a3b4c5d6e7',
+    deployedAbiHash: '0x9f2c1a4b7e8d0f3a5c6b2e1d4a8f7c3b9e0d1a2b3c4d5e6f708192a3b4c5d6e7',
+    verifiedAt: Date.now() - 6000,
+    affectedScope: [],
+    detail: 'ABI matches canonical manifest for chain 11155420.',
+  },
   healthMetrics: [
     {
       id: 'metric-indexer-lag',
@@ -400,165 +476,119 @@ export const FixtureIsolation: Story = {
   },
 };
 
-export const DestructiveConfirmationBoundary: Story = {
-  args: {
-    testDataOverride: {
-      ...mockBaseData,
-      operationalQueue: mockBaseData.operationalQueue.map((item) => ({
-        ...item,
-        risk: 'high' as const,
-      })),
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Destructive/privileged controls must require explicit impact copy and confirmation boundaries before execution. Contract state remains canonical for any mutation.',
-      },
-    },
-  },
-};
+const withObservation = (
+  id: string,
+  patch: Partial<HealthObservation>,
+): UseAdminDashboardDataReturn => ({
+  ...mockBaseData,
+  healthObservations: mockBaseData.healthObservations.map((obs) =>
+    obs.id === id ? { ...obs, ...patch } : obs,
+  ),
+});
 
-export const ReadOnlyParameters: Story = {
+export const HealthAllHealthy: Story = {
   args: {
     testDataOverride: mockBaseData,
   },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Read-only canonical parameters sourced from contract manifests. These values are not editable from the UI.',
-      },
-    },
-  },
 };
 
-export const GovernanceNotices: Story = {
+export const HealthDegraded: Story = {
   args: {
-    testDataOverride: mockBaseData,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Governance notices including timelock and escrow invariants. Notices must be announced with appropriate accessible roles.',
-      },
-    },
+    testDataOverride: withObservation('obs-database', {
+      state: 'degraded',
+      detail: 'Replica lag 4.2s exceeds 1s SLO.',
+      affectedScope: ['read-projections'],
+    }),
   },
 };
 
-export const AuditRecords: Story = {
+export const HealthDelayed: Story = {
   args: {
-    testDataOverride: mockBaseData,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Audit record table of prior operator actions with consequence hashes and timestamps.',
-      },
-    },
+    testDataOverride: withObservation('obs-indexer', {
+      state: 'delayed',
+      detail: '62 blocks behind finalized head; exceeds 50-block tolerance.',
+      affectedScope: ['dispute-events', 'challenge-projections', 'appeal-windows'],
+    }),
   },
 };
 
-export const HealthMetrics: Story = {
+export const HealthStale: Story = {
   args: {
-    testDataOverride: mockBaseData,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Health metric cards covering healthy and warning states with source attribution and last-updated timestamps.',
-      },
-    },
+    testDataOverride: withObservation('obs-api', {
+      state: 'stale',
+      freshness: 'stale',
+      lastObservedAt: Date.now() - 1000 * 60 * 45,
+      detail: 'No successful observation in 45 minutes.',
+      affectedScope: ['admin-overview'],
+    }),
   },
 };
 
-export const DisabledUnavailableActions: Story = {
+export const HealthUnavailable: Story = {
   args: {
-    testDataOverride: {
-      ...mockBaseData,
-      isAuthorized: false,
-      unauthorizedReason: 'Unpinned actions render unavailable.',
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Disabled/unavailable action state. Unpinned actions must render unavailable and must not be focusable as actionable controls.',
-      },
-    },
+    testDataOverride: withObservation('obs-rpc', {
+      state: 'unavailable',
+      freshness: 'unknown',
+      lastObservedAt: null,
+      finalizedBlock: null,
+      finalizedBlockSource: null,
+      detail: 'No response from provider; observation unavailable.',
+      affectedScope: ['indexer', 'database', 'release'],
+    }),
   },
 };
 
-export const ErrorState: Story = {
+export const HealthThirdPartyDependency: Story = {
+  args: {
+    testDataOverride: withObservation('obs-rpc', {
+      state: 'degraded',
+      isThirdParty: true,
+      detail: 'Third-party provider degraded. Not a TruthBounty guarantee.',
+      affectedScope: ['indexer'],
+    }),
+  },
+};
+
+export const HealthAbiManifestMismatch: Story = {
   args: {
     testDataOverride: {
       ...mockBaseData,
-      isPartialFailure: true,
-      partialFailureMessage: 'Indexer supervisor unreachable: connection refused',
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Error state rendering with accessible error semantics and contrast-compliant messaging.',
+      abiManifestVerification: {
+        ...mockBaseData.abiManifestVerification,
+        status: 'mismatch',
+        deployedAbiHash: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        detail: 'Deployed ABI hash does not match canonical manifest.',
+        affectedScope: ['dispute-engine', 'escrow'],
       },
     },
   },
 };
 
-export const OfflineState: Story = {
+export const HealthAbiManifestUnverified: Story = {
   args: {
     testDataOverride: {
       ...mockBaseData,
-      isOffline: true,
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Offline state. Cached projections must be clearly labelled and privileged mutations must remain unavailable.',
+      abiManifestVerification: {
+        ...mockBaseData.abiManifestVerification,
+        status: 'unverified',
+        verifiedAt: null,
+        detail: 'Manifest verification pending; actions render unavailable.',
+        affectedScope: ['all-mutations'],
       },
     },
   },
 };
 
-export const UnsupportedChain: Story = {
+export const HealthMissingObservations: Story = {
   args: {
     testDataOverride: {
       ...mockBaseData,
-      isSupportedChain: false,
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Unsupported chain state. Optimism/EVM only; the UI must not establish protocol authority on unsupported networks.',
-      },
-    },
-  },
-};
-
-export const DisconnectedWallet: Story = {
-  args: {
-    testDataOverride: {
-      ...mockBaseData,
-      isConnected: false,
-      account: null,
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Disconnected wallet state. Wallet connection alone never establishes protocol authority.',
+      healthObservations: [],
+      abiManifestVerification: {
+        ...mockBaseData.abiManifestVerification,
+        status: 'unverified',
+        verifiedAt: null,
+        detail: 'No observations available; health cannot be asserted.',
       },
     },
   },

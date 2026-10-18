@@ -10,6 +10,12 @@ const LABEL: Record<QueueItemState, string> = {
   expired: "Expired",
   "already-submitted": "Already submitted",
   unavailable: "Unavailable",
+  "missed-reveal": "Missed reveal",
+  "wrong-salt": "Wrong salt",
+  replaced: "Replaced",
+  slashed: "Slashed",
+  refunded: "Refunded",
+  tied: "Tied",
 };
 
 export function QueuePanel({
@@ -55,6 +61,7 @@ export function QueuePanel({
             .map((item) => {
               const d = formatDeadline(item.deadlineIso);
               const phaseOpen = item.phase !== "closed";
+              const revealPermitted = item.phase !== "commit";
               return (
                 <li key={item.id} className="rounded border p-3">
                   <p className="font-medium">{item.title}</p>
@@ -65,15 +72,15 @@ export function QueuePanel({
                     Deadline: <time dateTime={item.deadlineIso}>{d.absolute}</time> ({d.relative})
                   </p>
                   <p className="text-sm">{formatFreshness(item.freshness.fetchedAt, item.freshness.stale)}</p>
-                  {item.protectedEvidence !== undefined ? (
+                  {revealPermitted && item.protectedEvidence !== undefined ? (
                     <p>Evidence: {item.protectedEvidence}</p>
                   ) : (
-                    <p>Evidence sealed until the canonical phase permits access.</p>
+                    <p>Evidence sealed until the canonical reveal phase.</p>
                   )}
-                  {item.protectedChoice !== undefined ? (
+                  {revealPermitted && item.protectedChoice !== undefined ? (
                     <p>Your choice: {item.protectedChoice}</p>
                   ) : (
-                    <p>Your choice is sealed.</p>
+                    <p>Your choice is sealed until the reveal phase.</p>
                   )}
                   {!phaseOpen && <p>Phase closed.</p>}
                 </li>

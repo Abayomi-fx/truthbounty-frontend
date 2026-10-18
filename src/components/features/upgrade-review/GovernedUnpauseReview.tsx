@@ -17,7 +17,7 @@ import type {
  * a call and it never exposes an emergency control of any kind.
  */
 export interface GovernedUnpauseReviewProps {
-  governedCalls: UpgradeGovernedCall[];
+  governedCalls: readonly UpgradeGovernedCall[];
   currentLifecycleState: ProtocolLifecycleState;
   currentLifecycleLabel: string;
   currentLifecycleBlockingReasons: string[];

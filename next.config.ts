@@ -7,10 +7,15 @@ import {
   buildApiSecurityHeaders,
   CACHE_CONTROL_POLICIES,
 } from "./src/lib/security/headers";
+import { assertProductionEnv } from "./src/app/lib/env";
 
 const staticSecurityHeaders = Object.entries(buildStaticSecurityHeaders()).map(
   ([key, value]) => ({ key, value }),
 );
+
+// Fail closed on invalid required configuration during production builds.
+// Local/test defaults are explicit and non-production.
+assertProductionEnv(process.env);
 
 const apiSecurityHeaders = Object.entries(buildApiSecurityHeaders()).map(
   ([key, value]) => ({ key, value }),

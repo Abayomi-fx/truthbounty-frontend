@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const MAX_REPORT_SIZE = 16 * 1024;
-const MAX_LOG_FIELD_LENGTH = 2048;
+
 
 type CspViolation = Record<string, unknown>;
 
@@ -46,18 +46,23 @@ function normalizeViolation(value: unknown): CspViolation | null {
   };
 }
 
-function safeLogValue(value: unknown): string | number | undefined {
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : undefined;
-  }
+const DIRECTIVES = new Set([
+  'default-src', 'script-src', 'script-src-elem', 'script-src-attr',
+  'style-src', 'style-src-elem', 'style-src-attr', 'connect-src', 'img-src',
+  'frame-src', 'worker-src', 'font-src', 'media-src', 'object-src',
+  'base-uri', 'form-action', 'frame-ancestors', 'manifest-src',
+]);
 
-  if (typeof value === "string") {
-    return value.length > MAX_LOG_FIELD_LENGTH
-      ? value.slice(0, MAX_LOG_FIELD_LENGTH)
-      : value;
-  }
-
-  return undefined;
+/** Never retain attacker-controlled URL, source, sample, policy, or arbitrary text. */
+function privateViolation(violation: CspViolation) {
+  return {
+    effectiveDirective: typeof violation.effectiveDirective === 'string' && DIRECTIVES.has(violation.effectiveDirective)
+      ? violation.effectiveDirective : 'unknown',
+    disposition: violation.disposition === 'enforce' || violation.disposition === 'report'
+      ? violation.disposition : 'unknown',
+    statusCode: typeof violation.statusCode === 'number' && Number.isInteger(violation.statusCode)
+      && violation.statusCode >= 100 && violation.statusCode <= 599 ? violation.statusCode : undefined,
+  };
 }
 
 /**
@@ -126,14 +131,7 @@ export async function POST(request: Request) {
     }
 
     for (const violation of violations) {
-      console.warn("CSP violation", {
-        effectiveDirective: safeLogValue(violation.effectiveDirective),
-        blockedURL: safeLogValue(violation.blockedURL),
-        documentURL: safeLogValue(violation.documentURL),
-        sourceFile: safeLogValue(violation.sourceFile),
-        disposition: safeLogValue(violation.disposition),
-        statusCode: safeLogValue(violation.statusCode),
-      });
+      console.warn("CSP violation", privateViolation(violation));
     }
 
     return new NextResponse(null, { status: 204 });
