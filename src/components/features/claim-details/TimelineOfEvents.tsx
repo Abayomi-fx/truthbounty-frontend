@@ -1,6 +1,26 @@
+import { useMemo } from "react";
 import { TimelineEvent } from "@/app/types/dispute";
-import { Clock } from "lucide-react";
-import { formatAddress } from "@/lib/format";
+import { CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
+
+function getStatusIcon(type: string, isRecent: boolean) {
+  const normalized = type.toLowerCase();
+  if (normalized.includes("reject") || normalized.includes("fail")) {
+    return <XCircle size={14} className="text-red-400" aria-hidden="true" />;
+  }
+  if (normalized.includes("dispute") || normalized.includes("warn")) {
+    return <AlertCircle size={14} className="text-amber-400" aria-hidden="true" />;
+  }
+  if (normalized.includes("resolve") || normalized.includes("approve") || normalized.includes("verified")) {
+    return <CheckCircle size={14} className="text-emerald-400" aria-hidden="true" />;
+  }
+  return (
+    <Clock
+      size={14}
+      className={isRecent ? "text-primary" : "text-gray-400"}
+      aria-hidden="true"
+    />
+  );
+}
 
 export const TimelineOfEvents = ({ events }: { events: TimelineEvent[] }) => {
   const hasEvents = events && events.length > 0;
@@ -48,8 +68,8 @@ export const TimelineOfEvents = ({ events }: { events: TimelineEvent[] }) => {
                 <span>{event.actor}</span>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

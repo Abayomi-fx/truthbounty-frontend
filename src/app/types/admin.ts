@@ -8,6 +8,7 @@
 export type OperationRiskLevel = 'low' | 'medium' | 'high';
 export type OperationAuthority = 'PROTOCOL_OPERATOR' | 'EMERGENCY_ADMIN' | 'AUDIT_ADMIN';
 export type OperationalItemStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
+export type OperationalQueueLifecycle = 'pending' | 'delayed' | 'failed' | 'quarantined' | 'recovered';
 
 export interface OperationalQueueItem {
   id: string;
@@ -20,6 +21,15 @@ export interface OperationalQueueItem {
   queueAge: string;
   createdAt: string;
   status: OperationalItemStatus;
+  /** Optional backend lifecycle projection. Missing values remain unknown in the UI. */
+  queueState?: OperationalQueueLifecycle;
+  /** Retry facts are only authoritative when supplied by the protected queue adapter. */
+  retryEligibility?: {
+    eligible: boolean;
+    permissionMapped: boolean;
+    idempotencyProofRef?: string;
+    reason?: string;
+  };
 }
 
 export interface SystemHealthMetric {

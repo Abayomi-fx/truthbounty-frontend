@@ -5,6 +5,7 @@ import { TransactionLifecycleState } from '../hooks/useTransactionLifecycleMonit
 import { createReceiptFromLifecycleState } from '@/lib/receipts';
 import { TransactionReceiptModal } from '@/components/receipts/TransactionReceiptModal';
 import type { CanonicalReceiptRecord, ReceiptActionType } from '@/lib/receipts/types';
+import { usePublicServiceStatus } from '@/hooks/usePublicServiceStatus';
 
 interface Props {
     txState: TransactionLifecycleState | null;
@@ -25,10 +26,15 @@ export const TransactionStatusTracker: React.FC<Props> = ({
 }) => {
     const [isReceiptOpen, setIsReceiptOpen] = useState(false);
     const [receipt, setReceipt] = useState<CanonicalReceiptRecord | null>(null);
+    const { status: publicStatus, freshness } = usePublicServiceStatus();
 
     if (!txState) return null;
 
     const isPendingOrStuck = txState.status === 'pending' || txState.status === 'stuck';
+    const isStale = freshness === 'stale' || freshness === 'missing';
+    const isDegraded = publicStatus?.overall === 'degraded' || publicStatus?.overall === 'partial';
+    const isUnavailable = publicStatus?.overall === 'unavailable';
+    const isDelayed = publicStatus?.overall === 'delayed';
 
     const handleOpenReceipt = () => {
         try {
@@ -67,6 +73,20 @@ export const TransactionStatusTracker: React.FC<Props> = ({
                 <p className="text-xs text-slate-300 mb-4 leading-relaxed bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50">
                     {txState.message}
                 </p>
+
+                {(isStale || isDegraded || isUnavailable || isDelayed) && (
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="mb-3 rounded-lg border border-amber-700/50 bg-amber-950/40 p-2.5 text-[11px] leading-relaxed text-amber-200"
+                    >
+                        <span className="font-semibold">Service status: </span>
+                        {isUnavailable && 'Unavailable — observations could not be retrieved.'}
+                        {isStale && 'Stale — last observation is outdated; do not treat as healthy.'}
+                        {isDelayed && 'Delayed — observations are lagging behind.'}
+                        {isDegraded && 'Degraded or partial — some dependencies are not reporting.'}
+                    </div>
+                )}
 
                 <div className="flex flex-col gap-2">
                     {isPendingOrStuck && (
@@ -111,4 +131,4 @@ export const TransactionStatusTracker: React.FC<Props> = ({
             )}
         </>
     );
-};
+};

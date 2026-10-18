@@ -32,6 +32,7 @@ import {
   RefreshCw,
   Clock,
   ShieldAlert,
+  AlertOctagon,
 } from 'lucide-react';
 import { useAdminDashboardData, type UseAdminDashboardDataReturn } from '@/hooks/useAdminDashboardData';
 import { AdminUnauthorizedState } from './AdminUnauthorizedState';
@@ -42,6 +43,8 @@ import { SecurityGovernanceNotices } from './SecurityGovernanceNotices';
 import { ReadOnlyConfigSummary } from './ReadOnlyConfigSummary';
 import { AdminAuditTrail } from './AdminAuditTrail';
 import { OperationalHealthComposition } from './OperationalHealthComposition';
+import { FormErrorSummary, type FormErrorSummaryItem } from '@/components/ui/FormErrorSummary';
+import { useFormErrorSummary } from '@/hooks/useFormErrorSummary';
 import type { OperationalQueueItem } from '@/app/types/admin';
 
 export interface AdminDashboardProps {
@@ -93,6 +96,8 @@ export function AdminDashboardContent({
 
   const [selectedOperation, setSelectedOperation] = useState<OperationalQueueItem | null>(null);
   const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [operationErrors, setOperationErrors] = useState<FormErrorSummaryItem[]>([]);
+  const errorSummaryRef = useFormErrorSummary(operationErrors);
 
   // If unauthorized: return explicit denied state
   if (!isAuthorized) {
@@ -109,12 +114,32 @@ export function AdminDashboardContent({
 
   const handleConfirmOperation = async (operationId: string, confirmationText: string) => {
     setActionFeedback(null);
+    setOperationErrors([]);
     const result = await execute(operationId, confirmationText);
     if (result.success) {
       setActionFeedback({ type: 'success', message: result.message });
       setTimeout(() => setActionFeedback(null), 6000);
     } else {
       setActionFeedback({ type: 'error', message: result.message });
+      // Preserve authoritative error category from the server response.
+      // Authorization failures must remain authorization failures — never
+      // downgraded to client-side validation errors.
+      const category: FormErrorSummaryItem['category'] =
+        result.category === 'authorization'
+          ? 'authorization'
+          : result.category === 'server'
+            ? 'server'
+            : result.category === 'simulation'
+              ? 'simulation'
+              : 'validation';
+      setOperationErrors([
+        {
+          id: 'operation-confirmation',
+          fieldId: 'operation-confirmation-input',
+          category,
+          message: result.message,
+        },
+      ]);
     }
   };
 
@@ -124,7 +149,7 @@ export function AdminDashboardContent({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
         <div>
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" aria-hidden="true" />
+            <Shield className="h6 w-6 text-primary" aria-hidden="true" />
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Bounded Admin Operations & Health
             </h1>
@@ -171,7 +196,7 @@ export function AdminDashboardContent({
               <p className="text-xs text-muted-foreground">
                 {isOffline
                   ? 'Displaying cached administrative diagnostics. Reconnect to resume live telemetry.'
-                  : 'Last indexer sync was over 45s ago. Health states may not reflect current block.'}
+                  : 'Last indexer sync was over 45s ogo. Health states may not reflect current block.'}
               </p>
             </div>
           </div>
@@ -224,7 +249,7 @@ export function AdminDashboardContent({
             <div>
               <p className="text-sm font-semibold text-destructive">Partial Telemetry Failure</p>
               <p className="text-xs text-muted-foreground">
-                {partialFailureMessage || 'Failed to synchronize complete operational queue from backend API.'}
+                {partialFailureMessage || 'Failed to synchronize complete operational queue from backend API.' }
               </p>
             </div>
           </div>
@@ -237,6 +262,21 @@ export function AdminDashboardContent({
             <span>Retry Sync</span>
           </button>
         </div>
+      )}
+
+      {/* 4a. Accessible Error Summary for failed submissions */}
+      {operationErrors.length > 0 && (
+        <FormErrorSummary
+          ref=errorSummaryRef}
+          errors={operationErrors}
+          title="Operation could not be completed"
+          onNavigateToField={(fieldId) => {
+            const el = document.getElementById(fieldId);
+            if (el instanceof HTMLElement) {
+              el.focus();
+            }
+          }}
+        />
       )}
 
       {/* 4. Action Feedback Notification */}
@@ -281,9 +321,9 @@ export function AdminDashboardContent({
 
       {/* 8. Bounded Operational Queues (with Mobile Card Alternatives) */}
       <OperationalQueueTable
-        queue={operationalQueue}
+        items={operationalQueue}
         isLoading={isLoading}
-        onSelectOperation={(item) => setSelectedOperation(item)}
+        onSelectOperation={(op) => setSelectedOperation(op)}
       />
 
       {/* 9. Read-Only Configuration Summary */}
