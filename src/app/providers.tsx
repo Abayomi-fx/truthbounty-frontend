@@ -11,6 +11,7 @@ import {
   FeatureFlagProvider,
   FeatureFlagPanel,
   WalletStateGuard,
+  ReducedDataProvider,
 } from '@/components/providers';
 import { SiweAuthProvider } from '@/context/SiweAuthProvider';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
@@ -24,27 +25,29 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider defaultTheme="system">
-      <Web3Provider>
-        <QueryProvider>
-          <RainbowKitThemedProvider>
-            <SiweAuthProvider>
-              <FeatureFlagProvider enablePersistence={true}>
-                <ErrorBoundary>
-                  <WalletStateGuard>
-                    <ApiLifecycleProvider>
-                      <IntegrityBoundary>
-                        {children}
-                        {/* Feature flag panel for development debugging */}
-                        <FeatureFlagPanel defaultOpen={false} position="bottom-right" />
-                      </IntegrityBoundary>
-                    </ApiLifecycleProvider>
-                  </WalletStateGuard>
-                </ErrorBoundary>
-              </FeatureFlagProvider>
-            </SiweAuthProvider>
-          </RainbowKitThemedProvider>
-        </QueryProvider>
-      </Web3Provider>
+      <ReducedDataProvider>
+        <Web3Provider>
+          <QueryProvider>
+            <RainbowKitThemedProvider>
+              <SiweAuthProvider>
+                <FeatureFlagProvider enablePersistence={true}>
+                  <ErrorBoundary>
+                    <WalletStateGuard>
+                      <ApiLifecycleProvider>
+                        <IntegrityBoundary>
+                          {children}
+                          {/* Feature flag panel for development debugging */}
+                          <FeatureFlagPanel defaultOpen={false} position="bottom-right" />
+                        </IntegrityBoundary>
+                      </ApiLifecycleProvider>
+                    </WalletStateGuard>
+                  </ErrorBoundary>
+                </FeatureFlagProvider>
+              </SiweAuthProvider>
+            </RainbowKitThemedProvider>
+          </QueryProvider>
+        </Web3Provider>
+      </ReducedDataProvider>
     </ThemeProvider>
   );
 }

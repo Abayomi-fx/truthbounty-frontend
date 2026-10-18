@@ -101,7 +101,7 @@ describe('AggregationSummary', () => {
     expect(bar).toHaveAttribute('aria-valuenow', '70');
     expect(screen.getByText(/leaning supported/i)).toBeInTheDocument();
     expect(screen.getByText(/confidence 70\.0%/i)).toBeInTheDocument();
-    expect(screen.getByText(/reached/i)).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: /quorum progress/i })).toBeInTheDocument();
     expect(screen.getByText(/as of block 12345/i)).toBeInTheDocument();
   });
 
@@ -111,7 +111,7 @@ describe('AggregationSummary', () => {
         state={{ status: 'ready', projection: projection({ finalized: true }) }}
       />,
     );
-    expect(screen.getByText(/^Final$/)).toBeInTheDocument();
+    expect(screen.getByText('Verified')).toBeInTheDocument();
     expect(screen.queryByText(/provisional/i)).not.toBeInTheDocument();
   });
 

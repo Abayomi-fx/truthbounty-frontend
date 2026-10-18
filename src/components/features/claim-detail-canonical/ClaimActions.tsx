@@ -121,7 +121,7 @@ export function ClaimActions({ claim, freshness, onVerify, onDispute }: ClaimAct
         <button
           onClick={onVerify}
           disabled={isBlocked || !onVerify}
-          className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#18181b] min-h-[44px]"
+          className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#18181b] min-h-[44px]"
           aria-label={isBlocked ? `Verify claim (${blockingReason})` : 'Verify claim'}
           aria-disabled={isBlocked}
           title={isBlocked ? blockingReason : undefined}

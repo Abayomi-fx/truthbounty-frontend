@@ -14,6 +14,355 @@ import {
 
 const claimsRequest = createBoundedRequest({ namespace: 'claims' });
 
+// ---------------------------------------------------------------------------
+// Evidence upload preflight + recoverable transfer state (UI-FE-072)
+// ---------------------------------------------------------------------------
+
+export const EVIDENCE_MAX_FILE_COUNT = 10;
+export const EVIDENCE_MAX_FILE_BYTES = 25 * 1024 * 1024;
+export const EVIDENCE_ALLOWED_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'application/pdf',
+  'text/plain',
+] as const;
+export const EVIDENCE_ALLOWED_EXTENSIONS = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.pdf',
+  '.txt',
+] as const;
+
+export type EvidencePreflightCode =
+  | 'EMPTY_SELECTION'
+  | 'TOO_MANY_FILES'
+  | 'FILE_TOO_LARGE'
+  | 'UNSUPPORTED_MIME'
+  | 'UNSUPPORTED_EXTENSION'
+  | 'MIME_EXTENSION_MISMATCH'
+  | 'DUPLICATE_SELECTION'
+  | 'HASH_MISMATCH'
+  | 'POLICY_UNSUPPORTED';
+
+export interface EvidencePreflightIssue {
+  code: EvidencePreflightCode;
+  fileName: string;
+  message: string;
+}
+
+export interface EvidencePreflightFile {
+  file: File;
+  name: string;
+  size: number;
+  mimeType: string;
+  extension: string;
+  hash: string;
+}
+
+export interface EvidencePreflightResult {
+  ok: boolean;
+  accepted: EvidencePreflightFile[];
+  issues: EvidencePreflightIssue[];
+}
+
+export type EvidenceTransferStage =
+  | 'idle'
+  | 'hashing'
+  | 'uploading'
+  | 'pinning'
+  | 'verifying-cid'
+  | 'authorizing-claim'
+  | 'attached'
+  | 'failed';
+
+export interface EvidenceTransferState {
+  stage: EvidenceTransferStage;
+  attempt: number;
+  maxAttempts: number;
+  progress: number;
+  error: string | null;
+  recoverable: boolean;
+  evidenceId: string | null;
+  cid: string | null;
+  claimAttached: boolean;
+}
+
+export const EVIDENCE_TRANSFER_INITIAL_STATE: EvidenceTransferState = {
+  stage: 'idle',
+  attempt: 0,
+  maxAttempts: 3,
+  progress: 0,
+  error: null,
+  recoverable: false,
+  evidenceId: null,
+  cid: null,
+  claimAttached: false,
+};
+
+function extensionOf(name: string): string {
+  const idx = name.lastIndexOf('.');
+  if (idx < 0) return '';
+  return name.slice(idx).toLowerCase();
+}
+
+function expectedMimeForExtension(ext: string): string[] {
+  switch (ext) {
+    case '.png':
+      return ['image/png'];
+    case '.jpg':
+    case '.jpeg':
+      return ['image/jpeg'];
+    case '.webp':
+      return ['image/webp'];
+    case '.pdf':
+      return ['application/pdf'];
+    case '.txt':
+      return ['text/plain'];
+    default:
+      return [];
+  }
+}
+
+/**
+ * Compute a SHA-256 hex digest for a browser File using WebCrypto.
+ * Fails closed if the runtime lacks SubtleCrypto.
+ */
+export async function hashEvidenceFile(file: File): Promise<string> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) {
+    throw new Error('Hashing unavailable: SubtleCrypto is not supported');
+  }
+  const buffer = await file.arrayBuffer();
+  const digest = await subtle.digest('SHA-256', buffer);
+  const bytes = new Uint8Array(digest);
+  let hex = '';
+  for (let i = 0; i < bytes.length; i += 1) {
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+/**
+ * Validate a batch of selected evidence files before any network transfer.
+ * Rejects empty selections, oversize files, unsupported MIME/extension,
+ * MIME/extension mismatches, and duplicate selections (by name+size+hash).
+ */
+export async function preflightEvidenceSelection(
+  files: File[],
+  policy: { maxFiles?: number; maxBytes?: number } = {}
+): Promise<EvidencePreflightResult> {
+  const maxFiles = policy.maxFiles ?? EVIDENCE_MAX_FILE_COUNT;
+  const maxBytes = policy.maxBytes ?? EVIDENCE_MAX_FILE_BYTES;
+  const issues: EvidencePreflightIssue[] = [];
+  const accepted: EvidencePreflightFile[] = [];
+  const seen = new Set<string>();
+
+  if (!files || files.length === 0) {
+    issues.push({
+      code: 'EMPTY_SELECTION',
+      fileName: '',
+      message: 'Select at least one evidence file.',
+    });
+    return { ok: false, accepted, issues };
+  }
+
+  if (files.length > maxFiles) {
+    issues.push({
+      code: 'TOO_MANY_FILES',
+      fileName: '',
+      message: `Select no more than ${maxFiles} evidence files.`,
+    });
+  }
+
+  for (const file of files) {
+    const name = file.name;
+    const ext = extensionOf(name);
+    const mime = (file.type || '').toLowerCase();
+
+    if (file.size > maxBytes) {
+      issues.push({
+        code: 'FILE_TOO_LARGE',
+        fileName: name,
+        message: `${name} exceeds the ${Math.floor(maxBytes / (1024 * 1024))} MB limit.`,
+      });
+      continue;
+    }
+
+    if (!EVIDENCE_ALLOWED_MIME_TYPES.includes(mime as (typeof EVIDENCE_ALLOWED_MIME_TYPES)[number])) {
+      issues.push({
+        code: 'UNSUPPORTED_MIME',
+        fileName: name,
+        message: `${name} uses an unsupported MIME type.`,
+      });
+      continue;
+    }
+
+    if (!EVIDENCE_ALLOWED_EXTENSIONS.includes(ext as (typeof EVIDENCE_ALLOWED_EXTENSIONS)[number])) {
+      issues.push({
+        code: 'UNSUPPORTED_EXTENSION',
+        fileName: name,
+        message: `${name} uses an unsupported file extension.`,
+      });
+      continue;
+    }
+
+    const expected = expectedMimeForExtension(ext);
+    if (expected.length > 0 && !expected.includes(mime)) {
+      issues.push({
+        code: 'MIME_EXTENSION_MISMATCH',
+        fileName: name,
+        message: `${name} extension does not match its declared MIME type.`,
+      });
+      continue;
+    }
+
+    let hash: string;
+    try {
+      hash = await hashEvidenceFile(file);
+    } catch {
+      issues.push({
+        code: 'POLICY_UNSUPPORTED',
+        fileName: name,
+        message: `Unable to hash ${name} in this environment.`,
+      });
+      continue;
+    }
+
+    const dedupeKey = `${name}::${file.size}::${hash}`;
+    if (seen.has(dedupeKey)) {
+      issues.push({
+        code: 'DUPLICATE_SELECTION',
+        fileName: name,
+        message: `${name} is a duplicate selection.`,
+      });
+      continue;
+    }
+    seen.add(dedupeKey);
+
+    accepted.push({ file, name, size: file.size, mimeType: mime, extension: ext, hash });
+  }
+
+  return { ok: issues.length === 0, accepted, issues };
+}
+
+/**
+ * Verify a locally computed hash against the server-reported hash.
+ * Fails closed on mismatch.
+ */
+export function verifyEvidenceHash(localHash: string, remoteHash: string): boolean {
+  if (!localHash || !remoteHash) return false;
+  return localHash.toLowerCase() === remoteHash.toLowerCase();
+}
+
+export interface EvidenceUploadResponse {
+  evidenceId: string;
+  cid: string;
+  hash: string;
+  pinned: boolean;
+}
+
+export interface EvidenceTransferDeps {
+  upload: (file: File, signal?: AbortSignal) => Promise<EvidenceUploadResponse>;
+  pin: (evidenceId: string, signal?: AbortSignal) => Promise<{ cid: string; pinned: boolean }>;
+  verifyCid: (evidenceId: string, cid: string, signal?: AbortSignal) => Promise<boolean>;
+  authorizeClaim: (evidenceId: string, claimId: string, signal?: AbortSignal) => Promise<boolean>;
+  onState?: (state: EvidenceTransferState) => void;
+}
+
+/**
+ * Run the evidence transfer pipeline with bounded retry.
+ *
+ * Stages are separated so callers never confuse upload success with on-chain
+ * attachment. Retries reuse the same evidenceId to prevent duplicate records.
+ */
+export async function runEvidenceTransfer(
+  file: File,
+  claimId: string,
+  deps: EvidenceTransferDeps,
+  signal?: AbortSignal
+): Promise<EvidenceTransferState> {
+  let state: EvidenceTransferState = { ...EVIDENCE_TRANSFER_INITIAL_STATE };
+  const emit = () => deps.onState?.({ ...state });
+
+  state = { ...state, stage: 'hashing', progress: 0.05 };
+  emit();
+  const localHash = await hashEvidenceFile(file);
+
+  let evidenceId: string | null = null;
+  let cid: string | null = null;
+
+  while (state.attempt < state.maxAttempts) {
+    state = { ...state, attempt: state.attempt + 1, error: null, recoverable: false };
+    try {
+      if (!evidenceId) {
+        state = { ...state, stage: 'uploading', progress: 0.25 };
+        emit();
+        const uploaded = await deps.upload(file, signal);
+        if (!verifyEvidenceHash(localHash, uploaded.hash)) {
+          state = {
+            ...state,
+            stage: 'failed',
+            error: 'Hash mismatch after upload',
+            recoverable: false,
+          };
+          emit();
+          return state;
+        }
+        evidenceId = uploaded.evidenceId;
+        state = { ...state, evidenceId };
+      }
+
+      state = { ...state, stage: 'pinning', progress: 0.5 };
+      emit();
+      const pinned = await deps.pin(evidenceId, signal);
+      cid = pinned.cid;
+      state = { ...state, cid };
+
+      state = { ...state, stage: 'verifying-cid', progress: 0.7 };
+      emit();
+      const cidOk = await deps.verifyCid(evidenceId, cid, signal);
+      if (!cidOk) {
+        throw new Error('CID verification failed');
+      }
+
+      state = { ...state, stage: 'authorizing-claim', progress: 0.9 };
+      emit();
+      const authorized = await deps.authorizeClaim(evidenceId, claimId, signal);
+      if (!authorized) {
+        throw new Error('Claim authorization denied');
+      }
+
+      state = {
+        ...state,
+        stage: 'attached',
+        progress: 1,
+        claimAttached: true,
+        recoverable: false,
+      };
+      emit();
+      return state;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Evidence transfer failed';
+      const canRetry = state.attempt < state.maxAttempts;
+      state = {
+        ...state,
+        stage: 'failed',
+        error: message,
+        recoverable: canRetry,
+      };
+      emit();
+      if (!canRetry) {
+        return state;
+      }
+    }
+  }
+
+  return state;
+}
+
 type EvidenceItem = Record<string, unknown>;
 type RoundItem = Record<string, unknown>;
 
@@ -268,4 +617,3 @@ export async function fetchClaimsList(
 
   return assertClaimsListEnvelope(payload);
 }
-
