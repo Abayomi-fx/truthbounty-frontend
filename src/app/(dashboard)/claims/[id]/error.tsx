@@ -12,6 +12,13 @@ import { classifyRouteError } from '@/lib/routes/errors';
  * dependency, and missing-resource failures so the fallback can render
  * the correct recovery affordance without ever prompting a signature or
  * switching network.
+ *
+ * Error categories are preserved from their authoritative source and
+ * surfaced through the shared RouteErrorFallback. This boundary must not
+ * convert backend authorization failures into client validation errors,
+ * and must not steal focus during background refresh. When the failure
+ * is transaction recovery, focus must remain on the recovery affordance
+ * rather than jumping to a field.
  */
 export default function ClaimDetailError({
   error,

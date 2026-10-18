@@ -7,6 +7,8 @@
 This document records the mobile-responsiveness contract for every protocol
 workflow in the frontend, the rationale for each collapse rule, and the
 automated coverage that keeps the contract enforceable in CI. It complements
+[RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md](../RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md)
+(the normative acceptance matrix for STAB-DOC-FE-002),
 [INFORMATION_ARCHITECTURE.md](./INFORMATION_ARCHITECTURE.md) (which defines the
 intent) and [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) (which defines tokens,
 touch-target sizing and component contracts).

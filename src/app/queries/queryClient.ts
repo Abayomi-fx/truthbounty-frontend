@@ -1,6 +1,10 @@
 // src/app/queries/queryClient.ts
 import { QueryClient } from '@tanstack/react-query';
 import { readLowBandwidth } from '@/hooks/useNetworkStatus';
+import type {
+  createPersistedStore,
+  type PersistedKeyRegistryEntry,
+} from '@/app/lib/persistedState';
 
 const BASE_STALE_TIME = 1000 * 60 * 5; // 5 mins
 const LOW_BANDWIDTH_STALE_TIME = 1000 * 60 * 15; // 15 mins when data-saver/slow
@@ -26,6 +30,28 @@ function resolveStaleTime(): number {
   return isBrowser() && readLowBandwidth() ? LOW_BANDWIDTH_STALE_TIME : BASE_STALE_TIME;
 }
 
+/**
+ * Persisted Query Cache Policy
+ * ---------------------------
+ * The query cache is persisted to browser storage only through the versioned,
+ * bounded persistence layer. The cache is treated as untrusted input on rehydration:
+ * corrupt, oversized, expired, partially written, or unsupported-newer state fails
+ * closed and is dropped rather than boot-looping. Authoritative protocol state,
+ * contract receipts, reviewed API projections, signatures, and secrets are never
+ * persisted here.
+ */
+export const queryCachePersistence: PersistedKeyRegistryEntry = {
+  key: 'tb.queryCache.v1',
+  owner: 'app/queries/queryClient',
+  schemaVersion: 1,
+  retention: {
+    maxAgeMs: GC_TIME,
+    maxBytes: 250 * 1024,
+  },
+  sensitivity: 'internal',
+  storage: 'localStorage',
+};
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -43,3 +69,17 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * Rehydrate the query cache from browser storage. The persistence layer enforces
+ * versioned schemas, bounded migrations, expiry, size limits, and corruption
+ * recovery. Any failure is swallowed and the cache starts empty.
+ */
+export function rehydrateQueryCache(): void {
+  if (!isBrowser()) return;
+  try {
+    void createPersistedStore(queryCachePersistence).read();
+  } catch {
+    // Fail closed: drop untrusted persisted state without boot-looping.
+  }
+}

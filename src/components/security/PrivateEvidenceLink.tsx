@@ -19,7 +19,10 @@
 
 import React, { useState } from 'react';
 import { truncateEvidenceUrl } from '@/lib/security/evidence-privacy';
-import { safeUrl, SAFE_EXTERNAL_REL } from '@/lib/security/evidence-sanitizer';
+import {
+  externalNavigationRel,
+  resolveExternalLinkTrust,
+} from '@/lib/security/external-link-trust';
 import { privacyError } from '@/lib/security/privacy-logger';
 import { Copy, Check, ExternalLink } from 'lucide-react';
 
@@ -52,22 +55,24 @@ export function PrivateEvidenceLink({
 }: PrivateEvidenceLinkProps) {
   const [copied, setCopied] = useState(false);
 
-  // Validate URL (fail closed)
-  const check = safeUrl(href);
-  if (!check.ok) {
+  const trust = resolveExternalLinkTrust(href);
+  if (!trust.ok) {
+    const reason = trust.check.ok ? 'unknown' : trust.check.reason;
     return (
       <span
         className={`text-gray-500 italic text-xs ${className}`}
         role="note"
         aria-label="Evidence URL blocked for security reasons"
       >
-        [Blocked: {check.reason}]
+        [Blocked: {reason}]
       </span>
     );
   }
 
+  const { presentation } = trust;
+
   // Truncate for privacy
-  const truncated = truncateEvidenceUrl(href);
+  const truncated = truncateEvidenceUrl(presentation.href);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -85,16 +90,18 @@ export function PrivateEvidenceLink({
 
   const accessibleLabel =
     ariaLabel ||
-    `Evidence link: ${truncated.display} (click to copy full URL, truncated for privacy)`;
+    `Evidence link: ${truncated.display}. ${presentation.disclosureLabel}. Click to copy full URL (truncated for privacy).`;
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex flex-col gap-0.5">
+      <div className="inline-flex items-center gap-2">
       <a
         href={truncated.full}
         onClick={handleCopy}
         className={`text-blue-400 hover:text-blue-300 underline break-all transition-colors cursor-pointer ${className}`}
-        target="_blank"
-        rel={SAFE_EXTERNAL_REL}
+        target={presentation.navigation.target}
+        rel={externalNavigationRel()}
+        referrerPolicy={presentation.navigation.referrerPolicy}
         aria-label={accessibleLabel}
         title="Click to copy full URL (truncated for privacy)"
       >
@@ -133,6 +140,10 @@ export function PrivateEvidenceLink({
           Copied!
         </span>
       )}
+      </div>
+      <span className="text-[10px] leading-tight text-muted-foreground font-mono" aria-hidden="true">
+        {presentation.displayHostname}
+      </span>
     </div>
   );
 }
