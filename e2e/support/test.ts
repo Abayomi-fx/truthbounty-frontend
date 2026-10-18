@@ -290,6 +290,7 @@ export const test = base.extend<{ stubbedApi: void }>({
       assertProductionEnv(process.env);
 
       await stubClaimsApi(page);
+      await stubSupportApi(page);
       await use();
     },
     { auto: true },

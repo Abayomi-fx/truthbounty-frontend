@@ -199,7 +199,7 @@
     "claimId": "Claim ID",
     "claimHash": "Claim Hash",
     "contentDigest": "Content Digest",
-    
+
     "fields": {
       "title": "Title",
       "category": "Category",
@@ -217,7 +217,7 @@
       "deadline": "Deadline",
       "frozenConfig": "Configuration"
     },
-    
+
     "placeholders": {
       "title": "Enter claim title",
       "category": "Select category",
@@ -226,7 +226,7 @@
       "description": "Describe the claim in detail",
       "evidence": "Add supporting evidence"
     },
-    
+
     "validation": {
       "titleRequired": "Title is required",
       "titleMinLength": "Title must be at least {min} characters",
