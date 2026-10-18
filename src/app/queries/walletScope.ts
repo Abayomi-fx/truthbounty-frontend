@@ -63,7 +63,7 @@ export const WALLET_SCOPED_ROOTS = [
 export function keysForWalletScope(
   address: string | null | undefined,
   chainId: number | null | undefined,
-): readonly unknown[] {
+): readonly (readonly unknown[])[] {
   const scope = walletScope(address, chainId);
   if (!scope) return [] as const;
 
