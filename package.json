@@ -10,7 +10,7 @@
     "test:production-smoke:unit": "node --test scripts/__tests__/production-smoke.test.mjs",
     "verify-accessibility": "node scripts/verify-accessibility.mjs",
     "verify:fixture-determinism": "node scripts/verify-fixture-determinism.mjs",
-    "prebuild": "node scripts/verify-artifacts.mjs && node scripts/verify-production-boundaries.mjs source && node scripts/verify-fixture-determinism.mjs && node scripts/verify-accessibility.mjs",
+    "prebuild": "node scripts/verify-provider-drift.mjs && node scripts/verify-artifacts.mjs && node scripts/verify-production-boundaries.mjs source && node scripts/verify-fixture-determinism.mjs && node scripts/verify-accessibility.mjs",
     "build": "next build",
     "postbuild": "node scripts/verify-production-boundaries.mjs bundle && node scripts/verify-performance-budgets.mjs && node scripts/verify-staging-smoke.mjs",
     "start": "next start",
@@ -19,15 +19,16 @@
     "test": "jest",
     "test:fixture-determinism": "node --test scripts/__tests__/verify-fixture-determinism.test.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:public-claimant": "playwright test --config=playwright.public-claimant.config.ts",
-    "test:e2e:support-status-legal": "playwright test --config=playwright.support-status-legal.config.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:a11y": "jest --runInBand src/__tests__/accessibility",
     "verify:accessibility": "node scripts/verify-accessibility.mjs",
     "verify:staging-smoke": "node scripts/verify-staging-smoke.mjs",
     "check:token-drift": "node scripts/check-token-drift.mjs",
-    "check:token-drift:report": "node scripts/check-token-drift.mjs --report-file reports/token-drift-report.json"
+    "check:token-drift:report": "node scripts/check-token-drift.mjs --report-file reports/token-drift-report.json",
+    "verify:providers": "node scripts/verify-provider-drift.mjs",
+    "test:providers": "node --test scripts/__tests__/provider-policy.test.mjs",
+    "test:csp-browser": "playwright test --config e2e/csp.config.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "1.3.3",
