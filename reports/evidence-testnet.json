@@ -1,0 +1,335 @@
+{
+  "timestamp": "2026-10-17T14:00:00.000Z",
+  "generator": "verify-security-headers.mjs (UI-FE-092)",
+  "policyVersion": "1.0.0",
+  "environment": "testnet",
+  "targetUrl": "https://testnet.truthbounty.io",
+  "targetNetwork": "optimism-sepolia",
+  "targetChainId": 11155420,
+  "overallStatus": "PASS",
+  "surfaces": {
+    "document": {
+      "observedHeaders": {
+        "content-security-policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'nonce-evidence-nonce-00000000000000000000000000000000' 'strict-dynamic' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: https://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org https://verify.walletconnect.com https://verify.walletconnect.org https://explorer-api.walletconnect.com https://id.worldcoin.org https://*.worldcoin.org https://sepolia.optimism.io https://*.optimism.io; frame-src 'self' https://verify.walletconnect.com https://verify.walletconnect.org https://id.worldcoin.org; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:; report-to csp-endpoint; report-uri /api/csp-report; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(self \"https://id.worldcoin.org\"), microphone=(), geolocation=(), payment=(), usb=(), display-capture=(), screen-wake-lock=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), encrypted-media=()",
+        "cross-origin-opener-policy": "same-origin-allow-popups",
+        "cross-origin-resource-policy": "same-site",
+        "x-dns-prefetch-control": "off",
+        "cache-control": "no-store, max-age=0, must-revalidate",
+        "pragma": "no-cache"
+      },
+      "checks": [
+        {
+          "id": "hsts-max-age",
+          "header": "Strict-Transport-Security",
+          "status": "pass",
+          "message": "HSTS max-age is sufficiently long (63072000)"
+        },
+        {
+          "id": "hsts-includesubdomains",
+          "header": "Strict-Transport-Security",
+          "status": "pass",
+          "message": "HSTS includes includeSubDomains"
+        },
+        {
+          "id": "x-frame-options",
+          "header": "X-Frame-Options",
+          "status": "pass",
+          "message": "X-Frame-Options is DENY"
+        },
+        {
+          "id": "x-content-type-options",
+          "header": "X-Content-Type-Options",
+          "status": "pass",
+          "message": "X-Content-Type-Options is nosniff"
+        },
+        {
+          "id": "referrer-policy",
+          "header": "Referrer-Policy",
+          "status": "pass",
+          "message": "Referrer-Policy is strict-origin-when-cross-origin"
+        },
+        {
+          "id": "coop",
+          "header": "Cross-Origin-Opener-Policy",
+          "status": "pass",
+          "message": "COOP is same-origin-allow-popups"
+        },
+        {
+          "id": "corp",
+          "header": "Cross-Origin-Resource-Policy",
+          "status": "pass",
+          "message": "CORP is same-site"
+        },
+        {
+          "id": "permissions-camera",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Camera permission is properly scoped for Worldcoin IDKit"
+        },
+        {
+          "id": "permissions-denied-microphone",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature microphone is disabled ()"
+        },
+        {
+          "id": "permissions-denied-geolocation",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature geolocation is disabled ()"
+        },
+        {
+          "id": "permissions-denied-payment",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature payment is disabled ()"
+        },
+        {
+          "id": "permissions-denied-usb",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature usb is disabled ()"
+        },
+        {
+          "id": "permissions-denied-display-capture",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature display-capture is disabled ()"
+        },
+        {
+          "id": "permissions-denied-screen-wake-lock",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature screen-wake-lock is disabled ()"
+        },
+        {
+          "id": "permissions-denied-accelerometer",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature accelerometer is disabled ()"
+        },
+        {
+          "id": "permissions-denied-gyroscope",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature gyroscope is disabled ()"
+        },
+        {
+          "id": "permissions-denied-magnetometer",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature magnetometer is disabled ()"
+        },
+        {
+          "id": "permissions-denied-midi",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature midi is disabled ()"
+        },
+        {
+          "id": "permissions-denied-encrypted-media",
+          "header": "Permissions-Policy",
+          "status": "pass",
+          "message": "Feature encrypted-media is disabled ()"
+        },
+        {
+          "id": "csp-frame-ancestors",
+          "header": "Content-Security-Policy",
+          "status": "pass",
+          "message": "frame-ancestors 'none' strictly blocks framing"
+        },
+        {
+          "id": "csp-script-nonce",
+          "header": "Content-Security-Policy",
+          "status": "pass",
+          "message": "script-src contains valid per-request nonce"
+        },
+        {
+          "id": "csp-strict-dynamic",
+          "header": "Content-Security-Policy",
+          "status": "pass",
+          "message": "script-src includes 'strict-dynamic'"
+        },
+        {
+          "id": "csp-wasm-eval",
+          "header": "Content-Security-Policy",
+          "status": "pass",
+          "message": "script-src includes 'wasm-unsafe-eval'"
+        },
+        {
+          "id": "csp-no-unsafe-eval",
+          "header": "Content-Security-Policy",
+          "status": "pass",
+          "message": "'unsafe-eval' is absent or permitted for testnet"
+        },
+        {
+          "id": "csp-no-unsafe-inline-scripts",
+          "header": "Content-Security-Policy",
+          "status": "pass",
+          "message": "'unsafe-inline' is absent from script-src"
+        },
+        {
+          "id": "csp-upgrade-insecure-requests",
+          "header": "Content-Security-Policy",
+          "status": "pass",
+          "message": "upgrade-insecure-requests is configured appropriately"
+        },
+        {
+          "id": "cache-control-anti-caching",
+          "header": "Cache-Control",
+          "status": "pass",
+          "message": "Cache-Control for document correctly specifies no-store"
+        }
+      ],
+      "passed": true
+    },
+    "api": {
+      "observedHeaders": {
+        "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "cache-control": "no-store, max-age=0, must-revalidate",
+        "pragma": "no-cache",
+        "cross-origin-resource-policy": "same-site"
+      },
+      "checks": [
+        {
+          "id": "hsts-max-age",
+          "header": "Strict-Transport-Security",
+          "status": "pass",
+          "message": "HSTS max-age is sufficiently long (63072000)"
+        },
+        {
+          "id": "hsts-includesubdomains",
+          "header": "Strict-Transport-Security",
+          "status": "pass",
+          "message": "HSTS includes includeSubDomains"
+        },
+        {
+          "id": "x-frame-options",
+          "header": "X-Frame-Options",
+          "status": "pass",
+          "message": "X-Frame-Options is DENY"
+        },
+        {
+          "id": "x-content-type-options",
+          "header": "X-Content-Type-Options",
+          "status": "pass",
+          "message": "X-Content-Type-Options is nosniff"
+        },
+        {
+          "id": "cache-control-anti-caching",
+          "header": "Cache-Control",
+          "status": "pass",
+          "message": "Cache-Control for api correctly specifies no-store"
+        }
+      ],
+      "passed": true
+    },
+    "static": {
+      "observedHeaders": {
+        "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "cache-control": "public, max-age=31536000, immutable",
+        "cross-origin-resource-policy": "same-site"
+      },
+      "checks": [
+        {
+          "id": "hsts-max-age",
+          "header": "Strict-Transport-Security",
+          "status": "pass",
+          "message": "HSTS max-age is sufficiently long (63072000)"
+        },
+        {
+          "id": "hsts-includesubdomains",
+          "header": "Strict-Transport-Security",
+          "status": "pass",
+          "message": "HSTS includes includeSubDomains"
+        },
+        {
+          "id": "x-content-type-options",
+          "header": "X-Content-Type-Options",
+          "status": "pass",
+          "message": "X-Content-Type-Options is nosniff"
+        },
+        {
+          "id": "cache-control-static-immutable",
+          "header": "Cache-Control",
+          "status": "pass",
+          "message": "Cache-Control for static assets is properly configured for immutable caching"
+        }
+      ],
+      "passed": true
+    }
+  },
+  "negativeTests": [
+    {
+      "id": "negative-framing",
+      "title": "Disallow Third-Party Framing",
+      "status": "pass",
+      "message": "Framing is strictly blocked by both X-Frame-Options: DENY and frame-ancestors 'none'"
+    },
+    {
+      "id": "negative-permissions-leak",
+      "title": "Disallow High-Risk Browser Capabilities",
+      "status": "pass",
+      "message": "All high-risk browser capabilities (microphone, geolocation, usb, payment, etc.) are strictly closed"
+    },
+    {
+      "id": "negative-unsafe-eval",
+      "title": "Forbid unsafe-eval in Production/Preview/Testnet",
+      "status": "pass",
+      "message": "'unsafe-eval' is absent from non-local CSP"
+    }
+  ],
+  "integrationTests": [
+    {
+      "id": "walletconnect-connect-src",
+      "integration": "WalletConnect",
+      "status": "pass",
+      "message": "WalletConnect API & WebSocket origins are properly authorized"
+    },
+    {
+      "id": "walletconnect-frame-src",
+      "integration": "WalletConnect",
+      "status": "pass",
+      "message": "WalletConnect verify iframe is properly authorized in frame-src"
+    },
+    {
+      "id": "walletconnect-coop",
+      "integration": "WalletConnect",
+      "status": "pass",
+      "message": "COOP allows popup interactions required for RainbowKit/WalletConnect"
+    },
+    {
+      "id": "worldcoin-connect-src",
+      "integration": "Worldcoin IDKit",
+      "status": "pass",
+      "message": "Worldcoin verification origins are authorized"
+    },
+    {
+      "id": "worldcoin-frame-src",
+      "integration": "Worldcoin IDKit",
+      "status": "pass",
+      "message": "Worldcoin IDKit modal is authorized in frame-src"
+    },
+    {
+      "id": "worldcoin-camera-permission",
+      "integration": "Worldcoin IDKit",
+      "status": "pass",
+      "message": "Permissions-Policy scopes camera to self and https://id.worldcoin.org for QR scanning"
+    },
+    {
+      "id": "testnet-rpc-endpoint",
+      "integration": "Optimism Sepolia RPC",
+      "status": "pass",
+      "message": "Optimism Sepolia testnet RPC is authorized in connect-src"
+    }
+  ],
+  "integrityDigest": "sha256-b777129cea4fa9c1983ada25c0c39dd62b0fc0f5f231a99383ac513d8f799c4d"
+}
