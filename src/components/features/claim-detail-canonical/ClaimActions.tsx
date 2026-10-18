@@ -10,7 +10,8 @@
  * - Projection freshness (no writes on critical stale data)
  *
  * All actions fail closed: missing wallet, unsupported chain, or stale
- * projection disable the buttons with accessible reasons.
+ * projection disable the buttons with accessible reasons. Action availability
+ * is derived from canonical state only — never from a displayed countdown.
  */
 
 import React from 'react';
@@ -23,7 +24,7 @@ import type { UseClaimDetailFreshnessResult } from '@/hooks/useClaimDetailFreshn
 export interface ClaimActionsProps {
   claim: ClaimDetailProjection;
   freshness: UseClaimDetailFreshnessResult;
-  onVerify?: () => void;
+  onActionVerify?: () => void;
   onDispute?: () => void;
 }
 
@@ -72,7 +73,7 @@ function getActionBlockingReason(
   return null;
 }
 
-export function ClaimActions({ claim, freshness, onVerify, onDispute }: ClaimActionsProps) {
+export function ClaimActions({ claim, freshness, onActionVerify, onDispute }: ClaimActionsProps) {
   const wallet = useCanonicalWallet();
   const writeReadiness = useWriteReadiness({
     enabled: wallet.status === 'ready',
@@ -121,7 +122,7 @@ export function ClaimActions({ claim, freshness, onVerify, onDispute }: ClaimAct
         <button
           onClick={onVerify}
           disabled={isBlocked || !onVerify}
-          className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#18181b] min-h-[44px]"
+          className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#18181b] min-h-[44px]"
           aria-label={isBlocked ? `Verify claim (${blockingReason})` : 'Verify claim'}
           aria-disabled={isBlocked}
           title={isBlocked ? blockingReason : undefined}

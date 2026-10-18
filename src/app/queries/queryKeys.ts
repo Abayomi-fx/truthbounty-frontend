@@ -77,26 +77,26 @@ export type ClaimListFilters = {
 	  scope: (address: string, chainId: ChainId) => {
 	    const scope = walletScope(address, chainId);
 	    return scope
-	      ? ('wallet', 'scope', scope.address, scope.chainId] as const)
+	      ? (['wallet', 'scope', scope.address, scope.chainId] as const)
 	      : (['wallet', 'scope', 'invalid'] as const);
 	  },
 	  balance: (address: string, chainId: ChainId) => {
 	    const scope = walletScope(address, chainId);
 	    return scope
-	      ? ('wallet', 'balance', scope.address, scope.chainId] as const)
-	      : ('wallet', 'balance', 'invalid'] as const);
+	      ? (['wallet', 'balance', scope.address, scope.chainId] as const)
+	      : (['wallet', 'balance', 'invalid'] as const);
 	  },
 	  tokenBalance: (address: string, tokenAddress: string, chainId: ChainId) => {
 	    const scope = walletScope(address, chainId);
 	    const token = normalizeAddress(tokenAddress);
 	    return scope && token
 	      ? (['wallet', 'token', scope.address, token, scope.chainId] as const)
-	      : ('wallet', 'token', 'invalid'] as const);
+	      : (['wallet', 'token', 'invalid'] as const);
 	  },
 	  nonce: (address: string, chainId: ChainId) => {
 	    const scope = walletScope(address, chainId);
 	    return scope
-	      ? ('wallet', 'nonce', scope.address, scope.chainId] as const)
+	      ? (['wallet', 'nonce', scope.address, scope.chainId] as const)
 	      : (['wallet', 'nonce', 'invalid'] as const);
 	  },
 	  allowance: (address: string, spender: string, tokenAddress: string, chainId: ChainId) => {
@@ -104,7 +104,7 @@ export type ClaimListFilters = {
 	    const sp = normalizeAddress(spender);
 	    const token = normalizeAddress(tokenAddress);
 	    return scope && sp && token
-	      ? ('wallet', 'allowance', scope.address, sp, token, scope.chainId] as const)
+	      ? (['wallet', 'allowance', scope.address, sp, token, scope.chainId] as const)
 	      : (['wallet', 'allowance', 'invalid'] as const);
 	  },
 	} as const;
@@ -236,7 +236,7 @@ export type ClaimListFilters = {
 	  activity: (address: string, filters: Record<string, unknown> = {}) => {
 	    const addr = normalizeAddress(address);
 	    return addr
-	      ? ('filters', 'activity', addr, filters] as const)
+	      ? (['filters', 'activity', addr, filters] as const)
 	      : (['filters', 'activity', 'invalid', filters] as const);
 	  },
 	  leaderboard: (filters: Record<string, unknown> = {}) =>
@@ -270,7 +270,25 @@ export type ClaimListFilters = {
 	// ----------------------------------------------------------------------------
 	// Leaderboard (top-level, distinct from reputation leaderboard)
 	// ----------------------------------------------------------------------------
-	export const leaderboardKeys = {
-	  all: ['leaderboard'] as const,
-	  byScope: (scope: string) => ['leaderboard', scope] as const,
-	} as const;
+export const leaderboardKeys = {
+  all: ['leaderboard'] as const,
+  byScope: (scope: string) => ['leaderboard', scope] as const,
+} as const;
+
+export const queryKeys = {
+  chain: chainKeys,
+  wallet: walletKeys,
+  claims: claimKeys,
+  claim: claimKeys,
+  evidence: evidenceKeys,
+  rounds: roundsKeys,
+  disputes: disputesKeys,
+  verifications: verificationsKeys,
+  rewards: rewardsKeys,
+  reputation: reputationKeys,
+  projectionWatermark: projectionWatermarkKeys,
+  filters: filterKeys,
+  finality: finalityKeys,
+  leaderboard: leaderboardKeys.all,
+  user: userKeys,
+} as const;
