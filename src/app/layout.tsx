@@ -80,21 +80,22 @@ export default async function RootLayout({
         <meta charSet="utf-8" />
         <ThemeInitScript nonce={nonce} />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-    {/* Skip link for keyboard users */}
-    <a
-      href="#main"
-      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 bg-white text-black px-3 py-2 rounded"
-    >
-      Skip to content
-    </a>
 
-    <Providers>
-      <main id="main" tabIndex={-1} role="main">
-        {children}
-      </main>
-    </Providers>
-  </body>
-</html>
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        {/* Skip link for keyboard users */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 bg-white text-black px-3 py-2 rounded"
+        >
+          Skip to content
+        </a>
+
+        <Providers>
+          <main id="main" tabIndex={-1} role="main">
+            {children}
+          </main>
+        </Providers>
+      </body>
+    </html>
   );
 }

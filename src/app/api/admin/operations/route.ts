@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getProtocolRelease } from '@/lib/contracts/registry';
 import type { ExecuteOperationRequest, ExecuteOperationResponse, AdminAuditRecord } from '@/app/types/admin';
+import { composeOperationalHealth } from '@/lib/health/composeOperationalHealth';
+import type { OperationalHealthSnapshot } from '@/app/types/health';
 
 // UI-FE-036: This route is a protected administrator diagnostic endpoint.
 // Its payloads MUST NOT be reused by the public /status adapter. The public
@@ -112,6 +114,29 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'execution_failed', reason: message },
       { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const snapshot: OperationalHealthSnapshot = await composeOperationalHealth();
+    return NextResponse.json(snapshot, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-TruthBounty-Health-Source': 'privileged-composition',
+      },
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown server error';
+    return NextResponse.json(
+      {
+        error: 'health_unavailable',
+        reason: message,
+        observations: [],
+        overallStatus: 'unavailable',
+      },
+      { status: 503 }
     );
   }
 }

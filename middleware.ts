@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 
 import { i18nConfig } from "./src/i18n/config";
+import { i18nConfig } from "./src/i8n/config";
+import { resolveCanonicalRedirect } from "./src/lib/routing/redirects";
 import {
   NONCE_HEADER,
   SECURITY_HEADER_NAMES,
@@ -12,6 +14,12 @@ import {
 const handleI18n = createMiddleware(i18nConfig);
 
 export default function middleware(request: NextRequest) {
+  const canonicalRedirect = resolveCanonicalRedirect(request);
+
+  if (canonicalRedirect) {
+    return canonicalRedirect;
+  }
+
   const nonce = createRequestNonce();
   const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -40,6 +48,7 @@ export default function middleware(request: NextRequest) {
 
   return response;
 }
+
 export const config = {
   matcher: [
     {
