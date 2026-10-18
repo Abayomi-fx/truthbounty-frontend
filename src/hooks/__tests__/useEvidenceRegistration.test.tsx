@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useEvidenceRegistration } from '../useEvidenceRegistration';
 import { useAccount, useChainId } from 'wagmi';
 import { getContractAddress } from '@/lib/contracts/registry';
@@ -49,6 +49,7 @@ const mockGetContractAddress = getContractAddress as jest.Mock;
 
 describe('useEvidenceRegistration', () => {
   const validClaimId = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2';
+  const validCidUri = 'ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco';
   
   beforeEach(() => {
     jest.clearAllMocks();
@@ -64,7 +65,7 @@ describe('useEvidenceRegistration', () => {
 
       const validation = result.current.validateEvidence({
         claimId: validClaimId,
-        evidenceUri: 'ipfs://QmXxxx',
+        evidenceUri: validCidUri,
       });
 
       expect(validation.isValid).toBe(true);
@@ -79,7 +80,7 @@ describe('useEvidenceRegistration', () => {
 
       const validation = result.current.validateEvidence({
         claimId: validClaimId,
-        evidenceUri: 'ipfs://QmXxxx',
+        evidenceUri: validCidUri,
       });
 
       expect(validation.isValid).toBe(false);
@@ -94,7 +95,7 @@ describe('useEvidenceRegistration', () => {
 
       const validation = result.current.validateEvidence({
         claimId: validClaimId,
-        evidenceUri: 'ipfs://QmXxxx',
+        evidenceUri: validCidUri,
       });
 
       expect(validation.isValid).toBe(false);
@@ -109,7 +110,7 @@ describe('useEvidenceRegistration', () => {
 
       const validation = result.current.validateEvidence({
         claimId: 'invalid-id',
-        evidenceUri: 'ipfs://QmXxxx',
+        evidenceUri: validCidUri,
       });
 
       expect(validation.isValid).toBe(false);
@@ -128,7 +129,8 @@ describe('useEvidenceRegistration', () => {
       });
 
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('Oversized input: evidence URI must be at most 1024 characters');
+      expect(validation.errors).toContain('Unsupported scheme: only https and ipfs are allowed');
+    });
 
     it('returns error for oversized input', () => {
       mockUseAccount.mockReturnValue({ address: '0x111', isConnected: true });
@@ -143,7 +145,7 @@ describe('useEvidenceRegistration', () => {
       });
 
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('Oversized input: evidence URI must be under 1024 characters');
+      expect(validation.errors).toContain('Oversized input: evidence URI must be at most 1024 characters');
     });
 
     it('prevents raw secrets in URI', () => {
@@ -169,12 +171,14 @@ describe('useEvidenceRegistration', () => {
 
       const { result } = renderHook(() => useEvidenceRegistration());
 
-      await expect(
+      await act(async () => {
+        await expect(
         result.current.submitEvidence({
           claimId: validClaimId,
-          evidenceUri: 'ipfs://QmXxxx',
+          evidenceUri: validCidUri,
         })
       ).rejects.toThrow('Evidence registration requires wallet writeContract integration; no synthetic transaction hash is emitted.');
     });
   });
+});
 });

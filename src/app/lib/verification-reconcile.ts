@@ -186,31 +186,22 @@ export function reconcileVerificationState(
     };
   }
 
-  if (
-    projectionIncomplete &&
-    (hasReceipt || hasOnChain) &&
-    !receiptRejected &&
-    !chainMismatch &&
-    !claimMismatch &&
-    !versionMismatch &&
-    !positionMismatch &&
-    !projectionMismatch
-  ) {
-    details.push('projection data is incomplete; API response is degraded');
+  if (hasProjection && !hasOnChain && !receiptRejected) {
+    details.push('projection exists but no on-chain position is visible');
     return {
-      status: 'degraded',
-      isMismatch: false,
+      status: 'stale',
+      isMismatch: true,
       isWrongNetwork,
       isProtocolDisabled: false,
       details,
     };
   }
 
-  if (hasProjection && !hasOnChain && !receiptRejected) {
-    details.push('projection exists but no on-chain position is visible');
+  if (projectionIncomplete && !receiptRejected && !chainMismatch && !claimMismatch && !versionMismatch && !positionMismatch && !projectionMismatch) {
+    details.push('projection data is incomplete; API response is degraded');
     return {
-      status: 'stale',
-      isMismatch: true,
+      status: 'degraded',
+      isMismatch: false,
       isWrongNetwork,
       isProtocolDisabled: false,
       details,

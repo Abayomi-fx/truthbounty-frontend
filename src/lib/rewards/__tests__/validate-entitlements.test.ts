@@ -128,7 +128,7 @@ describe('validateRewardEntitlements', () => {
     const payload = [
       validEntitlement(),
       { garbage: true },
-      validEntitlement({ claimId: CLAIM_2, amount: '500', decimals: 6 }),
+      validEntitlement({ asset: ADDR_B, claimId: CLAIM_2, amount: '500', decimals: 6 }),
     ];
     const result = validateRewardEntitlements(payload);
     expect(result.entitlements).toHaveLength(2);
@@ -198,7 +198,7 @@ describe('summarizeRewardEntitlements', () => {
   it('groups multiple assets deterministically', () => {
     const entitlements = validateRewardEntitlements([
       validEntitlement({ asset: ADDR_B, amount: '10', decimals: 6 }),
-      validEntitlement({ asset: ADDR_A, amount: '20' }),
+      validEntitlement({ claimId: CLAIM_2, asset: ADDR_A, amount: '20' }),
     ]).entitlements;
 
     const summary = summarizeRewardEntitlements(entitlements);

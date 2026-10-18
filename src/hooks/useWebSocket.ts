@@ -19,7 +19,7 @@ const DEFAULT_MAX_RECONNECT_INTERVAL = 30000; // 30 seconds max delay
 const DEFAULT_HEARTBEAT_INTERVAL = 30000;
 const DEFAULT_BACKOFF_MULTIPLIER = 2; // Exponential backoff multiplier
 const DEFAULT_MESSAGE_CACHE_SIZE = 1000; // Max number of messages to keep for deduplication
-const DEFAULT_CURSOR_STORAGE_KEY = 'truthbounty:ws:cursor';
+export const DEFAULT_CURSOR_STORAGE_KEY = 'truthbounty:ws:cursor';
 const DEFAULT_HTTP_CATCHUP_URL = '/api/claims/catchup';
 
 type TimeoutId = ReturnType<typeof setTimeout>;

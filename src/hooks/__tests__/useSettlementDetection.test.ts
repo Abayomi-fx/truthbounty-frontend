@@ -16,7 +16,7 @@ jest.mock('wagmi', () => ({
 describe('useSettlementDetection', () => {
   const mockContractAddress = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
   const mockUserAddress = '0x1234567890123456789012345678901234567890';
-  const OPTIMISM_MAINNET = 11155420;
+  const OPTIMISM_MAINNET = 10;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -170,9 +170,9 @@ describe('useSettlementDetection', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Simulate chain change
+      // Simulate chain change (expected chain stays on Optimism mainnet)
       (wagmi.useChainId as jest.Mock).mockReturnValue(1);
-      rerender({ chainId: 1 });
+      rerender({ chainId: OPTIMISM_MAINNET });
 
       await waitFor(() => {
         expect(result.current.validation?.isValid).toBe(false);

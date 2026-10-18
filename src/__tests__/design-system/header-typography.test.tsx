@@ -15,6 +15,16 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 
+// Components under test pull in wagmi hooks (via useDisputeContext on
+// MainClaimCard's OpenDispute panel); provide inert stubs so rendering works
+// without a WagmiProvider.
+jest.mock('wagmi', () => ({
+  useAccount: () => ({ address: undefined, isConnected: false }),
+  useChainId: () => 11155420,
+  useBlockNumber: () => ({ data: BigInt(12345678) }),
+  usePublicClient: () => ({}),
+}));
+
 import { ClaimStats } from '@/components/features/claim-details/ClaimStats';
 import { TopVerifiers } from '@/components/features/claim-details/TopVerifiers';
 import { MainClaimCard } from '@/components/features/claim-details/MainClaimCard';

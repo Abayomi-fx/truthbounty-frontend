@@ -22,6 +22,7 @@ import React from "react";
 import { useRewards } from "@/hooks/useRewards";
 import { ClaimRewardsPanelSkeleton } from "@/components/skeletons";
 import { getTransactionExplorerUrl } from "@/lib/explorer";
+import { formatCurrency } from "@/lib/format";
 
 interface ClaimRewardsPanelProps {
   isLoading?: boolean;
@@ -126,7 +127,7 @@ export default function ClaimRewardsPanel({
   return (
     <div className="bg-[#18181b] rounded-xl border border-[#232329] overflow-hidden min-h-[280px]">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#232329]">
+      <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-4 border-b border-[#232329]">
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-lg bg-[#5b5bf6]/20 flex items-center justify-center"
@@ -145,22 +146,22 @@ export default function ClaimRewardsPanel({
               />
             </svg>
           </div>
-          <div>
-            <p className="text-white font-semibold text-sm">
+          <div className="min-w-0">
+            <p className="text-white font-semibold text-sm truncate">
               Claimable Rewards
             </p>
-            <p className="text-[#a1a1aa] text-xs">
+            <p className="text-[#a1a1aa] text-xs truncate">
               Earned from verified claims
             </p>
           </div>
         </div>
 
-        {/* Total + Claim button */}
-        <div className="flex items-center gap-4">
+        {/* Total + Claim button — full width on mobile, inline from sm */}
+        <div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-start">
           <div className="text-right">
             <p className="text-xs text-[#a1a1aa]">Total available</p>
             <p
-              className={`text-xl font-bold transition-colors ${
+              className={`text-xl font-bold font-mono tabular-nums transition-colors ${
                 hasRewards ? "text-[#5b5bf6]" : "text-[#a1a1aa]"
               }`}
             >
@@ -276,7 +277,7 @@ export default function ClaimRewardsPanel({
           pendingRewards.map((reward) => (
             <li
               key={reward.claimId}
-              className="flex items-center justify-between px-6 py-3 hover:bg-[#232329]/40 transition-colors"
+              className="flex items-center justify-between px-4 py-3 hover:bg-[#232329]/40 transition-colors sm:px-6"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
@@ -285,10 +286,10 @@ export default function ClaimRewardsPanel({
                 />
                 <div className="min-w-0">
                   <p className="text-white text-sm truncate">
-                    {reward.categoryExplanation}
+                    {reward.categoryExplanation || (reward as { title?: string }).title}
                   </p>
                   <p className="text-[#71717a] text-xs">
-                    {reward.category.replace(/_/g, " ")} · {reward.amountRaw}
+                    {(reward.category ?? "").replace(/_/g, " ")} · {reward.amountRaw}
                   </p>
                 </div>
               </div>

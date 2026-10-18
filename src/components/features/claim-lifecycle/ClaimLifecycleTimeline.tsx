@@ -115,6 +115,7 @@ export function ClaimLifecycleTimeline({
             </p>
             {error?.recoverable && (
               <button
+                type="button"
                 onClick={() => reconcile()}
                 disabled={isReconciling}
                 className="mt-3 rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-white hover:bg-destructive/90 disabled:opacity-50"
@@ -181,6 +182,7 @@ export function ClaimLifecycleTimeline({
 
         {showReconcileButton && (
           <button
+            type="button"
             onClick={() => reconcile()}
             disabled={isReconciling}
             className={cn(
@@ -350,7 +352,7 @@ function TimelineEntryItem({
       <div className={cn('flex-1 space-y-1', compact && 'text-sm')}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h4
+            <h3
               className={cn(
                 'font-medium',
                 severity === 'success' && 'text-success',
@@ -364,7 +366,7 @@ function TimelineEntryItem({
               {isUserAction && (
                 <span className="ml-2 text-xs font-normal text-muted-foreground">(You)</span>
               )}
-            </h4>
+            </h3>
             <p className={cn('text-sm text-muted-foreground', isStale && 'opacity-70')}>
               {description}
             </p>
@@ -536,7 +538,7 @@ function EventIcon({ type, severity }: { type: string; severity: string }) {
  */
 function TimelineSkeleton({ compact }: { compact: boolean }) {
   return (
-    <div className="space-y-6" aria-label="Loading timeline">
+    <div className="space-y-6" aria-hidden="true">
       {[1, 2, 3].map((i) => (
         <div key={i} className="flex gap-3">
           <Skeleton variant="circular" width={32} height={32} />

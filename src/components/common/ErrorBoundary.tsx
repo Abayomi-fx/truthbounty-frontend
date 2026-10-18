@@ -1,8 +1,41 @@
 'use client';
 
-import React, { ErrorInfo, ReactNode, createRef } from 'react';
-import { toSafeErrorMessage } from '@/lib/sanitize-error';
-import { redactError } from '@/lib/security/redaction';
+/**
+ * ErrorBoundary — global React error boundary with privacy-safe telemetry.
+ *
+ * V2-FE-149 — TruthBounty Frontend
+ *
+ * Catches unhandled render errors and:
+ *  1. Reports them via the telemetry library (if PRIVACY_SAFE_TELEMETRY is enabled).
+ *  2. Shows an accessible, user-friendly fallback UI with a Retry button.
+ *
+ * V2-FE-008 — Route boundary classification:
+ *  - Distinguishes authorization, configuration, dependency, and
+ *    missing-resource failures so route errors surface the correct
+ *    boundary state (denied / config-failure / dependency / not-found).
+ *
+ * Telemetry is sourced from TelemetryContext so this component only relies on
+ * the singleton `getTelemetryClient()` fallback — it does NOT call React hooks
+ * (class components cannot use hooks). The singleton is initialised by
+ * TelemetryProvider at application boot.
+ */
+
+import React, { createRef, ErrorInfo, ReactNode } from 'react'
+import { getTelemetryClient } from '@/lib/telemetry'
+import { redactError } from '@/lib/telemetry/redact'
+import { toSafeErrorMessage } from '@/lib/telemetry/redact'
+
+/**
+ * Route boundary failure classification. Mirrors the approved route contract
+ * (UI-FE-008): route errors must distinguish authorization, configuration,
+ * dependency, and missing-resource failures.
+ */
+export type RouteBoundaryKind =
+  | 'authorization'
+  | 'configuration'
+  | 'dependency'
+  | 'missing-resource'
+  | 'unknown';
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
@@ -14,11 +47,46 @@ export interface ErrorBoundaryProps {
   onReset?: () => void;
   /** When any entry changes, a caught error is cleared (safe retry/remount). */
   resetKeys?: unknown[];
+  /**
+   * Optional explicit boundary kind. When omitted, the kind is inferred from
+   * the caught error (status codes / error name) so route boundaries render
+   * the correct denied / configuration-failure / dependency / not-found state.
+   */
+  kind?: RouteBoundaryKind;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+}
+
+/**
+ * Infer the route boundary kind from a caught error. Never inspects user
+ * data — only well-known status codes and error names produced by adapters.
+ */
+export function classifyRouteError(error: unknown): RouteBoundaryKind {
+  if (!error || typeof error !== 'object') return 'unknown';
+  const anyErr = error as { name?: string; status?: number; code?: string | number };
+  const status = typeof anyErr.status === 'number' ? anyErr.status : undefined;
+  const code = anyErr.code !== undefined ? String(anyErr.code) : undefined;
+  const name = typeof anyErr.name === 'string' ? anyErr.name : '';
+
+  if (status === 401 || status === 403) return 'authorization';
+  if (status === 404) return 'missing-resource';
+  if (status === 502 || status === 503 || status === 504) return 'dependency';
+  if (status === 500 || status === 0) return 'dependency';
+
+  if (code === 'UNAUTHORIZED' || code === 'FORBIDDEN') return 'authorization';
+  if (code === 'NOT_FOUND') return 'missing-resource';
+  if (code === 'CONFIG_MISSING' || code === 'CONFIG_INVALID') return 'configuration';
+  if (code === 'DEPENDENCY_UNAVAILABLE' || code === 'NETWORK_ERROR') return 'dependency';
+
+  if (name === 'AuthorizationError' || name === 'ForbiddenError') return 'authorization';
+  if (name === 'ConfigurationError' || name === 'ConfigError') return 'configuration';
+  if (name === 'NotFoundError') return 'missing-resource';
+  if (name === 'DependencyError' || name === 'NetworkError') return 'dependency';
+
+  return 'unknown';
 }
 
 /**
@@ -41,34 +109,27 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    redactError(error);
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const redacted = redactError(error);
-    // Fail closed: log the redacted form only, never propagate sensitive
-    // detail to telemetry console streams.
-    console.error(
-      'ErrorBoundary caught:',
-      this.props.scope ?? 'global',
-      redacted.name,
-      redacted.message,
-      redacted.stack,
-      { cause: redacted.cause, componentStack: errorInfo.componentStack ? redactErrorInfoStack(errorInfo.componentStack) : null },
-    );
-    this.props.onError?.(error, errorInfo, this.props.scope);
-  }
-
-  componentDidUpdate(prevProps: ErrorBoundaryProps, prevState: ErrorBoundaryState) {
-    if (!this.state.hasError) return;
-    if (!prevState.hasError) {
-      this.retryRef.current?.focus();
-      return;
+    // Report to privacy-safe telemetry (no-op when flag is disabled)
+    try {
+      getTelemetryClient().captureError(error, {
+        category: 'boundary_error',
+        severity: 'fatal',
+        kind: this.props.kind ?? classifyRouteError(error),
+        context: {},
+      })
+    } catch {
+      // Telemetry must never surface to the user
     }
-    const prev = prevProps.resetKeys ?? [];
-    const next = this.props.resetKeys ?? [];
-    if (prev.length !== next.length || prev.some((v, i) => !Object.is(v, next[i]))) {
-      this.handleRetry();
+
+    // Development-only verbose logging
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.error('[ErrorBoundary] Caught unhandled error:', error, errorInfo)
     }
   }
 
@@ -88,29 +149,58 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         stack: redacted.stack ?? undefined,
       } as Error;
       const message = toSafeErrorMessage(safeErrorForDisplay);
+      const kind: RouteBoundaryKind =
+        this.props.kind ?? classifyRouteError(this.state.error);
       if (this.props.fallback) {
         return <>{this.props.fallback({ message, onRetry: this.handleRetry })}</>;
       }
       return (
         <div
+          className="flex min-h-screen items-center justify-center bg-gray-50 px-4"
           role="alert"
           aria-live="assertive"
-          className="flex min-h-[40vh] items-center justify-center px-4 py-10"
         >
-          <div className="w-full max-w-md rounded-lg bg-white p-6 text-center shadow-lg dark:bg-gray-900">
-            <h2 className="mb-3 text-xl font-semibold text-red-600">
-              Something went wrong
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6 text-center">
+            <h2 className="text-xl font-semibold text-red-600 mb-3">
+              {kind === 'authorization'
+                ? 'Access denied'
+                : kind === 'configuration'
+                  ? 'Configuration failure'
+                  : kind === 'dependency'
+                    ? 'Service unavailable'
+                    : kind === 'missing-resource'
+                      ? 'Not found'
+                      : 'Something went wrong'}
             </h2>
             <p className="mb-2 text-gray-600 dark:text-gray-300">{message}</p>
             <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-              Your pending transactions are preserved. Retry is safe.
+              {kind === 'authorization'
+                ? 'You do not have permission to view this route. Your pending transactions are preserved.'
+                : kind === 'configuration'
+                  ? 'This route is misconfigured. Your pending transactions are preserved.'
+                  : kind === 'dependency'
+                    ? 'A required dependency is unavailable. Your pending transactions are preserved. Retry is safe.'
+                    : kind === 'missing-resource'
+                      ? 'This resource does not exist. Your pending transactions are preserved.'
+                      : 'Your pending transactions are preserved. Retry is safe.'}
             </p>
             <button
               ref={this.retryRef}
               autoFocus
               type="button"
               onClick={this.handleRetry}
-              className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+              aria-label={
+                kind === 'authorization'
+                  ? 'Retry after access denied error'
+                  : kind === 'configuration'
+                    ? 'Retry after configuration failure'
+                    : kind === 'dependency'
+                      ? 'Retry after dependency failure'
+                      : kind === 'missing-resource'
+                        ? 'Retry after not found error'
+                        : 'Retry after error'
+              }
             >
               Try again
             </button>
@@ -122,9 +212,4 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
-function redactErrorInfoStack(componentStack: string): string {
-  const r = redactError({ message: '', stack: componentStack });
-  return r.stack ?? '';
-}
-
-export default ErrorBoundary;
+export default ErrorBoundary

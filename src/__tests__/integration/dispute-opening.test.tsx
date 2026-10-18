@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports -- test doubles and dynamic module access */
 /**
  * Integration tests for complete dispute opening flow
  * Tests end-to-end: fetch context → validate → simulate → submit → reconcile

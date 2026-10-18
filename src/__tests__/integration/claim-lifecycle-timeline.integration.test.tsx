@@ -47,18 +47,7 @@ describe('Claim Lifecycle Timeline Integration', () => {
   let queryClient: QueryClient;
   let user: ReturnType<typeof userEvent.setup>;
 
-  const mockClaim: Claim = {
-    id: 'claim-integration-123',
-    title: 'Integration Test Claim',
-    description: 'Testing full lifecycle flow',
-    claimantAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E',
-    status: 'OPEN',
-    bountyAmount: 100,
-    totalStaked: 0,
-    evidence: [],
-    createdAt: new Date('2024-01-01T10:00:00Z').toISOString(),
-    updatedAt: new Date('2024-01-01T10:00:00Z').toISOString(),
-  };
+  let mockClaim: Claim;
 
   const mockVerification: Verification = {
     id: 'verification-1',
@@ -68,34 +57,52 @@ describe('Claim Lifecycle Timeline Integration', () => {
     stakeAmount: 50,
     status: 'CONFIRMED',
     transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-    createdAt: new Date('2024-01-01T11:00:00Z').toISOString(),
-    confirmedAt: new Date('2024-01-01T11:02:00Z').toISOString(),
+    createdAt: new Date().toISOString(),
+    confirmedAt: new Date().toISOString(),
   };
 
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
+        queries: { retry: false },
         mutations: { retry: false },
       },
     });
 
-    user = userEvent.setup();
+    mockClaim = {
+      id: 'claim-integration-123',
+      title: 'Integration Test Claim',
+      description: 'Testing full lifecycle flow',
+      claimantAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E',
+      status: 'OPEN',
+      bountyAmount: 100,
+      totalStaked: 0,
+      evidence: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     mockSubscriptionHandlers = new Map();
     jest.clearAllMocks();
     jest.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    jest.clearAllTimers();
     jest.useRealTimers();
     queryClient.clear();
   });
 
-  const renderTimeline = (claimId: string = 'claim-integration-123', props = {}) => {
+  const renderTimeline = (
+    claimIdOrProps: string | Record<string, unknown> = 'claim-integration-123',
+    props: Record<string, unknown> = {}
+  ) => {
+    const claimId = typeof claimIdOrProps === 'string' ? claimIdOrProps : 'claim-integration-123';
+    const finalProps = typeof claimIdOrProps === 'object' ? { ...claimIdOrProps, ...props } : props;
     return render(
       <QueryClientProvider client={queryClient}>
-        <ClaimLifecycleTimeline claimId={claimId} {...props} />
+        <ClaimLifecycleTimeline claimId={claimId} {...finalProps} />
       </QueryClientProvider>
     );
   };
@@ -130,7 +137,7 @@ describe('Claim Lifecycle Timeline Integration', () => {
       expect(screen.getByText('Claim Indexed')).toBeInTheDocument();
 
       // Should show correct phase
-      expect(screen.getByText(/verification open/i)).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /current phase/i })).toHaveTextContent(/verification open/i);
 
       // Should show user action indicator
       expect(screen.getByText('(You)')).toBeInTheDocument();
@@ -556,7 +563,7 @@ describe('Claim Lifecycle Timeline Integration', () => {
       renderTimeline();
 
       await waitFor(() => {
-        expect(screen.getByText(/verification open/i)).toBeInTheDocument();
+        expect(screen.getByRole('status', { name: /current phase/i })).toHaveTextContent(/verification open/i);
       });
 
       // Simulate verification period ending
@@ -690,7 +697,7 @@ describe('Claim Lifecycle Timeline Integration', () => {
 
       // Clean unmount
       unmount();
-      expect(mockSubscriptionHandlers.get('CLAIM_UPDATED')?.size).toBe(0);
+      expect(mockSubscriptionHandlers.get('CLAIM_UPDATED')?.size ?? 0).toBe(0);
     });
   });
 });

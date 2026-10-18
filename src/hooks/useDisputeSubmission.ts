@@ -488,54 +488,6 @@ export function useDisputeSubmission(
         };
         setLastTransaction(transaction);
         return transaction;
-        // In production, this would:
-        // 1. Call writeContract via Wagmi
-        // 2. Return transaction hash immediately
-        // 3. Transaction will be mined asynchronously
-        // 4. Bond will be locked on confirmation
-        //
-        // const hash = await writeContract({
-        //   address: contractAddress,
-        //   abi: contractAbi,
-        //   functionName: 'openDispute',
-        //   args: [payload.claimId, payload.reason, BigInt(payload.bondAmount)],
-        //   value: BigInt(payload.bondAmount),
-        //   chainId: expectedChainId,
-        // })
-
-        // Placeholder for the post-write tx hash returned by the wallet.
-        // Until wallet integration is connected, use a dummy hash fixture that
-        // triggers the no-fabrication guard so the test surface is reachable.
-        const plantedHash: string = (context as any).__testPlantedHash ??
-          '0x0000000000000000000000000000000000000000000000000000000000000001'; // secret-scan-allow: test fixture
-
-        const plantedFrom: string = (context as any).__testPlantedFrom ??
-          (userAddress ?? '0x1111111111111111111111111111111111111111'); // secret-scan-allow: test fixture
-
-        const securityTx: TransactionConfirmed = {
-          state: 'confirmed',
-          hash: plantedHash,
-          fromAddress: plantedFrom as `0x${string}`,
-          toAddress: contractAddress as `0x${string}`,
-          chainId: expectedChainId,
-          timestamp: Date.now(),
-          blockNumber: 0n,
-          blockHash: '0x' + '0'.repeat(64),
-          transactionIndex: 0,
-          confirmations: 1,
-          receipt: {
-            status: 'success',
-            gasUsed: 0n,
-            cumulativeGasUsed: 0n,
-            logs: [],
-          },
-        };
-        assertNoFabricatedData(securityTx);
-
-        // Submission requires a wallet writeContract call; do not fabricate hashes.
-        throw new Error(
-          'Dispute submission requires wallet writeContract integration; no synthetic transaction hash is emitted.'
-        );
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : 'Submission failed';
@@ -587,13 +539,7 @@ export function getPrimaryError(validation: DisputeValidation): string | null {
 
 /**
  * Utility: Calculate bond in ETH (for display)
+ * Canonical implementation in @/lib/format
  */
-export function formatBondAmount(bondWei: string): string {
-  try {
-    const bondBigInt = BigInt(bondWei);
-    const ethValue = Number(bondBigInt) / 1e18;
-    return ethValue.toFixed(4);
-  } catch {
-    return '0.0000';
-  }
-}
+export { formatBondAmount } from '@/lib/format';
+

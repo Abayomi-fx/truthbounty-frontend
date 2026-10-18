@@ -79,7 +79,7 @@ export function deriveWalletBoundaryState(
     };
   }
 
-  if (!wallet.isConnected || !wallet.address) {
+  if ((!wallet.isConnected && !wallet.unsupportedChain) || !wallet.address) {
     return {
       status: "disconnected",
       isLoading: false,
@@ -109,7 +109,7 @@ export function deriveWalletBoundaryState(
     };
   }
 
-  if (!network.isSupported || network.isUnsupported) {
+  if (wallet.unsupportedChain || !network.isSupported || network.isUnsupported) {
     return {
       status: "unsupported",
       isLoading: false,
@@ -146,32 +146,47 @@ export function useCanonicalWallet(): CanonicalWallet {
   const chainId = useChainId();
   const account = useAccount();
 
+  const effectiveAddress =
+    wallet.address ?? (wallet.unsupportedChain ? (account.address as `0x${string}`) : undefined);
+  const effectiveChainId =
+    wallet.chainId ?? (wallet.unsupportedChain ? (account.chainId ?? chainId) : undefined);
+  const effectiveIsConnected = wallet.isConnected || wallet.unsupportedChain;
+
+  const effectiveWallet = useMemo(
+    () => ({
+      ...wallet,
+      isConnected: effectiveIsConnected,
+      address: effectiveAddress,
+      chainId: effectiveChainId,
+    }),
+    [wallet, effectiveIsConnected, effectiveAddress, effectiveChainId],
+  );
+
   const network = useWalletNetwork({
-    chainId: wallet.chainId ?? chainId,
-    isConnected: wallet.isConnected,
+    chainId: effectiveChainId,
+    isConnected: effectiveIsConnected,
     switchChain,
   });
 
   const configValidation = useMemo(
     () => validateWalletProviderConfig(),
-    // Re-validate when the connector set changes; this is a coarse but safe trigger.
-    [wallet.activeConnector?.id],
+    [],
   );
 
   const addressValidationError = useMemo(
-    () => (wallet.address ? getAddressValidationError(wallet.address) : null),
-    [wallet.address],
+    () => (effectiveAddress ? getAddressValidationError(effectiveAddress) : null),
+    [effectiveAddress],
   );
 
   const state = useMemo(
     () =>
       deriveWalletBoundaryState(
-        wallet,
+        effectiveWallet,
         network,
         configValidation.errors,
         addressValidationError,
       ),
-    [wallet, network, configValidation.errors, addressValidationError],
+    [effectiveWallet, network, configValidation.errors, addressValidationError],
   );
 
   const switchToSupportedNetwork = useCallback(async () => {

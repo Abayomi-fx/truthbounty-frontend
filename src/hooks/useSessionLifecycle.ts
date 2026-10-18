@@ -150,10 +150,11 @@ export function useSessionLifecycle(
     setSession(current);
   }, [store]);
 
+  const nowFn = options.now ?? Date.now;
   const health = useMemo(
-    () => evaluateSessionHealth(session, nowRef.current(), refreshWindowMs),
+    () => evaluateSessionHealth(session, nowFn(), refreshWindowMs),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [session, clock, refreshWindowMs],
+    [session, clock, refreshWindowMs, options.now],
   );
 
   const refresh = useCallback(async (): Promise<boolean> => {

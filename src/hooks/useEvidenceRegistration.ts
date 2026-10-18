@@ -8,6 +8,7 @@ import {
   getReleaseChainId,
 } from '@/lib/contracts/registry';
 import { evaluateWriteTarget } from '@/lib/contracts/write-gate';
+import { validateEvidenceUri } from '@/lib/validation/evidenceUri';
 
 // Types
 export interface EvidencePayload {

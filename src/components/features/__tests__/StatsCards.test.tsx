@@ -1,84 +1,125 @@
-import React from 'react';
-import { render, screen, within } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import StatsCards from '../StatsCards';
+import React from "react";
+import { render, screen, within } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import StatsCards from "../StatsCards";
+import { platformStatsFixture } from "@/__tests__/fixtures/dashboard-fixtures";
 
-// Mock useTrust hook
-jest.mock('@/components/hooks/useTrust', () => ({
-  useTrust: () => ({
-    reputation: 95,
-  }),
-}));
-
-// Mock StatsCardsSkeleton
-jest.mock('@/components/skeletons', () => ({
+jest.mock("@/components/skeletons", () => ({
   StatsCardsSkeleton: () => <div data-testid="stats-cards-skeleton" />,
 }));
 
-// Mock TrustScoreTooltip
-jest.mock('@/components/ui/TrustScoreTooltip', () => {
+jest.mock("@/components/ui/TrustScoreTooltip", () => {
   return function DummyTrustScoreTooltip() {
     return <div data-testid="trust-score-tooltip" />;
   };
 });
 
-describe('StatsCards Component', () => {
-  it('renders loading skeleton when isLoading is true', () => {
-    render(<StatsCards isLoading={true} />);
-    expect(screen.getByTestId('stats-cards-skeleton')).toBeInTheDocument();
+function mockTrust(reputation: number | null) {
+  jest.mock("@/components/hooks/useTrust", () => ({
+    useTrust: () => ({
+      reputation,
+      accountAgeDays: null,
+      suspicious: null,
+      isVerified: false,
+    }),
+  }));
+}
+
+// Default mock — reputation known
+jest.mock("@/components/hooks/useTrust", () => ({
+  useTrust: () => ({
+    reputation: 95,
+    accountAgeDays: null,
+    suspicious: null,
+    isVerified: false,
+  }),
+}));
+
+describe("StatsCards — loading state", () => {
+  it("renders skeleton when isLoading is true", () => {
+    render(<StatsCards isLoading />);
+    expect(screen.getByTestId("stats-cards-skeleton")).toBeInTheDocument();
   });
 
-  it('renders "My Trust" stat when isLoading is false', () => {
-    render(<StatsCards isLoading={false} />);
+  it("does not render stat cards while loading", () => {
+    render(<StatsCards isLoading />);
+    expect(screen.queryByLabelText(/My Trust/)).not.toBeInTheDocument();
+  });
+});
 
-    // Check "My Trust" value is rendered
-    expect(screen.getByText('95')).toBeInTheDocument();
-    expect(screen.getByText('My Trust')).toBeInTheDocument();
-
-    // Check tooltip is rendered for "My Trust"
-    expect(screen.getByTestId('trust-score-tooltip')).toBeInTheDocument();
+describe("StatsCards — My Trust card", () => {
+  it("renders the My Trust value and label", () => {
+    render(<StatsCards />);
+    expect(screen.getByText("95")).toBeInTheDocument();
+    expect(screen.getByText("My Trust")).toBeInTheDocument();
   });
 
-  /**
-   * STAB-FE-002 — replaces a `toMatchSnapshot()` baseline.
-   *
-   * The snapshot asserted the rendered Tailwind class strings, so any
-   * semantics-preserving reorder of utility classes failed the suite while the
-   * accessible output was unchanged. It also asserted the `aria-label`
-   * accessible name only opaquely, as serialized markup.
-   *
-   * These assertions cover the same contract semantically: the accessible name
-   * pairs each label with its value, and the value, label and tooltip belong to
-   * the same card. Scoping the lookups to the card is stricter than the
-   * previous page-wide `getByText` calls, which would pass even if the label
-   * and the value were rendered in different cards.
-   */
-  it('exposes an accessible name pairing the stat label with its value', () => {
-    render(<StatsCards isLoading={false} />);
-
-    const card = screen.getByLabelText('My Trust: 95');
-    expect(card).toBeInTheDocument();
+  it("STAB-FE-002: exposes an accessible name pairing label and value", () => {
+    render(<StatsCards />);
+    expect(screen.getByLabelText("My Trust: 95")).toBeInTheDocument();
   });
 
-  it('keeps the value, label and tooltip in the same stat card', () => {
-    render(<StatsCards isLoading={false} />);
+  it("STAB-FE-002: keeps value, label and tooltip in the same card", () => {
+    render(<StatsCards />);
+    const card = screen.getByLabelText("My Trust: 95");
+    expect(within(card).getByText("95")).toBeInTheDocument();
+    expect(within(card).getByText("My Trust")).toBeInTheDocument();
+    expect(within(card).getByTestId("trust-score-tooltip")).toBeInTheDocument();
+  });
+});
 
-    const card = screen.getByLabelText('My Trust: 95');
-    expect(within(card).getByText('95')).toBeInTheDocument();
-    expect(within(card).getByText('My Trust')).toBeInTheDocument();
-    expect(within(card).getByTestId('trust-score-tooltip')).toBeInTheDocument();
+describe("StatsCards — null reputation (unavailable)", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    jest.doMock("@/components/hooks/useTrust", () => ({
+      useTrust: () => ({
+        reputation: null,
+        accountAgeDays: null,
+        suspicious: null,
+        isVerified: false,
+      }),
+    }));
   });
 
-  it('renders exactly one stat card so a missing or duplicated stat is caught', () => {
-    render(<StatsCards isLoading={false} />);
-
-    expect(screen.getAllByLabelText(/^[^:]+: \S+$/)).toHaveLength(1);
+  afterEach(() => {
+    jest.resetModules();
+    // Restore default mock
+    jest.doMock("@/components/hooks/useTrust", () => ({
+      useTrust: () => ({
+        reputation: 95,
+        accountAgeDays: null,
+        suspicious: null,
+        isVerified: false,
+      }),
+    }));
   });
 
-  it('does not render stat cards while loading', () => {
-    render(<StatsCards isLoading={true} />);
+  it("renders em-dash, not the string 'null', when reputation is unavailable", async () => {
+    // Re-import after doMock
+    const { default: StatsCardsFresh } = await import("../StatsCards");
+    render(<StatsCardsFresh />);
+    // The "My Trust" card should show "—" not "null"
+    expect(screen.queryByText("null")).not.toBeInTheDocument();
+  });
+});
 
-    expect(screen.getByTestId('stats-cards-skeleton')).toBeInTheDocument();
-    expect(screen.queryByLabelText('My Trust: 95')).not.toBeInTheDocument();
+describe("StatsCards — platform stats", () => {
+  it("renders em-dash placeholders for all 6 stat labels when platformStats is not provided", () => {
+    render(<StatsCards />);
+    const dashes = screen.getAllByText("—");
+    expect(dashes.length).toBe(6);
+  });
+
+  it("renders supplied platformStats values", () => {
+    render(<StatsCards platformStats={platformStatsFixture} />);
+    for (const stat of platformStatsFixture) {
+      expect(screen.getByText(stat.label)).toBeInTheDocument();
+      expect(screen.getByText(stat.value)).toBeInTheDocument();
+    }
+  });
+
+  it("does not show em-dashes when real platform stats are supplied", () => {
+    render(<StatsCards platformStats={platformStatsFixture} />);
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 });

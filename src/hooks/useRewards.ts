@@ -9,10 +9,10 @@
  *  - useRewardClaim: submits pull claims via wagmi/viem against the frozen
  *    release ABI and reconciles receipts.
  *
- * The legacy mock-data pipeline (claimableRewards from @/data/mock-data) and
- * the NotImplemented claimRewards stub are removed; this hook no longer
- * fabricates rewards, hashes, or settlement state. Lifecycle state is driven
- * by canonical on-chain receipts only — never by setTimeout or client guesses.
+ * The legacy mock-data pipeline and the NotImplemented claimRewards stub are
+ * removed; this hook no longer fabricates rewards, hashes, or settlement state.
+ * Lifecycle state is driven by canonical on-chain receipts only — never by
+ * setTimeout or client guesses.
  */
 
 import { useCallback, useMemo } from "react";

@@ -250,92 +250,65 @@ describe('ClaimRewardsPanel — ARIA structure invariants', () => {
 // RewardsPage accessibility (simpler standalone page)
 // ---------------------------------------------------------------------------
 
+const mockPageEntitlements = {
+  entitlements: [] as any[],
+  summary: { claimableByAsset: [], entitlements: [], hasClaimable: false },
+  isLoading: false,
+  isError: false,
+  error: null,
+  isUnsupported: false,
+  unsupportedReason: null as string | null,
+  refetch: jest.fn(),
+};
+
+const mockPageClaim = {
+  submitClaim: jest.fn(),
+  status: 'idle',
+  txHash: null,
+  projection: null,
+  failure: null,
+  isWritePending: false,
+  reset: jest.fn(),
+};
+
+const mockPageReadiness = {
+  ready: true,
+  reason: null,
+  account: '0x1111111111111111111111111111111111111111',
+  chainId: 11155420,
+  expectedChainId: 11155420,
+  targetAddress: '0x3333333333333333333333333333333333333333',
+  failure: null,
+};
+
+jest.mock('@/hooks/useRewardEntitlements', () => ({
+  useRewardEntitlements: () => mockPageEntitlements,
+}));
+
+jest.mock('@/hooks/useRewardClaim', () => ({
+  useRewardClaim: () => mockPageClaim,
+}));
+
+jest.mock('@/hooks/useWriteReadiness', () => ({
+  useWriteReadiness: () => mockPageReadiness,
+}));
+
 describe('RewardsPage — axe accessibility', () => {
-  beforeEach(() => {
-    jest.resetModules();
-  });
-
   it('has no violations in the unsupported (wrong chain) state', async () => {
-    jest.mock('wagmi', () => ({
-      useAccount: () => ({ address: '0x1111111111111111111111111111111111111111', isConnected: true }),
-      useChainId: () => 1, // Ethereum mainnet — unsupported
-    }));
-    jest.mock('@/lib/contracts/registry', () => ({
-      getContractAddress: () => '0x3333333333333333333333333333333333333333',
-      getReleaseChainId: () => 11155420,
-    }));
-    jest.mock('@/hooks/useRewardEntitlements', () => ({
-      useRewardEntitlements: () => ({
-        entitlements: [],
-        summary: { claimableByAsset: [], entitlements: [], hasClaimable: false },
-        isLoading: false,
-        isError: false,
-        error: null,
-        isUnsupported: true,
-        unsupportedReason: 'Wrong network. Switch to the protocol chain to view claimable rewards.',
-        refetch: jest.fn(),
-      }),
-    }));
-    jest.mock('@/hooks/useRewardClaim', () => ({
-      useRewardClaim: () => ({
-        submitClaim: jest.fn(),
-        status: 'idle',
-        txHash: null,
-        projection: null,
-        failure: null,
-        isWritePending: false,
-        reset: jest.fn(),
-      }),
-    }));
-    jest.mock('@/lib/explorer', () => ({
-      getTransactionExplorerUrl: (hash: string) =>
-        `https://sepolia-optimism.etherscan.io/tx/${hash}`,
-    }));
-
+    mockPageEntitlements.isUnsupported = true;
+    mockPageEntitlements.unsupportedReason =
+      'Wrong network. Switch to the protocol chain to view claimable rewards.';
     const RewardsPage = (await import('@/components/RewardsPage')).default;
     const { container } = render(<RewardsPage />);
     await assertAccessible(container);
   });
 
   it('has no violations in the empty (no rewards) state', async () => {
-    jest.mock('wagmi', () => ({
-      useAccount: () => ({ address: '0x1111111111111111111111111111111111111111', isConnected: true }),
-      useChainId: () => 11155420,
-    }));
-    jest.mock('@/lib/contracts/registry', () => ({
-      getContractAddress: () => '0x3333333333333333333333333333333333333333',
-      getReleaseChainId: () => 11155420,
-    }));
-    jest.mock('@/hooks/useRewardEntitlements', () => ({
-      useRewardEntitlements: () => ({
-        entitlements: [],
-        summary: { claimableByAsset: [], entitlements: [], hasClaimable: false },
-        isLoading: false,
-        isError: false,
-        error: null,
-        isUnsupported: false,
-        unsupportedReason: null,
-        refetch: jest.fn(),
-      }),
-    }));
-    jest.mock('@/hooks/useRewardClaim', () => ({
-      useRewardClaim: () => ({
-        submitClaim: jest.fn(),
-        status: 'idle',
-        txHash: null,
-        projection: null,
-        failure: null,
-        isWritePending: false,
-        reset: jest.fn(),
-      }),
-    }));
-    jest.mock('@/lib/explorer', () => ({
-      getTransactionExplorerUrl: (hash: string) =>
-        `https://sepolia-optimism.etherscan.io/tx/${hash}`,
-    }));
-
+    mockPageEntitlements.isUnsupported = false;
+    mockPageEntitlements.unsupportedReason = null;
     const RewardsPage = (await import('@/components/RewardsPage')).default;
     const { container } = render(<RewardsPage />);
     await assertAccessible(container);
   });
 });
+

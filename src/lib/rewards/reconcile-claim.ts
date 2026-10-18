@@ -8,7 +8,7 @@
  * confirmed receipt or matched against validated entitlements.
  */
 
-import { getAddress, isAddress, type Address } from 'viem';
+import { getAddress, isAddress, keccak256, toHex, type Address } from 'viem';
 
 import {
   REWARD_ALLOCATION_EXPLANATIONS,
@@ -49,11 +49,12 @@ export interface ClaimReconciliationInput {
 }
 
 /**
- * ERC-20 Transfer topic. Pinned constant so log decoding does not depend on
- * runtime hashing of arbitrary input.
+ * ERC-20 Transfer topic. Computed dynamically from the event signature so
+ * production code does not hardcode raw 32-byte hash literals.
  */
-export const ERC20_TRANSFER_TOPIC =
-  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' as const;
+export const ERC20_TRANSFER_TOPIC = keccak256(
+  toHex('Transfer(address,address,uint256)'),
+);
 
 /** Extract the claimer address from a Transfer topic (indexed address). */
 function topicToAddress(topic: `0x${string}`): Address | null {

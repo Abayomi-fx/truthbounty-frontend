@@ -3,6 +3,12 @@
  * Protocol requirement: Fail closed on unsupported schemes, unsafe inputs, or secrets.
  */
 
+import {
+  DEFAULT_IPFS_GATEWAY_POLICY,
+  buildApprovedGatewayUrl,
+  parseIpfsEvidenceUri,
+} from '@/lib/evidence-gateway';
+
 export const SUPPORTED_EVIDENCE_SCHEMES = ['https:', 'ipfs:'] as const;
 export type SupportedEvidenceScheme = typeof SUPPORTED_EVIDENCE_SCHEMES[number];
 
@@ -24,6 +30,8 @@ const SENSITIVE_PARAM_NAMES = new Set([
   'x-amz-security-token',
   'x-goog-signature',
   'x-goog-credential',
+  'authorization',
+  'credential',
 ]);
 
 // IPFS CID patterns: CIDv0 (base58 starting with Qm...) or CIDv1 (multibase starting with baf...)
@@ -133,11 +141,14 @@ export function getSafeEvidenceHref(uri: string): string | null {
       return parsed.href;
     }
     if (parsed.protocol === 'ipfs:') {
-      const cid = parsed.hostname || parsed.pathname.replace(/^\/\//, '').split('/')[0];
-      const remainder = parsed.pathname.startsWith('/') && parsed.hostname
-        ? parsed.pathname
-        : parsed.pathname.replace(new RegExp(`^\\/?\\/?${cid}`), '');
-      return `https://ipfs.io/ipfs/${cid}${remainder}${parsed.search}${parsed.hash}`;
+      const reference = parseIpfsEvidenceUri(uri);
+      if (!reference) return null;
+      const [primaryGateway] = DEFAULT_IPFS_GATEWAY_POLICY.gateways;
+      return buildApprovedGatewayUrl(
+        primaryGateway,
+        reference.cid,
+        reference.path,
+      );
     }
   } catch {
     return null;

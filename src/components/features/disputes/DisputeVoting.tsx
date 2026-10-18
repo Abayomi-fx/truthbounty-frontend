@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatCurrency } from '@/lib/format';
 
 interface DisputeVotingProps {
   disputeId: string;
@@ -32,7 +33,9 @@ export const DisputeVoting = ({ disputeId, currentStaked, onVote }: DisputeVotin
           ></span>
           Active Dispute Voting
         </h3>
-        <span className="text-xs sm:text-sm text-red-400 font-mono">${currentStaked.toLocaleString()} Staked</span>
+        <span className="text-xs sm:text-sm text-red-400 font-mono tabular-nums">
+          {formatCurrency(currentStaked)} Staked
+        </span>
       </div>
 
       <div className="mb-3 sm:mb-4">

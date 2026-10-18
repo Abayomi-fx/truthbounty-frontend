@@ -18,7 +18,7 @@ export type Messages = typeof enMessages;
  * Used for type-safe translation key access.
  */
 export type MessageKeys = {
-  [K in keyof Messages]: Messages[K] extends Record<string, any>
+  [K in keyof Messages]: Messages[K] extends Record<string, unknown>
     ? `${K & string}.${keyof Messages[K] & string}`
     : K & string;
 }[keyof Messages];
@@ -106,5 +106,6 @@ export type ClaimErrorCodeKey =
 
 declare global {
   // Use type-safe messages from the English translation file
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface IntlMessages extends Messages {}
 }

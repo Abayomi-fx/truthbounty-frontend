@@ -128,6 +128,8 @@ export type ERC20ApprovalErrorReason =
   | 'RESET_FAILED'
   | 'APPROVAL_FAILED'
   | 'RECEIPT_REVERTED'
+  | 'RECEIPT_UNAVAILABLE'
+  | 'ALLOWANCE_REFRESH_FAILED'
   | 'UNEXPECTED';
 
 // ---------------------------------------------------------------------------
@@ -158,6 +160,8 @@ export function useERC20Approval({
 
   // Prevent duplicate submissions
   const isSubmitting = useRef(false);
+  // Incremented by reset() so late async results from an abandoned attempt are ignored
+  const attemptGeneration = useRef(0);
 
   // ---------------------------------------------------------------------------
   // Param validation
@@ -223,12 +227,17 @@ export function useERC20Approval({
 
   useEffect(() => {
     if (!autoCheck) return;
-    // Only act when we're in a state that should react to fresh allowance data
+    // Only act when we're in a state that should react to fresh allowance data.
+    // 'unsupported-chain' and 'invalid-params' are derived from inputs, so they
+    // must re-evaluate once the wallet returns to a supported chain or params
+    // become valid — otherwise the fail-closed state has no recovery path.
     if (
       status !== 'idle' &&
       status !== 'checking' &&
       status !== 'needs-approval' &&
-      status !== 'approved'
+      status !== 'approved' &&
+      status !== 'unsupported-chain' &&
+      status !== 'invalid-params'
     ) {
       return;
     }
@@ -327,7 +336,34 @@ export function useERC20Approval({
     setResetTxHash(undefined);
     void submitApproval();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetReceiptQuery.data, status]);
+  }, [resetReceiptQuery.data, status, submitApproval]);
+
+  // ---------------------------------------------------------------------------
+  // React to receipt query failures (RPC error, timeout, dropped tx)
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    const receiptError =
+      status === 'pending-reset'
+        ? resetReceiptQuery.error
+        : status === 'pending-approval'
+          ? approveReceiptQuery.error
+          : null;
+    if (!receiptError) return;
+
+    // Fail closed: without a confirmed receipt nothing is treated as approved.
+    // reset() re-reads the allowance from chain, which reflects the real outcome.
+    setResetTxHash(undefined);
+    setApproveTxHash(undefined);
+    setError(
+      new ERC20ApprovalError(
+        'RECEIPT_UNAVAILABLE',
+        'Could not confirm the approval transaction. Check your wallet activity before retrying',
+      ),
+    );
+    setStatus('error');
+    isSubmitting.current = false;
+  }, [status, resetReceiptQuery.error, approveReceiptQuery.error]);
 
   // ---------------------------------------------------------------------------
   // React to approve tx receipt
@@ -346,31 +382,38 @@ export function useERC20Approval({
       return;
     }
 
-    // Receipt confirmed — refresh allowance from chain
+    // Receipt confirmed — refresh allowance from chain. The outcome is decided
+    // from the fresh read only: the cached allowance still holds the
+    // pre-receipt value while the refetch is in flight.
     setApproveTxHash(undefined);
     setStatus('confirming');
-    refetchAllowance();
     isSubmitting.current = false;
+    const generation = attemptGeneration.current;
+    void refetchAllowance().then(
+      (freshAllowance) => {
+        if (generation !== attemptGeneration.current) return;
+        if (freshAllowance === undefined) {
+          setError(
+            new ERC20ApprovalError('ALLOWANCE_REFRESH_FAILED', 'Could not read the allowance after confirmation'),
+          );
+          setStatus('error');
+        } else if (requiredAmount !== undefined && freshAllowance >= requiredAmount) {
+          setStatus('success');
+        } else {
+          setError(new ERC20ApprovalError('APPROVAL_FAILED', 'Allowance still insufficient after confirmation'));
+          setStatus('error');
+        }
+      },
+      () => {
+        if (generation !== attemptGeneration.current) return;
+        setError(
+          new ERC20ApprovalError('ALLOWANCE_REFRESH_FAILED', 'Could not read the allowance after confirmation'),
+        );
+        setStatus('error');
+      },
+    );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [approveReceiptQuery.data, status]);
-
-  // ---------------------------------------------------------------------------
-  // React to allowance refresh after confirmation
-  // ---------------------------------------------------------------------------
-
-  useEffect(() => {
-    if (status !== 'confirming') return;
-    if (allowanceStatus === 'loading') return; // still fetching
-
-    if (allowanceStatus === 'success') {
-      setStatus(isSufficient ? 'success' : 'error');
-      if (!isSufficient) {
-        setError(new ERC20ApprovalError('APPROVAL_FAILED', 'Allowance still insufficient after confirmation'));
-      }
-    } else if (allowanceStatus === 'error') {
-      setStatus('error');
-    }
-  }, [status, allowanceStatus, isSufficient]);
 
   // ---------------------------------------------------------------------------
   // Public `approve()` method
@@ -453,6 +496,7 @@ export function useERC20Approval({
   // ---------------------------------------------------------------------------
 
   const reset = useCallback(() => {
+    attemptGeneration.current += 1;
     setStatus('idle');
     setError(null);
     setResetTxHash(undefined);

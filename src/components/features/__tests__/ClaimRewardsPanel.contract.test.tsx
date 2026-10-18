@@ -172,7 +172,7 @@ describe('V2-FE-088 ClaimRewardsPanel component contracts', () => {
     const ClaimRewardsPanel = (await import('../ClaimRewardsPanel')).default;
     const user = userEvent.setup();
     render(<ClaimRewardsPanel />);
-    const button = screen.getByRole('button');
+    const button = screen.getByRole('button', { name: /retry/i });
     expect(button).not.toBeDisabled();
     await user.tab();
     expect(button).toHaveFocus();

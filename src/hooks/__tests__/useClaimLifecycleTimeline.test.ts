@@ -13,13 +13,15 @@ import type { Verification } from '@/app/types/verification';
 import React from 'react';
 
 // Mock WebSocket provider
-jest.mock('@/components/providers/WebSocketProvider', () => ({
-  useWebSocketContext: () => ({
-    subscribe: jest.fn(() => jest.fn()),
-    isConnected: true,
-    send: jest.fn(),
-  }),
-}));
+jest.mock('@/components/providers/WebSocketProvider', () => {
+  return {
+    useWebSocketContext: jest.fn(() => ({
+      subscribe: jest.fn(() => jest.fn()),
+      isConnected: true,
+      send: jest.fn(),
+    })),
+  };
+});
 
 // Mock wagmi hooks
 jest.mock('wagmi', () => ({
@@ -33,19 +35,7 @@ jest.mock('wagmi', () => ({
 describe('useClaimLifecycleTimeline', () => {
   let queryClient: QueryClient;
   let wrapper: React.FC<{ children: React.ReactNode }>;
-
-  const mockClaim: Claim = {
-    id: 'claim-123',
-    title: 'Test Claim',
-    description: 'Test description',
-    claimantAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E',
-    status: 'OPEN',
-    bountyAmount: 100,
-    totalStaked: 50,
-    evidence: [],
-    createdAt: new Date('2024-01-01T00:00:00Z').toISOString(),
-    updatedAt: new Date('2024-01-01T00:00:00Z').toISOString(),
-  };
+  let mockClaim: Claim;
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -55,9 +45,29 @@ describe('useClaimLifecycleTimeline', () => {
       },
     });
 
-    wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
+    mockClaim = {
+      id: 'claim-123',
+      title: 'Test Claim',
+      description: 'Test description',
+      claimantAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E',
+      status: 'OPEN',
+      bountyAmount: 100,
+      totalStaked: 50,
+      evidence: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const { useWebSocketContext } = require('@/components/providers/WebSocketProvider');
+    useWebSocketContext.mockReset();
+    useWebSocketContext.mockImplementation(() => ({
+      subscribe: jest.fn(() => jest.fn()),
+      isConnected: true,
+      send: jest.fn(),
+    }));
+
+    wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
 
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -307,6 +317,7 @@ describe('useClaimLifecycleTimeline', () => {
     it('should mark old timeline as stale after threshold', async () => {
       const oldClaim = {
         ...mockClaim,
+        createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10 mins ago
       };
       queryClient.setQueryData(['claims', 'claim-123'], oldClaim);

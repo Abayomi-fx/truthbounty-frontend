@@ -62,6 +62,8 @@
 - Desktop: content column, contextual action rail and lifecycle timeline.
 - At 200% zoom, no two-dimensional scrolling is required except genuine data tables.
 
+Implementation and per-workflow coverage: see [RESPONSIVE_WORKFLOWS.md](./RESPONSIVE_WORKFLOWS.md).
+
 ## Information-state requirements
 
 Every route defines loading, empty, partial, stale, degraded, error, offline and unauthorized states. Protocol actions additionally define wrong-chain, approval-required, signature-requested, rejected, submitted, replaced, confirming, finalized, reverted, dropped and reorged states.

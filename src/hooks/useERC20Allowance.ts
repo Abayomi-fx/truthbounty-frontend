@@ -70,8 +70,13 @@ export interface UseERC20AllowanceResult {
   /**
    * Trigger an immediate re-read.
    * Call this after a confirmed Approval receipt to sync state from chain.
+   *
+   * Resolves with the freshly read on-chain allowance, or `undefined` when the
+   * read is disabled or failed. Callers deciding post-receipt state must use
+   * this value — `allowance`/`status` may still hold the pre-receipt value
+   * while the refetch is in flight.
    */
-  refetch: () => void;
+  refetch: () => Promise<bigint | undefined>;
 }
 
 // ---------------------------------------------------------------------------
@@ -119,8 +124,12 @@ export function useERC20Allowance({
     },
   });
 
-  const refetch = () => {
-    if (enabled) wagmiRefetch();
+  const refetch = async (): Promise<bigint | undefined> => {
+    if (!enabled) return undefined;
+    const result = await wagmiRefetch();
+    // Only a successful chain read counts — errors and missing data fail closed.
+    if (!result || result.error || typeof result.data !== 'bigint') return undefined;
+    return result.data;
   };
 
   // Derive status from wagmi state

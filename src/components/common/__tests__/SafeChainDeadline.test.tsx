@@ -49,11 +49,9 @@ describe('SafeChainDeadline', () => {
   });
 
   it('renders active deadline correctly', () => {
-    const targetBlockNumber = 2800n; // 1800 blocks ahead -> 3600 seconds -> 1 hour ahead
-    render(<SafeChainDeadline anchor={mockAnchor} targetBlockNumber={targetBlockNumber} dataState="confirmed" />);
-    // Should show the formatted deadline context
-    const timeEl = screen.getByRole('time', { hidden: true }); // It's a <time> element, sometimes role isn't default. Let's just use DOM query or text match.
-    // The exact text depends on formatLocalDateTime, but we can check it doesn't show "Expired"
+    const targetBlockNumber = 4600n; // 3600 blocks ahead -> 7200 seconds -> 2 hours from anchor (1 hour in future of system time)
+    const { container } = render(<SafeChainDeadline anchor={mockAnchor} targetBlockNumber={targetBlockNumber} dataState="confirmed" />);
+    expect(container.querySelector('time')).toBeInTheDocument();
     expect(screen.queryByText('Expired')).not.toBeInTheDocument();
   });
 

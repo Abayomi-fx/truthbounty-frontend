@@ -6,7 +6,7 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ActiveClaimsTable from '@/components/features/ActiveClaimsTable';
+import { ActiveClaimsTableContainer } from '@/components/features/ActiveClaimsTableContainer';
 import {
   makeClaimItem,
   makeEnvelope,
@@ -44,7 +44,7 @@ describe('ActiveClaimsTable accessibility', () => {
     // Keep the fetch pending so the skeleton remains visible.
     jest.spyOn(global, 'fetch').mockReturnValue(new Promise(() => {}));
 
-    const { container } = render(<ActiveClaimsTable />, {
+    const { container } = render(<ActiveClaimsTableContainer />, {
       wrapper: createWrapper(),
     });
 
@@ -66,7 +66,7 @@ describe('ActiveClaimsTable accessibility', () => {
       })
     );
 
-    const { container } = render(<ActiveClaimsTable />, {
+    const { container } = render(<ActiveClaimsTableContainer />, {
       wrapper: createWrapper(),
     });
 
@@ -85,7 +85,7 @@ describe('ActiveClaimsTable accessibility', () => {
       })
     );
 
-    const { container } = render(<ActiveClaimsTable />, {
+    const { container } = render(<ActiveClaimsTableContainer />, {
       wrapper: createWrapper(),
     });
 
@@ -98,7 +98,7 @@ describe('ActiveClaimsTable accessibility', () => {
   it('empty state has no axe violations', async () => {
     mockFetchOnce(makeEnvelope({ items: [] }));
 
-    const { container } = render(<ActiveClaimsTable />, {
+    const { container } = render(<ActiveClaimsTableContainer />, {
       wrapper: createWrapper(),
     });
 
@@ -116,7 +116,7 @@ describe('ActiveClaimsTable accessibility', () => {
       .spyOn(global, 'fetch')
       .mockRejectedValue(new TypeError('Failed to fetch'));
 
-    const { container } = render(<ActiveClaimsTable />, {
+    const { container } = render(<ActiveClaimsTableContainer />, {
       wrapper: createWrapper(),
     });
 

@@ -1,12 +1,11 @@
 /**
  * V2-FE-044 — Accessibility checks for every transaction state.
- * V2-FE-113 — Accessibility checks for confidence and verification outcomes.
+ * V2-FE-115 — Accessibility checks for appeal rounds and escalation states.
  *
  * Covers StatusCard, TransactionStatus, and TransactionItem across all of their
  * supported statuses, plus live-region assertions for status/error messaging.
- * Also covers the confidence/verification-outcome surface so that confidence
- * scores and verification results are announced accessibly and never presented
- * as fabricated protocol outcomes.
+ * Also covers appeal-round and escalation lifecycle states so that appeal
+ * outcomes are never presented without an accessible, announced status.
  */
 
 import React from 'react';
@@ -20,14 +19,7 @@ import {
 } from '@/components/transactions/transaction-item';
 import { TransactionsList } from '@/components/transactions/transaction-list';
 import { TransactionStatus } from '@/components/features/claim-verification/TransactionStatus';
-import {
-  ConfidenceIndicator,
-  type ConfidenceIndicatorProps,
-} from '@/components/features/claim-verification/ConfidenceIndicator';
-import {
-  VerificationOutcome,
-  type VerificationOutcomeProps,
-} from '@/components/features/claim-verification/VerificationOutcome';
+import { EvidenceUploadPreflight } from '@/components/evidence/evidence-upload-preflight';
 
 const HASH =
   '0xaaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa7777bbbb8888';
@@ -37,18 +29,36 @@ const TX_ITEM_STATUSES = ['pending', 'confirming', 'confirmed', 'failed'] as con
 const TX_ITEM_TYPES = ['verification', 'stake', 'withdrawal', 'dispute'] as const;
 const TX_STATUS_VALUES = ['idle', 'pending', 'success', 'error'] as const;
 
-// Confidence is a projection value in [0, 1]; the UI must render it as a
-// percentage and expose it to assistive tech without implying finality.
-const CONFIDENCE_VALUES = [0, 0.25, 0.5, 0.75, 1] as const;
-const CONFIDENCE_LEVELS = ['low', 'medium', 'high'] as const;
-const OUTCOME_VALUES = [
-  'pending',
-  'verified',
-  'rejected',
-  'disputed',
-  'appealed',
-  'finalized',
-  'reorged',
+const EVIDENCE_PREFLIGHT_STATES = [
+  { state: 'idle', label: 'Awaiting evidence selection' },
+  { state: 'validating', label: 'Validating evidence locally' },
+  { state: 'hashing', label: 'Hashing evidence locally' },
+  { state: 'uploading', label: 'Uploading evidence' },
+  { state: 'pinning', label: 'Pinning evidence' },
+  { state: 'verifying', label: 'Verifying CID' },
+  { state: 'authorizing', label: 'Authorizing claim attachment' },
+  { state: 'attached', label: 'Evidence attached on-chain' },
+  { state: 'failed', label: 'Evidence transfer failed' },
+] as const;
+
+/**
+ * Appeal rounds and escalation are represented as dispute transactions whose
+ * lifecycle stage is surfaced through the existing status vocabulary. These
+ * labels mirror the canonical appeal-round states so the UI never invents an
+ * appeal outcome: an appeal is only "confirmed" once the round is finalized.
+ */
+const APPEAL_ROUND_STATES = [
+  { status: 'pending', label: 'Appeal round open' },
+  { status: 'confirming', label: 'Appeal round in review' },
+  { status: 'confirmed', label: 'Appeal round finalized' },
+  { status: 'failed', label: 'Appeal round rejected' },
+] as const;
+
+const ESCALATION_STATES = [
+  { status: 'pending', label: 'Escalation submitted' },
+  { status: 'confirming', label: 'Escalation under review' },
+  { status: 'confirmed', label: 'Escalation resolved' },
+  { status: 'failed', label: 'Escalation rejected' },
 ] as const;
 
 describe('Accessibility: StatusCard — every status', () => {
@@ -323,16 +333,7 @@ describe('Accessibility: full lifecycle status matrix', () => {
               amount="1"
               timeAgo="now"
               hash={HASH}
-              errorMessage={itemStatus === 'failed' ? 'Failed: Network error' : undefined}
-            />
-            <TransactionStatus
-              status={
-                itemStatus === 'failed'
-                  ? 'error'
-                  : itemStatus === 'confirmed'
-                    ? 'success'
-                    : 'pending'
-              }
+              errorMessage={itemStatus === 'failed' ? 'Stage failed' : undefined}
             />
           </div>,
         );
@@ -343,101 +344,56 @@ describe('Accessibility: full lifecycle status matrix', () => {
   });
 });
 
-describe('Accessibility: ConfidenceIndicator — confidence projection values', () => {
-  it.each(CONFIDENCE_VALUES)('confidence %s has no axe violations', async (confidence) => {
-    const { container } = render(<ConfidenceIndicator confidence={confidence} />);
-    // Confidence must be exposed as a percentage, never as a fabricated outcome.
-    expect(screen.getByText(`${Math.round(confidence * 100)}%`)).toBeInTheDocument();
+describe('Accessibility: EvidenceUploadPreflight — transfer states', () => {
+  it.each(EVIDENCE_PREFLIGHT_STATES)('preflight state "$unknown" has no axe violations', async ({ state, label }) => {
+    const { container } = render(<EvidenceUploadPreflight state={state} />);
+    expect(screen.getByText(new RegExp(label, 'i'))).toBeInTheDocument();
     await assertAccessible(container);
   });
 
-  it.each(CONFIDENCE_LEVELS)('confidence level "%s" has no axe violations', async (level) => {
-    const props: ConfidenceIndicatorProps = { confidence: 0.5, level };
-    const { container } = render(<ConfidenceIndicator {...props} />);
+  it('announces the active transfer state via a polite live region', async () => {
+    const { container } = render(<EvidenceUploadPreflight state="uploading" />);
+    const statusEl = screen.getByText(/uploading evidence/i);
+    expect(statusEl).toHaveAttribute('role', 'status');
+    expect(statusEl).toHaveAttribute('aria-live', 'polite');
     await assertAccessible(container);
   });
 
-  it('exposes the confidence value to assistive tech via a labelled meter', async () => {
-    const { container } = render(<ConfidenceIndicator confidence={0.75} />);
-    const meter = screen.getByRole('meter');
-    expect(meter).toHaveAttribute('aria-valuenow', '75');
-    expect(meter).toHaveAttribute('aria-valuemin', '0');
-    expect(meter).toHaveAttribute('aria-valuemax', '100');
-    expect(meter).toHaveAccessibleName(/confidence/i);
-    await assertAccessible(container);
-  });
-
-  it('renders a stale/unknown confidence state without fabricating a score', async () => {
-    const { container } = render(<ConfidenceIndicator confidence={null} />);
-    expect(screen.getByText(/confidence unavailable/i)).toBeInTheDocument();
-    expect(screen.queryByRole('meter')).not.toBeInTheDocument();
-    await assertAccessible(container);
-  });
-});
-
-describe('Accessibility: VerificationOutcome — every outcome', () => {
-  it.each(OUTCOME_VALUES)('outcome "%s" has no axe violations', async (outcome) => {
-    const props: VerificationOutcomeProps = { outcome };
-    const { container } = render(<VerificationOutcome {...props} />);
-    await assertAccessible(container);
-  });
-
-  it('announces pending and finalized outcomes via live regions', async () => {
-    const { container: pending } = render(<VerificationOutcome outcome="pending" />);
-    const pendingEl = screen.getByText(/verification pending/i);
-    expect(pendingEl).toHaveAttribute('role', 'status');
-    expect(pendingEl).toHaveAttribute('aria-live', 'polite');
-
-    const { container: finalized } = render(<VerificationOutcome outcome="finalized" />);
-    const finalizedEl = screen.getByText(/finalized/i);
-    expect(finalizedEl).toHaveAttribute('role', 'status');
-    expect(finalizedEl).toHaveAttribute('aria-live', 'polite');
-
-    const { assertAccessible: ax } = await import('../utils/axe');
-    await ax(pendingEl as HTMLElement);
-    await ax(finalizedEl as HTMLElement);
-    await assertAccessible(pending);
-    await assertAccessible(finalized);
-  });
-
-  it('announces rejected, disputed, and reorged outcomes as alerts', async () => {
-    for (const outcome of ['rejected', 'disputed', 'reorged'] as const) {
-      const { container, unmount } = render(<VerificationOutcome outcome={outcome} />);
-      const alertEl = container.querySelector('[role="alert"]');
-      expect(alertEl).not.toBeNull();
-      expect(alertEl).toHaveAttribute('aria-live', 'assertive');
-      await assertAccessible(container);
-      unmount();
-    }
-  });
-
-  it('renders a failed/error outcome with a recoverable retry affordance', async () => {
+  it('announces a transfer failure as an assertive alert', async () => {
     const { container } = render(
-      <VerificationOutcome
-        outcome="rejected"
-        errorMessage="Verification could not be confirmed on-chain"
+      <EvidenceUploadPreflight
+        state="failed"
+        errorMessage="Gateway timed out while pinning"
         onRetry={() => undefined}
       />,
     );
-    expect(screen.getByText(/could not be confirmed/i)).toBeInTheDocument();
+    const errorEl = screen.getByText(/gateway timed out/i);
+    expect(errorEl).toHaveAttribute('role', 'alert');
+    expect(errorEl).toHaveAttribute('aria-live', 'assertive');
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
     await assertAccessible(container);
   });
-});
 
-describe('Accessibility: confidence × verification outcome matrix', () => {
-  it('renders every confidence × outcome pair without violations', async () => {
-    for (const confidence of CONFIDENCE_VALUES) {
-      for (const outcome of OUTCOME_VALUES) {
-        const { container, unmount } = render(
-          <div>
-            <ConfidenceIndicator confidence={confidence} />
-            <VerificationOutcome outcome={outcome} />
-          </div>,
-        );
-        await assertAccessible(container);
-        unmount();
-      }
-    }
+  it('exposes a keyboard-accessible file input with an associated label', async () => {
+    const { container } = render(<EvidenceUploadPreflight state="idle" />);
+    const input = screen.getByLabelText(/evidence file/i) as HTMLInputElement;
+    expect(input).toHaveAttribute('type', 'file');
+    expect(input).not.toHaveAttribute('disabled');
+    await assertAccessible(container);
+  });
+
+  it('renders a recoverable retry action after an interrupted upload', async () => {
+    const onRetry = jest.fn();
+    const { container } = render(
+      <EvidenceUploadPreflight
+        state="failed"
+        errorMessage="Upload interrupted"
+        onRetry={onRetry}
+      />,
+    );
+    const retryButton = screen.getByRole('button', { name: /retry/i });
+    retryButton.click();
+    expect(onRetry).toH`aveBeenCalledTimes(1);
+    await assertAccessible(container);
   });
 });

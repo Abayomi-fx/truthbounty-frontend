@@ -1,13 +1,16 @@
 import {
   NONCE_HEADER,
   SECURITY_HEADER_NAMES,
+  CACHE_CONTROL_POLICIES,
+  PERMISSIONS_POLICY,
   buildContentSecurityPolicy,
   buildSecurityHeaders,
   buildStaticSecurityHeaders,
+  buildApiSecurityHeaders,
   createRequestNonce,
 } from '@/lib/security/headers';
 
-describe('V2-FE-131 security headers', () => {
+describe('V2-FE-131 & UI-FE-092 security headers', () => {
   const nonce = 'test-nonce-abc123';
 
   describe('buildContentSecurityPolicy', () => {
@@ -23,7 +26,7 @@ describe('V2-FE-131 security headers', () => {
       expect(csp).toContain("object-src 'none'");
       expect(csp).toContain("frame-ancestors 'none'");
       expect(csp).toContain('upgrade-insecure-requests');
-      expect(csp).toContain('https://*.walletconnect.com');
+      expect(csp).toContain('wss://relay.walletconnect.com');
       expect(csp).toContain('https://id.worldcoin.org');
       expect(csp).not.toContain("'unsafe-eval'");
     });
@@ -33,10 +36,20 @@ describe('V2-FE-131 security headers', () => {
       expect(csp).toContain("'unsafe-eval'");
       expect(csp).toContain('http://localhost:*');
     });
+
+    it('scopes RPC origins based on target environment', () => {
+      const testnetCsp = buildContentSecurityPolicy({ nonce, environment: 'testnet' });
+      expect(testnetCsp).toContain('https://sepolia.optimism.io');
+      expect(testnetCsp).not.toContain("'unsafe-eval'");
+
+      const prodCsp = buildContentSecurityPolicy({ nonce, environment: 'production' });
+      expect(prodCsp).toContain('https://mainnet.optimism.io');
+      expect(prodCsp).not.toContain("'unsafe-eval'");
+    });
   });
 
   describe('buildSecurityHeaders', () => {
-    it('sets CSP plus baseline browser hardening headers', () => {
+    it('sets CSP plus baseline browser hardening and anti-caching headers', () => {
       const headers = buildSecurityHeaders({ nonce });
       expect(headers[SECURITY_HEADER_NAMES.contentSecurityPolicy]).toContain(
         `'nonce-${nonce}'`,
@@ -53,6 +66,12 @@ describe('V2-FE-131 security headers', () => {
       );
       expect(headers[SECURITY_HEADER_NAMES.permissionsPolicy]).toContain('camera=');
       expect(headers[SECURITY_HEADER_NAMES.permissionsPolicy]).toContain('microphone=()');
+      expect(headers[SECURITY_HEADER_NAMES.permissionsPolicy]).toContain('geolocation=()');
+      expect(headers[SECURITY_HEADER_NAMES.permissionsPolicy]).toContain('payment=()');
+      expect(headers[SECURITY_HEADER_NAMES.permissionsPolicy]).toContain('usb=()');
+      expect(headers[SECURITY_HEADER_NAMES.permissionsPolicy]).toContain('display-capture=()');
+      expect(headers[SECURITY_HEADER_NAMES.cacheControl]).toBe(CACHE_CONTROL_POLICIES.dynamicHtml);
+      expect(headers[SECURITY_HEADER_NAMES.pragma]).toBe('no-cache');
     });
 
     it('can emit report-only CSP for staged rollout', () => {
@@ -64,12 +83,21 @@ describe('V2-FE-131 security headers', () => {
     });
   });
 
-  describe('buildStaticSecurityHeaders', () => {
+  describe('buildStaticSecurityHeaders & buildApiSecurityHeaders', () => {
     it('omits CSP (nonce-bound) but keeps static hardening headers', () => {
       const headers = buildStaticSecurityHeaders();
       expect(headers[SECURITY_HEADER_NAMES.contentSecurityPolicy]).toBeUndefined();
       expect(headers[SECURITY_HEADER_NAMES.xContentTypeOptions]).toBe('nosniff');
       expect(headers[SECURITY_HEADER_NAMES.xFrameOptions]).toBe('DENY');
+      expect(headers[SECURITY_HEADER_NAMES.referrerPolicy]).toBe('strict-origin-when-cross-origin');
+    });
+
+    it('buildApiSecurityHeaders enforces anti-caching boundaries on API routes', () => {
+      const headers = buildApiSecurityHeaders();
+      expect(headers[SECURITY_HEADER_NAMES.cacheControl]).toBe(CACHE_CONTROL_POLICIES.api);
+      expect(headers[SECURITY_HEADER_NAMES.pragma]).toBe('no-cache');
+      expect(headers[SECURITY_HEADER_NAMES.xFrameOptions]).toBe('DENY');
+      expect(headers[SECURITY_HEADER_NAMES.xContentTypeOptions]).toBe('nosniff');
     });
   });
 

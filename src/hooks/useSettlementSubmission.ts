@@ -3,9 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount, useChainId, usePublicClient, useWriteContract } from 'wagmi';
 import { encodeFunctionData, type Abi, type Hash } from 'viem';
-import { useCallback, useState } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { encodeFunctionData, isAddress } from 'viem';
 import {
   SettlementAction,
   SimulationResult,
@@ -15,6 +12,7 @@ import {
   getContractAbi,
   getContractAddress,
   getProtocolVersion,
+  getReleaseChainId,
 } from '@/lib/contracts/registry';
 import { evaluateWriteTarget } from '@/lib/contracts/write-gate';
 import { useConstant } from './useConstant';
@@ -22,6 +20,7 @@ import { useConstant } from './useConstant';
 interface UseSettlementSubmissionConfig {
   contractAddress?: string;
   abi?: readonly unknown[];
+  expectedChainId?: number;
 }
 
 const SETTLEMENT_FUNCTIONS: Record<string, 'settleProvisional' | 'settleAppeal' | 'finalize'> = {
@@ -114,28 +113,12 @@ export function useSettlementSubmission(
     publicClientRef.current = publicClient;
     writeRef.current = writeContractAsync;
   });
-  const contractAddress = config.contractAddress ?? getContractAddress('TruthBountyWeighted');
-  const abi = config.abi ?? getContractAbi('TruthBountyWeighted');
-  const artifactVersion = getProtocolVersion();
-  const { address: userAddress } = useAccount();
 
   const [isSimulating, setIsSimulating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Only populated after a real wallet write returns a hash (V2-FE-100).
   const [lastSubmission, setLastSubmission] = useState<SettlementSubmission | null>(null);
-  const [lastSubmission, setLastSubmission] = useState<SettlementSubmission | null>(null);
-
-  // Wagmi hooks for actual chain interaction
-  const { writeContractAsync } = useWriteContract();
-  
-  // We track the latest transaction hash to wait for receipt
-  const [pendingTxHash, setPendingTxHash] = useState<`0x${string}` | null>(null);
-  
-  // Wait for the transaction receipt to confirm finality
-  const { data: receipt, isLoading: isConfirming } = useWaitForTransactionReceipt({
-    hash: pendingTxHash || undefined,
-  });
 
   /**
    * Resolve the canonical function and argument for a settlement action.
@@ -172,8 +155,6 @@ export function useSettlementSubmission(
         });
       } catch {
         return null;
-        // Fallback should not happen if ABI is valid, but fail closed
-        throw new Error('Failed to encode settlement call data');
       }
     },
     [abi],
@@ -191,7 +172,20 @@ export function useSettlementSubmission(
       return 'Wallet not connected';
     }
 
-    if (!isAddress(contractAddress)) {
+    if (expectedChainId !== undefined && activeChainId !== expectedChainId) {
+      return `Wrong network. Expected chain ${expectedChainId}, got ${activeChainId}`;
+    }
+
+    const writeTarget = evaluateWriteTarget({
+      activeChainId,
+      contractAddress,
+      expectedProtocolVersion: artifactVersion,
+    });
+    if (!writeTarget.ok) {
+      return writeTarget.errors.join('; ');
+    }
+
+    if (!contractAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
       return 'Invalid contract address';
     }
 
@@ -200,17 +194,13 @@ export function useSettlementSubmission(
     }
 
     return null;
-  }, [userAddress, contractAddress]);
+  }, [userAddress, contractAddress, activeChainId, expectedChainId, artifactVersion]);
 
   /**
    * Simulate settlement transaction against the canonical deployment.
    *
    * The RPC node is the only source of truth for whether the call succeeds and
    * for the gas estimate; neither is ever invented locally.
-   * Simulate settlement transaction
-   * Note: We do not fabricate calldata or gas. We rely on the contract ABI for encoding.
-   * Actual simulation/gas estimation is typically done via viem's estimateGas or public client,
-   * but for this hook, we focus on validation and encoding readiness.
    */
   const simulateSettlement = useCallback(
     async (action: SettlementAction): Promise<SimulationResult> => {
@@ -251,18 +241,8 @@ export function useSettlementSubmission(
         return {
           success: true,
           ...(gasEstimate === undefined ? {} : { gasEstimate }),
-        // Encode call data to ensure ABI compatibility
-        const calldata = encodeSettlementCall(action);
-
-        // In a real implementation, we would use viem's estimateGas here.
-        // For this focused implementation, we return the encoded data for the UI to display
-        // and prepare for submission. We do not fabricate gas estimates.
-        
-        return {
-          success: true,
-          gasEstimate: '0', // Placeholder, actual gas comes from RPC estimateGas
           data: {
-            from: userAddress!,
+            from: fromAddress,
             to: contractAddress,
             ...(calldata === null ? {} : { calldata }),
           },
@@ -291,8 +271,6 @@ export function useSettlementSubmission(
    * The returned hash is whatever the wallet/RPC returns. Nothing is derived,
    * truncated or invented locally, and the submission is only recorded once
    * that real hash exists.
-   * Submit settlement transaction
-   * Uses Wagmi/Viem to interact with the chain. Receipts are authoritative.
    */
   const submitSettlement = useCallback(
     async (action: SettlementAction): Promise<SettlementSubmission> => {
@@ -327,7 +305,6 @@ export function useSettlementSubmission(
         }
 
         // Simulate first so a reverting call never reaches the wallet.
-        // First simulate to catch errors early
         const simulation = await simulateSettlement(action);
         if (!simulation.success) {
           throw new Error(simulation.error || 'Simulation failed');
@@ -360,33 +337,11 @@ export function useSettlementSubmission(
         const submission: SettlementSubmission = {
           transactionHash: txHash,
           from: userAddress as string,
-        // Encode the actual call
-        const calldata = encodeSettlementCall(action);
-        const claimId = action.claimId.startsWith('0x')
-          ? (action.claimId as `0x${string}`)
-          : (`0x${action.claimId.padStart(64, '0')}` as `0x${string}`);
-
-        // Execute the contract write via Wagmi
-        const hash = await writeContractAsync({
-          address: contractAddress as `0x${string}`,
-          abi: abi as any,
-          functionName: SETTLEMENT_FUNCTIONS[action.type],
-          args: [claimId],
-        });
-
-        // Set the pending hash to trigger the receipt waiter
-        setPendingTxHash(hash);
-
-        // Create a pending submission record immediately
-        const submission: SettlementSubmission = {
-          transactionHash: hash,
-          from: userAddress!,
           to: contractAddress,
           status: 'pending',
           type: action.type,
           claimId: action.claimId,
           ...(action.disputeId === undefined ? {} : { disputeId: action.disputeId }),
-          disputeId: action.disputeId,
           timestamp: new Date().toISOString(),
         };
 
@@ -411,20 +366,7 @@ export function useSettlementSubmission(
       buildSettlementCall,
       simulateSettlement,
     ],
-    [userAddress, contractAddress, validateSettlementAction, simulateSettlement, encodeSettlementCall, writeContractAsync, abi]
   );
-
-  // Update the last submission status based on the receipt
-  // This ensures the UI reflects the authoritative chain state
-  if (receipt && lastSubmission && lastSubmission.transactionHash === receipt.hash) {
-    const isSuccess = receipt.status === 'success';
-    setLastSubmission({
-      ...lastSubmission,
-      status: isSuccess ? 'confirmed' : 'reverted',
-      blockNumber: receipt.blockNumber?.toString(),
-      gasUsed: receipt.gasUsed?.toString(),
-    });
-  }
 
   return {
     simulateSettlement,

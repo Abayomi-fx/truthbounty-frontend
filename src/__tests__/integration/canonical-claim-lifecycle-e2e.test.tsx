@@ -155,7 +155,7 @@ const TX_HASH =
   '0xaaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa7777bbbb8888' as const;
 /** Distinct from TX_HASH so a derived-vs-returned hash mix-up is detectable. */
 const REAL_WALLET_TX_HASH =
-  '0x1111111111111111111111111111111111111111111111111111111111111111' as const;
+  '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as const;
 
 const APPEAL_PARTICIPATION_ABI = [
   {
@@ -477,6 +477,7 @@ describe('V2-FE-044 — Canonical claim lifecycle (happy path)', () => {
         useSettlementDetection({
           claimId: SETTLEMENT_CLAIM_ID,
           contractAddress: CONTRACT,
+          expectedChainId: OP_MAINNET,
           pollInterval: 999999,
         }),
       );
@@ -543,16 +544,18 @@ describe('V2-FE-044 — Canonical claim lifecycle (happy path)', () => {
           expect(err).toBeInstanceOf(ProtocolError);
         }
       });
-      await expect(
-        result.current.reconcile({
-          id: 'settle-2',
-          type: 'SETTLE_PROVISIONAL',
-          claimId: CLAIM_ID,
-          transactionHash: TX_HASH,
-          status: 'pending',
-          submittedAt: new Date().toISOString(),
-        } as any),
-      ).rejects.toBeInstanceOf(ProtocolError);
+      await act(async () => {
+        await expect(
+          result.current.reconcile({
+            id: 'settle-2',
+            type: 'SETTLE_PROVISIONAL',
+            claimId: CLAIM_ID,
+            transactionHash: TX_HASH,
+            status: 'pending',
+            submittedAt: new Date().toISOString(),
+          } as any),
+        ).rejects.toBeInstanceOf(ProtocolError);
+      });
     });
   });
 

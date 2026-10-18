@@ -82,6 +82,8 @@ TruthBounty Frontend publishes its security posture as reviewable V2 artifacts:
 
 **Authority model:** smart contracts are authoritative for protocol mutation; the API is a projection / read layer; the frontend never fabricates protocol outcomes and fails closed on integrity uncertainty.
 
+**Privacy protections:** Evidence URLs and metadata are displayed in privacy-preserving format to prevent tracking and metadata leakage while maintaining verifiability. Full URLs available via clipboard. See [EVIDENCE_PRIVACY_MODEL.md](./docs/EVIDENCE_PRIVACY_MODEL.md) and [IMPLEMENTATION_V2_FE_EVIDENCE_PRIVACY.md](./IMPLEMENTATION_V2_FE_EVIDENCE_PRIVACY.md).
+
 Related security references: [SECURITY_HEADERS.md](./docs/SECURITY_HEADERS.md), [SIWE_AUTH.md](./docs/SIWE_AUTH.md), [CONTRACT_ARTIFACTS.md](./docs/CONTRACT_ARTIFACTS.md).
 
 ## ⚙️ Tech Stack

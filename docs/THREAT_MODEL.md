@@ -165,6 +165,9 @@ The frontend must **fail closed** (block the action, show a clear reason) when a
 
 Redaction is enforced by [`src/lib/security/redaction.ts`](../src/lib/security/redaction.ts). Rules:
 
+- Optional analytics is disabled until the user explicitly grants consent. A missing, invalid, or unreadable choice fails closed; consent can be revoked and is synchronized across tabs.
+- The only analytics event is a coarse page view. It excludes route identifiers, query strings, account and wallet data, evidence, API payloads, and transaction data.
+- The event is dispatched locally only. There is no configured network sink or third-party analytics SDK; do not add one until the canonical `V2-FE-133` interface is available.
 - **Sensitive keys** (case/format-insensitive, contains `token`, `secret`, `authorization`, `password`, `privatekey`, `apikey`, `cookie`, `session`) → `[REDACTED]`.
 - **`*signature*` keys** with string value >10 chars → `[REDACTED]`.
 - **`calldata` / `data` / `input` keys** with long `0x…` hex → `[REDACTED]`.
@@ -175,6 +178,10 @@ Redaction is enforced by [`src/lib/security/redaction.ts`](../src/lib/security/r
 - **Fail closed:** unknown shapes are redacted, not passed through.
 
 **Rule:** every telemetry/error-reporter call site must use `redactForTelemetry` / `redactError` / `redactForErrorReporter`. No raw `console.error` of payloads in production.
+
+
+The consent UI, state model, and local-only page-view contract are documented in [ANALYTICS_CONSENT.md](./ANALYTICS_CONSENT.md).
+
 
 ---
 

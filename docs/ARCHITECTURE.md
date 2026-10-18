@@ -351,6 +351,27 @@ interface ClaimCreatedEvent {
 - **RainbowKit**: Standardized wallet UI
 - **Transaction Signing**: Client-side transaction validation
 
+### 4. Wallet-Scoped Auth Sessions (V2-FE-008)
+
+Authenticated sessions are bound to the connected wallet scope
+(`account address + chain id`):
+
+- **Session store** (`src/lib/session-store.ts`): a token is only usable for the
+  exact `(address, chainId)` scope it was issued for. Address comparisons are
+  case-insensitive; stored payloads are shape-validated before use.
+- **Session reconciliation** (`src/hooks/useSessionReconciliation.ts`): when the
+  connected account changes, the required chain changes, or the wallet
+  disconnects, the auth session is invalidated, chain-scoped storage caches and
+  the resumable WebSocket cursor are dropped, and the query cache is cleared.
+  It also coordinates wagmi reconnect, explicit logout, and re-authentication.
+- **Consumer API** (`src/hooks/useAuthSession.ts`): `authenticate()` stores a
+  backend-issued token bound to the current scope and refuses to run without a
+  connected wallet; `isAuthenticated` flips to false as soon as the scope moves.
+- **Realtime stream** (`src/hooks/useWebSocket.ts`): authenticated frames and
+  the HTTP catch-up request only carry the `Authorization` header while the
+  stored session is valid for the current scope; the socket is re-established
+  when the wallet scope changes so a stale session cannot keep a live stream.
+
 ## Testing Architecture
 
 ### 1. Unit Testing
@@ -397,7 +418,7 @@ interface ClaimCreatedEvent {
 ### 2. Performance
 - **Lazy loading**: Load code as needed
 - **Memoization**: Prevent unnecessary re-renders
-- **Optimistic updates**: Improve perceived performance
+- **Optimistic updates**: Restricted to an explicit safe allowlist; see [OPTIMISTIC_UPDATES.md](./OPTIMISTIC_UPDATES.md)
 
 ### 3. Accessibility
 - **Semantic HTML**: Proper element usage
@@ -462,6 +483,8 @@ For the **full, independently reviewable** security model of the frontend, see:
 | Telemetry redaction | `src/lib/security/redaction.ts` |
 | Sensitive path policy | `src/lib/security/sensitive-paths.ts` |
 | Evidence sanitization | `src/lib/security/evidence-sanitizer.ts` |
+| IPFS gateway integrity/failover | `src/lib/evidence-gateway.ts`, `docs/IPFS_GATEWAY_INTEGRITY.md` |
+| RPC health/quorum/failover | `src/lib/rpc-health/`, `docs/RPC_HEALTH_QUORUM.md` |
 | CSP + security headers | `src/lib/security/headers.ts`, `docs/SECURITY_HEADERS.md` |
 | SIWE auth | `src/lib/auth/siwe-client.ts`, `docs/SIWE_AUTH.md` |
 | Transaction lifecycle | `src/hooks/useTransactionMachine.ts`, `useReceiptProjection.ts`, `useFinalizationDetection.ts` |

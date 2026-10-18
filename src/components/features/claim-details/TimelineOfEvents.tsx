@@ -1,30 +1,26 @@
-import { TimelineEvent } from "@/app/types/dispute";
-import { Clock, AlertCircle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useMemo } from "react";
+import { TimelineEvent } from "@/app/types/dispute";
+import { CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
 
-// Helper to determine status icon based on event type or state
-const getStatusIcon = (type: string, isRecent: boolean) => {
-  if (isRecent) {
-    return <Loader2 size={14} className="animate-spin text-indigo-500" />;
+function getStatusIcon(type: string, isRecent: boolean) {
+  const normalized = type.toLowerCase();
+  if (normalized.includes("reject") || normalized.includes("fail")) {
+    return <XCircle size={14} className="text-red-400" aria-hidden="true" />;
   }
-
-  switch (type.toLowerCase()) {
-    case "provisional":
-    case "pending":
-      return <Clock size={14} className="text-yellow-500" />;
-    case "final":
-    case "settled":
-      return <CheckCircle2 size={14} className="text-green-500" />;
-    case "rejected":
-    case "challenged":
-      return <XCircle size={14} className="text-red-500" />;
-    case "error":
-    case "failed":
-      return <AlertCircle size={14} className="text-red-500" />;
-    default:
-      return <div className="w-3.5 h-3.5 rounded-full bg-gray-600" />;
+  if (normalized.includes("dispute") || normalized.includes("warn")) {
+    return <AlertCircle size={14} className="text-amber-400" aria-hidden="true" />;
   }
-};
+  if (normalized.includes("resolve") || normalized.includes("approve") || normalized.includes("verified")) {
+    return <CheckCircle size={14} className="text-emerald-400" aria-hidden="true" />;
+  }
+  return (
+    <Clock
+      size={14}
+      className={isRecent ? "text-primary" : "text-gray-400"}
+      aria-hidden="true"
+    />
+  );
+}
 
 export const TimelineOfEvents = ({ events }: { events: TimelineEvent[] }) => {
   const hasEvents = events && events.length > 0;
@@ -62,7 +58,7 @@ export const TimelineOfEvents = ({ events }: { events: TimelineEvent[] }) => {
         {validEvents.map((event) => (
           <div key={event.id} className="relative flex items-start">
             <div className="absolute left-0 mt-1.5 mr-4 z-10">
-              {getStatusIcon(event.type || "", event.isRecent)}
+              {getStatusIcon(event.type || "", Boolean(event.isRecent))}
             </div>
             <div>
               <p className="text-sm font-medium text-gray-200">{event.title}</p>

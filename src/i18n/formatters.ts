@@ -30,15 +30,18 @@ export function formatAddress(
   address: string,
   format: 'short' | 'medium' | 'full' = 'short'
 ): string {
+  if (typeof address !== 'string') {
+    return String(address);
+  }
   if (!address || !address.startsWith('0x')) {
     return address;
   }
 
   switch (format) {
     case 'short':
-      return `${address.slice(0, 6)}...${address.slice(-4)}`;
+      return `${address.slice(0, 6)}...${address.slice(-5)}`;
     case 'medium':
-      return `${address.slice(0, 10)}...${address.slice(-8)}`;
+      return `${address.slice(0, 12)}...${address.slice(-8)}`;
     case 'full':
       return address;
     default:
@@ -58,6 +61,9 @@ export function formatTxHash(
   hash: string,
   format: 'short' | 'medium' | 'full' = 'short'
 ): string {
+  if (typeof hash !== 'string') {
+    return String(hash);
+  }
   if (!hash || !hash.startsWith('0x')) {
     return hash;
   }

@@ -6,7 +6,8 @@ export type ReceiptProjectionStatus =
   | 'confirmed'
   | 'rejected'
   | 'stale'
-  | 'mismatch';
+  | 'mismatch'
+  | 'degraded';
 
 export interface ReceiptLike {
   transactionHash: string;
@@ -150,6 +151,15 @@ export function useReceiptProjection(options: UseReceiptProjectionOptions) {
 
     // If both exist, ensure they align
     if (hasReceipt && hasProjection) {
+      if (receiptConfirmed && !projection?.status) {
+        return {
+          status: 'degraded' as ReceiptProjectionStatus,
+          isMismatch: false,
+          isWrongNetwork: false,
+          isProtocolDisabled: false,
+        };
+      }
+
       // If receipt is confirmed but projection is not, it's a mismatch/stale state
       if (receiptConfirmed && projectionStatus !== 'confirmed') {
         return {

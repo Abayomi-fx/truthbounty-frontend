@@ -286,8 +286,9 @@ describe('ClaimLifecycleTimeline Component', () => {
     it('should display phase indicator', () => {
       renderComponent();
 
-      expect(screen.getByRole('status', { name: /current phase/i })).toBeInTheDocument();
-      expect(screen.getByText(/verification open/i)).toBeInTheDocument();
+      const phaseIndicator = screen.getByRole('status', { name: /current phase/i });
+      expect(phaseIndicator).toBeInTheDocument();
+      expect(phaseIndicator).toHaveTextContent(/verification open/i);
     });
 
     it('should show refresh button', () => {
@@ -310,9 +311,9 @@ describe('ClaimLifecycleTimeline Component', () => {
     });
 
     it('should show timestamps', () => {
-      renderComponent();
+      const { container } = renderComponent();
 
-      const times = screen.getAllByRole('time');
+      const times = container.querySelectorAll('time');
       expect(times.length).toBe(mockTimeline.entries.length);
     });
   });
@@ -339,7 +340,7 @@ describe('ClaimLifecycleTimeline Component', () => {
       renderComponent();
 
       expect(screen.getByText('Timeline Data May Be Outdated')).toBeInTheDocument();
-      expect(screen.getByText(/data may be outdated/i)).toBeInTheDocument();
+      expect(screen.getByText(/^data may be outdated/i)).toBeInTheDocument();
     });
 
     it('should show time since last reconciliation', () => {
@@ -607,8 +608,8 @@ describe('ClaimLifecycleTimeline Component', () => {
     it('should render phase indicator with correct styling', () => {
       renderComponent();
 
-      const phaseIndicator = screen.getByText(/verification open/i);
-      expect(phaseIndicator.parentElement).toHaveClass('inline-flex');
+      const phaseIndicator = screen.getByRole('status', { name: /current phase/i });
+      expect(phaseIndicator).toHaveClass('inline-flex');
     });
 
     it('should render finality badges with correct colors', () => {

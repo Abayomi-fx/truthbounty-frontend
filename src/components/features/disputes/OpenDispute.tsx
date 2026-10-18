@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
+import { useUnsavedChangesDialog } from '@/hooks/useUnsavedChangesDialog';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
+import { useRecoverableFormDraft } from '@/hooks/useRecoverableFormDraft';
+import { useDraftScope } from '@/hooks/useDraftScope';
+import { UnsavedChangesDialog } from '@/components/ui/UnsavedChangesDialog';
+import { DraftStatusIndicator } from '@/components/ui/DraftStatusIndicator';
 import { X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useDisputeContext } from '@/hooks/useDisputeContext';
 import { useDisputeSubmission, formatBondAmount } from '@/hooks/useDisputeSubmission';
@@ -14,6 +21,18 @@ interface OpenDisputeProps {
   onError?: (error: string) => void;
 }
 
+interface DisputeDraftPayload {
+  reason: string;
+}
+
+function isDisputeDraftPayload(value: unknown): value is DisputeDraftPayload {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { reason?: unknown }).reason === 'string'
+  );
+}
+
 export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: OpenDisputeProps) => {
   const [reason, setReason] = useState('');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -24,7 +43,6 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
 
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLTextAreaElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
 
   // Fetch dispute context
   const contractAddress = getContractAddress('TruthBountyWeighted');
@@ -64,52 +82,28 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen) {
-      previousActiveElement.current = document.activeElement as HTMLElement;
+  // UI-FE-084: coordinate a local-only draft scoped to account/chain/release.
+  const draftScope = useDraftScope();
+  const draftPayload = useMemo<DisputeDraftPayload>(() => ({ reason }), [reason]);
+  const draft = useRecoverableFormDraft<DisputeDraftPayload>({
+    formId: `dispute:${claimId}`,
+    scope: draftScope,
+    payload: draftPayload,
+    isDirty: reason.trim().length > 0,
+    validatePayload: isDisputeDraftPayload,
+  });
+
+  const handleRestoreDraft = () => {
+    if (draft.restoredPayload) {
+      setReason(draft.restoredPayload.reason);
     }
-    return () => {
-      if (!isOpen) {
-        previousActiveElement.current?.focus();
-      }
-    };
-  }, [isOpen]);
+    draft.acknowledgeRestoredDraft();
+  };
 
-  useEffect(() => {
-    if (isOpen) {
-      firstFocusableRef.current?.focus();
-    }
-  }, [isOpen]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-    }
-  }, [onClose]);
-
-  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== "Tab") return;
-
-    const focusableElements = modalRef.current?.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-
-    if (!focusableElements || focusableElements.length === 0) return;
-
-    const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-    if (e.shiftKey) {
-      if (document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      }
-    } else if (document.activeElement === lastElement) {
-      e.preventDefault();
-      firstElement.focus();
-    }
-  }, []);
+  const handleDiscardRestoredDraft = () => {
+    draft.acknowledgeRestoredDraft();
+    draft.discardDraft();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,6 +163,8 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
       const tx = await submitDispute(context, payload);
       if (tx?.transactionHash) {
         handleRealSuccess?.(tx.disputeId ?? tx.transactionHash);
+        // Verified on-chain write — release the local draft and its guard.
+        draft.markPersisted();
         onClose();
         setReason('');
       }
@@ -181,6 +177,26 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
 
   // Combined loading state
   const isLoading = isLoadingContext || isSimulating || isSubmitting;
+
+  // UI-FE-084: guard nontrivial dispute input against silent loss.
+  const isDirty = reason.trim().length > 0;
+  const guardDialog = useUnsavedChangesDialog({ onSaveDraft: draft.saveDraft });
+  useUnsavedChangesGuard({ when: isOpen && isDirty && !isLoading, confirm: guardDialog.confirm });
+
+  const closeIfIdle = () => {
+    if (isLoading) return;
+    if (isDirty) {
+      void guardDialog.confirm().then((allowed) => {
+        if (allowed) {
+          setReason('');
+          onClose();
+        }
+      });
+      return;
+    }
+    onClose();
+  };
+  useDialogFocus(isOpen, modalRef, firstFocusableRef, closeIfIdle);
 
   // Combined error
   const displayError = submissionError || contextError || submissionHookError;
@@ -206,15 +222,15 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
     <div
       className="fixed inset-0 z-50 modal-shell bg-black/80 backdrop-blur-sm"
       role="presentation"
-      onKeyDown={handleFocusTrap}
     >
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape/focus-trap keydown handling on the dialog container */}
       <div
         ref={modalRef}
         className="modal-panel border border-zinc-800 bg-[#111111] shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="dispute-modal-title"
-        onKeyDown={handleKeyDown}
+        tabIndex={-1}
       >
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-2 text-red-500">
@@ -222,7 +238,8 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
             <h2 id="dispute-modal-title" className="text-base sm:text-lg font-bold text-white">Open Dispute</h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={closeIfIdle}
+            disabled={isLoading}
             className="text-zinc-500 hover:text-white p-1"
             aria-label="Close dispute modal"
           >
@@ -259,14 +276,43 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
             </div>
           )}
 
+          {/* Draft restore (UI-FE-084) — local browser draft, explicit recovery */}
+          {draft.hasRestoredDraft && draft.restoredPayload && (
+            <div
+              data-testid="dispute-draft-restore"
+              className="rounded-lg bg-sky-950/30 border border-sky-900/50 p-3 text-sm text-sky-200"
+              role="status"
+            >
+              <p className="mb-2">
+                A local draft of this dispute is available on this device.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleRestoreDraft}
+                  className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-700"
+                >
+                  Restore draft
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDiscardRestoredDraft}
+                  className="rounded-md border border-sky-900/50 px-3 py-1.5 text-xs font-medium text-sky-200 hover:text-white"
+                >
+                  Discard draft
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Bond amount display */}
           {context && (
             <div className="rounded-lg bg-zinc-900/50 border border-zinc-700 p-3">
               <div className="text-sm text-zinc-400 mb-1">Required Challenge Bond</div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white font-mono tabular-nums">
                 {formatBondAmount(context.bond.bondAmount)} ETH
               </div>
-              <div className="text-xs text-zinc-500 mt-1">
+              <div className="text-xs text-zinc-500 mt-1 font-mono tabular-nums">
                 Your balance: {formatBondAmount(context.walletPosition.currentBalance)} ETH
               </div>
             </div>
@@ -293,6 +339,13 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
             <div id="reason-help" className="text-xs text-zinc-500 mt-1">
               Provide a clear and detailed explanation for challenging this claim
             </div>
+            {reason.trim().length > 0 && (
+              <DraftStatusIndicator
+                status={draft.status}
+                lastSavedAt={draft.lastSavedAt}
+                className="mt-1"
+              />
+            )}
           </div>
 
           {/* Canonical ABI gate — fail closed with an accessible reason */}
@@ -321,7 +374,7 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
           <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
             <button
               type="button"
-              onClick={onClose}
+              onClick={closeIfIdle}
               disabled={isLoading}
               className="px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
               aria-label="Cancel dispute"
@@ -361,6 +414,16 @@ export const OpenDispute = ({ claimId, isOpen, onClose, onSuccess, onError }: Op
           </div>
         </form>
       </div>
+
+      <UnsavedChangesDialog
+        open={guardDialog.isConfirmOpen}
+        onConfirmLeave={() => {
+          draft.discardDraft();
+          guardDialog.confirmLeave();
+        }}
+        onCancel={guardDialog.cancelLeave}
+        onSaveDraft={guardDialog.saveDraftAndLeave}
+      />
     </div>
   );
 };

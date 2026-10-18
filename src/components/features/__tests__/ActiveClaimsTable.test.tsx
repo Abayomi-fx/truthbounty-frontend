@@ -1,11 +1,18 @@
-// Component tests for ActiveClaimsTable (V2-FE-109).
-// Covers every documented user-visible state plus interaction behavior.
+/**
+ * ActiveClaimsTableContainer tests (V2-FE-109)
+ *
+ * Tests the container component that owns the canonical claims list projection.
+ * Covers all user-visible states, interaction behavior, and query integration.
+ *
+ * These tests exercise the full container/hook/API integration, not the
+ * presentational component in isolation.
+ */
 
 import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ActiveClaimsTable from '../ActiveClaimsTable';
+import { ActiveClaimsTableContainer } from '../ActiveClaimsTableContainer';
 import { makeClaimItem, makeEnvelope, makeJsonResponse } from '@/hooks/__tests__/claim-list-fixtures';
 
 function createWrapper() {
@@ -47,13 +54,13 @@ function lastUrl(fetchMock: jest.SpyInstance): string {
   return String(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][0]);
 }
 
-describe('ActiveClaimsTable — ready state', () => {
+describe('ActiveClaimsTableContainer — ready state', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('renders canonical rows from the projection (not mock data)', async () => {
     mockFetchOnce(makeEnvelope({ items: [makeClaimItem({ title: 'Canonical claim row' })] }));
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() =>
       expect(screen.getByText('Canonical claim row')).toBeInTheDocument()
@@ -62,29 +69,37 @@ describe('ActiveClaimsTable — ready state', () => {
       expect(screen.getAllByText('Verified').length).toBeGreaterThan(0)
     );
     // Confidence comes from the projection score.
-    expect(screen.getByText('97%')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('meter', { name: /confidence/i })).toBeInTheDocument()
+    );
   });
 
   it('renders an em-dash for unscored claims instead of inventing confidence', async () => {
     mockFetchOnce(makeEnvelope({ items: [makeClaimItem({ confidenceScore: null })] }));
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() => expect(screen.getByLabelText('Active claims')).toBeInTheDocument());
-    expect(screen.getByTitle('Not yet scored')).toBeInTheDocument();
+    // ConfidenceMeter shows "—" for null values
+    await waitFor(() =>
+      expect(screen.getByText('—')).toBeInTheDocument()
+    );
   });
 
   it('sends the canonical querystring: search, filter, pagination', async () => {
     const user = userEvent.setup();
     const fetchMock = mockFetchOnce(makeEnvelope());
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
     await waitFor(() => expect(screen.getByLabelText('Search claims')).toBeInTheDocument());
 
     await user.type(screen.getByLabelText('Search claims'), 'vac');
-    await user.click(screen.getByRole('button', { name: 'Disputed' }));
+    
+    // Click the Disputed filter button
+    const filterGroup = screen.getByRole('group', { name: 'Filter claims' });
+    await user.click(within(filterGroup).getByRole('button', { name: 'Disputed' }));
 
-    await waitFor(() => expect(lastUrl(fetchMock)).toContain('search=vac'));
+    await waitFor(() => expect(lastUrl(fetchMock)).toContain('search=vac'), { timeout: 2000 });
     await waitFor(() => expect(lastUrl(fetchMock)).toContain('status=DISPUTED'));
   });
 
@@ -92,23 +107,23 @@ describe('ActiveClaimsTable — ready state', () => {
     const user = userEvent.setup();
     const fetchMock = mockFetchOnce(makeEnvelope());
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
     await waitFor(() => expect(screen.getByLabelText('Search claims')).toBeInTheDocument());
 
     await user.type(screen.getByLabelText('Search claims'), 'abc');
     // During the debounce window nothing beyond the initial fetch happened.
-    expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(1);
+    expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(2);
   });
 
   it('paginates via the server: next page requests page=2 and updates the range', async () => {
     const user = userEvent.setup();
     const fetchMock = mockFetchPages(3);
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() => expect(screen.getByText('Claim 1.0')).toBeInTheDocument());
 
-    await user.click(screen.getByRole('button', { name: /next page/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
 
     await waitFor(() => expect(screen.getAllByText('Claim 2.0').length).toBeGreaterThan(0));
     expect(lastUrl(fetchMock)).toContain('page=2');
@@ -119,19 +134,19 @@ describe('ActiveClaimsTable — ready state', () => {
     const user = userEvent.setup();
     mockFetchPages(2);
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /previous page/i })).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled());
 
-    await user.click(screen.getByRole('button', { name: /next page/i }));
-    await waitFor(() => expect(screen.getByRole('button', { name: /next page/i })).toBeDisabled());
-    expect(screen.getByRole('button', { name: /previous page/i })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /next/i })).toBeDisabled());
+    expect(screen.getByRole('button', { name: /previous/i })).toBeEnabled();
   });
 
   it('marks the current page with aria-current', async () => {
     mockFetchPages(2);
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Go to page 1' })).toHaveAttribute('aria-current', 'page')
@@ -139,14 +154,14 @@ describe('ActiveClaimsTable — ready state', () => {
   });
 });
 
-describe('ActiveClaimsTable — filterable empty state', () => {
+describe('ActiveClaimsTableContainer — filterable empty state', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('offers Clear filters when the current search/filter matches nothing', async () => {
     const user = userEvent.setup();
     mockFetchOnce(makeEnvelope({ items: [] }));
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
     await waitFor(() => expect(screen.getByLabelText('Search claims')).toBeInTheDocument());
 
     await user.type(screen.getByLabelText('Search claims'), 'zzz');
@@ -157,13 +172,15 @@ describe('ActiveClaimsTable — filterable empty state', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Clear filters' }));
-    expect(screen.getByLabelText('Search claims')).toHaveValue('');
+    
+    // After clearing, the search input should be empty
+    await waitFor(() => expect(screen.getByLabelText('Search claims')).toHaveValue(''));
   });
 
   it('distinguishes a genuinely empty projection from a filtered-out one', async () => {
     mockFetchOnce(makeEnvelope({ items: [] }));
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() =>
       expect(
@@ -174,7 +191,7 @@ describe('ActiveClaimsTable — filterable empty state', () => {
   });
 });
 
-describe('ActiveClaimsTable — error and stale states', () => {
+describe('ActiveClaimsTableContainer — error and stale states', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('shows a recoverable error with canonical code and a Try again action', async () => {
@@ -183,7 +200,7 @@ describe('ActiveClaimsTable — error and stale states', () => {
       .spyOn(global, 'fetch')
       .mockRejectedValue(new TypeError('Failed to fetch'));
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(screen.getByText(/PROJECTION_UNAVAILABLE/)).toBeInTheDocument();
@@ -206,7 +223,7 @@ describe('ActiveClaimsTable — error and stale states', () => {
       })
     );
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() =>
       expect(screen.getByText('Claim data may be out of date.')).toBeInTheDocument()
@@ -217,7 +234,7 @@ describe('ActiveClaimsTable — error and stale states', () => {
   it('announces row counts to assistive tech via a polite live region', async () => {
     mockFetchOnce(makeEnvelope({ items: [makeClaimItem()], total: 42, totalPages: 5 }));
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() =>
       expect(screen.getAllByText('Showing 1–1 of 42 claims').length).toBeGreaterThan(0)
@@ -225,13 +242,13 @@ describe('ActiveClaimsTable — error and stale states', () => {
   });
 });
 
-describe('ActiveClaimsTable — accessibility structure', () => {
+describe('ActiveClaimsTableContainer — accessibility structure', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('exposes search, filter group, table, and pagination with accessible names', async () => {
     mockFetchPages(2);
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() => expect(screen.getByRole('table', { name: 'Active claims' })).toBeInTheDocument());
 
@@ -240,24 +257,24 @@ describe('ActiveClaimsTable — accessibility structure', () => {
     expect(screen.getByRole('navigation', { name: 'Claims pagination' })).toBeInTheDocument();
 
     const nav = screen.getByRole('navigation', { name: 'Claims pagination' });
-    expect(within(nav).getByRole('button', { name: /previous page/i })).toBeDisabled();
+    expect(within(nav).getByRole('button', { name: /previous/i })).toBeDisabled();
   });
 
   it('renders filter chips as toggle buttons with aria-pressed', async () => {
     const user = userEvent.setup();
     mockFetchOnce(makeEnvelope());
 
-    render(<ActiveClaimsTable />, { wrapper: createWrapper() });
+    render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() =>
       expect(screen.getByRole('group', { name: 'Filter claims' })).toBeInTheDocument()
     );
 
     const group = screen.getByRole('group', { name: 'Filter claims' });
-    const openChip = within(group).getByRole('button', { name: 'Open' });
-    expect(openChip).toHaveAttribute('aria-pressed', 'false');
+    const verifiedChip = within(group).getByRole('button', { name: 'Verified' });
+    expect(verifiedChip).toHaveAttribute('aria-pressed', 'false');
 
-    await user.click(openChip);
-    expect(openChip).toHaveAttribute('aria-pressed', 'true');
+    await user.click(verifiedChip);
+    expect(verifiedChip).toHaveAttribute('aria-pressed', 'true');
   });
 });

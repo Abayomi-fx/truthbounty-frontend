@@ -13,6 +13,7 @@ import { Dispute } from "@/app/types/dispute";
 import { OpenDispute } from "../disputes/OpenDispute";
 import { DisputeVoting } from "../disputes/DisputeVoting";
 import { MainClaimCardSkeleton } from "@/components/skeletons";
+import { formatNumber, formatPercent } from "@/lib/format";
 
 interface MainClaimCardProps {
   data: ClaimData | null;
@@ -64,7 +65,7 @@ export const MainClaimCard = ({ data, isLoading = false }: MainClaimCardProps) =
           <span className="bg-gray-800 text-gray-300 px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm">
             {data.category}
           </span>
-          <span className="text-gray-500 text-xs sm:text-sm">{data.hash}</span>
+          <span className="text-gray-500 text-xs sm:text-sm font-mono">{data.hash}</span>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-3 text-green-600 bg-green-600/10 px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm border border-green-600/20">
           <CheckCircle2 size={14} className="sm:size-16" />
@@ -99,12 +100,12 @@ export const MainClaimCard = ({ data, isLoading = false }: MainClaimCardProps) =
             Verification Breakdown
           </h3>
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-green-600 flex items-center">
+            <span className="text-green-600 flex items-center font-mono tabular-nums">
               <ThumbsUp size={14} className="mr-1" aria-hidden="true" /> For:{" "}
-              {data.votesFor.toLocaleString()}
+              {formatNumber(data.votesFor)}
             </span>
-            <span className="text-red-500 flex items-center">
-              Against: {data.votesAgainst}{" "}
+            <span className="text-red-500 flex items-center font-mono tabular-nums">
+              Against: {formatNumber(data.votesAgainst)}{" "}
               <ThumbsDown size={14} className="ml-1" aria-hidden="true" />
             </span>
           </div>
@@ -119,7 +120,7 @@ export const MainClaimCard = ({ data, isLoading = false }: MainClaimCardProps) =
             ></div>
           </div>
           <p className="text-xs text-gray-500">
-            Weighted by reputation · {data.verifiersCount} verifiers
+            Weighted by reputation · <span className="font-mono tabular-nums">{formatNumber(data.verifiersCount)}</span> verifiers
             participated
           </p>
         </div>
@@ -135,8 +136,8 @@ export const MainClaimCard = ({ data, isLoading = false }: MainClaimCardProps) =
                 className="h-full bg-linear-to-r from-indigo-500 via-purple-500 to-indigo-400"
               ></div>
             </div>
-            <span className="text-green-600 font-bold text-xl">
-              {data.confidenceScore}%
+            <span className="text-green-600 font-bold text-xl font-mono tabular-nums">
+              {formatPercent(data.confidenceScore)}
             </span>
           </div>
         </div>

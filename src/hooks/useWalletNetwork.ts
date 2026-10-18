@@ -116,6 +116,23 @@ export interface UseWalletNetworkReturn {
   addSupportedNetwork: () => Promise<unknown>;
 }
 
+/**
+ * Standalone helper: clear chain-scoped storage keys outside of hook context.
+ * Used by session reconciliation (V2-FE-008) to drop caches on account/chain changes.
+ */
+export function clearChainScopedStorage(): void {
+  if (typeof window === 'undefined') return;
+  const keys = [
+    'truthbounty-chain-cache',
+    'truthbounty:chain',
+    'truthbounty:wallet:network',
+  ];
+  for (const key of keys) {
+    window.sessionStorage.removeItem(key);
+    window.localStorage.removeItem(key);
+  }
+}
+
 export function useWalletNetwork(
   options: UseWalletNetworkOptions = {},
 ): UseWalletNetworkReturn {

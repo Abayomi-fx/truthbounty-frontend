@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import Sidebar from '../Sidebar';
 import { trackPendingTransaction } from '@/lib/pending-transactions';
@@ -45,6 +45,22 @@ describe('Sidebar', () => {
     render(<Sidebar />);
     expect(screen.getByTestId('sidebar-pending-transactions')).toHaveTextContent(/verification stake pending/i);
     expect(screen.getByText(/waiting for wallet confirmation/i)).toBeInTheDocument();
+  });
+
+  it('keeps the closed mobile navigation hidden and restores focus after Escape', () => {
+    render(<Sidebar />);
+    const trigger = screen.getByRole('button', { name: 'Toggle navigation menu' });
+    const navigation = screen.getByLabelText('Sidebar navigation');
+    expect(navigation).toHaveClass('invisible');
+
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(navigation).toHaveAttribute('aria-modal', 'true');
+    expect(screen.getByRole('link', { name: 'Claims Feed' })).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(navigation).toHaveClass('invisible');
+    expect(trigger).toHaveFocus();
   });
 
   it('routes Submit Claim to the canonical claim creation page', () => {

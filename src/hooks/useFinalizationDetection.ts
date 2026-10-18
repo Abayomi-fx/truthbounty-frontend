@@ -101,15 +101,7 @@ export function useFinalizationDetection(
         // 3. Verify no active appeals exist
         // 4. Calculate time remaining in finalization window
         
-        const mockRequirements: FinalizationRequirements = {
-          claimId,
-          allSettlementsCompleted: true,
-          noActiveAppeals: true,
-          finalizationWindowOpen: true,
-          timeRemaining: 86400, // 24 hours
-        };
-
-        return mockRequirements;
+        throw new Error('Not implemented');
       } catch (err) {
         throw new Error(`Failed to fetch finalization requirements: ${err instanceof Error ? err.message : String(err)}`);
       }

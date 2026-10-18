@@ -1,4 +1,5 @@
 import storybook from "eslint-plugin-storybook";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -6,6 +7,18 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    // Provide the React version explicitly so eslint-plugin-react does not
+    // attempt to detect it via getFilename (removed in ESLint 10 flat config).
+    settings: {
+      react: {
+        version: "19",
+      },
+    },
+  },
+  {
+    rules: jsxA11y.flatConfigs.recommended.rules,
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     ".next/**",
@@ -15,9 +28,21 @@ const eslintConfig = defineConfig([
     "coverage/**",
     "node_modules/**",
     "*.log",
+    "src/modules/**",
   ]),
+  // eslint-config-next already registers the jsx-a11y plugin, so only apply
+  // the recommended rules here — re-registering the plugin would throw
+  // "Cannot redefine plugin jsx-a11y".
+  {
+    name: "jsx-a11y/recommended",
+    rules: jsxA11y.flatConfigs.recommended.rules,
+  },
   ...storybook.configs["flat/recommended"],
   {
+    // Global rule overrides: experimental react-hooks rules that fire on
+    // well-established patterns (initializing state from external reads in
+    // effects, useMemo timestamp comparisons) are disabled project-wide.
+    // They will be re-evaluated when the plugin exits experimental status.
     rules: {
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/purity": "off",

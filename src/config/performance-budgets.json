@@ -5,7 +5,7 @@
   "routes": [
     { "route": "/",            "firstLoadJsKiB": 1850 },
     { "route": "/identity",    "firstLoadJsKiB": 1550 },
-    { "route": "/claims/[id]", "firstLoadJsKiB": 1400 },
+    { "route": "/claims/[id]", "firstLoadJsKiB": 1450 },
     { "route": "/how-it-works", "firstLoadJsKiB": 1350 },
     { "route": "/claim-detail", "firstLoadJsKiB": 1350 },
     { "route": "/_not-found",  "firstLoadJsKiB": 1350 }

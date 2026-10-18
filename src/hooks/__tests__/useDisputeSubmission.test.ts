@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports -- test doubles and dynamic module access */
 /**
  * Unit tests for useDisputeSubmission hook
  * Tests validation, simulation, and encoding for dispute opening transactions

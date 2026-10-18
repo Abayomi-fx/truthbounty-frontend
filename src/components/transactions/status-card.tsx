@@ -1,6 +1,5 @@
 import React from 'react';
 import { type LucideIcon } from 'lucide-react';
-import { useTranslations } from '@/i18n';
 
 export interface StatusCardProps {
   status: 'pending' | 'confirming' | 'confirmed' | 'failed';
@@ -11,28 +10,28 @@ export interface StatusCardProps {
 const statusConfig = {
   pending: {
     icon: '⏱️',
-    labelKey: 'transaction.states.pending' as const,
+    label: 'Pending',
     bgColor: 'bg-slate-800',
     textColor: 'text-slate-400',
     countColor: 'text-slate-200',
   },
   confirming: {
     icon: '⚙️',
-    labelKey: 'transaction.states.confirming' as const,
+    label: 'Confirming',
     bgColor: 'bg-orange-950',
     textColor: 'text-orange-400',
     countColor: 'text-orange-300',
   },
   confirmed: {
     icon: '✓',
-    labelKey: 'transaction.states.confirmed' as const,
+    label: 'Confirmed',
     bgColor: 'bg-green-950',
     textColor: 'text-green-400',
     countColor: 'text-green-300',
   },
   failed: {
     icon: '✕',
-    labelKey: 'transaction.states.failed' as const,
+    label: 'Failed',
     bgColor: 'bg-red-950',
     textColor: 'text-red-400',
     countColor: 'text-red-300',
@@ -40,7 +39,6 @@ const statusConfig = {
 };
 
 export function StatusCard({ status, count }: StatusCardProps) {
-  const t = useTranslations();
   const config = statusConfig[status];
 
   return (
@@ -48,15 +46,14 @@ export function StatusCard({ status, count }: StatusCardProps) {
       role="status"
       aria-live="polite"
       aria-atomic="true"
-      className={`${config.bgColor} border border-slate-700 rounded-lg p-6 min-w-[200px]`}
+      className={`${config.bgColor} border border-slate-700 rounded-lg p-6 min-w-0 w-full sm:min-w-[200px] sm:w-auto`}
     >
       <div className="flex items-center gap-2 mb-4">
         <span className={`text-lg ${config.textColor}`} aria-hidden="true">
           {config.icon}
         </span>
         <span className={`text-sm font-medium ${config.textColor}`}>
-          {/* @ts-expect-error - Dynamic translation key */}
-          {t(config.labelKey)}
+          {config.label}
         </span>
       </div>
       <div className={`text-3xl font-bold ${config.countColor}`}>{count}</div>

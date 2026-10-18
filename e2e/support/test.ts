@@ -1,6 +1,24 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Page, type Locator } from '@playwright/test';
 import { seededClaims, seededClaimById } from './claims';
 import type { ClaimListItem, ClaimsListEnvelope } from '../../src/app/types/claim-list';
+import { assertProductionEnv } from '../../src/app/lib/env';
+
+/**
+ * Local structural mirror of the contract-sourced stake review projection.
+ *
+ * Declared inline so the e2e stub does not depend on the component module's
+ * type surface; the UI remains the authority for rendering and validation.
+ */
+export interface StakeEffectiveWeightReview {
+  claimId: string;
+  rawStake: { value: string; unit: string; source: string };
+  adjustmentInputs: Array<{ id: string; label: string; value: string; unit: string; source: string }>;
+  effectiveWeight: { value: string; unit: string; source: string };
+  rewardRange: { min: { value: string; unit: string; source: string }; max: { value: string; unit: string; source: string } };
+  slashingExposure: { value: string; unit: string; source: string };
+  projection: { freshness: string; generatedAt: string };
+  changedBeforeAuthorization: boolean;
+}
 
 const STATUS_QUERY_MAP: Record<string, string> = {
   verified: 'VERIFIED',
@@ -19,7 +37,7 @@ const STATUS_QUERY_MAP: Record<string, string> = {
  * envelope. `highImpact` and `confidenceScore` are derived from the seeded
  * fixture only; they are stub values, not protocol reads.
  */
-function toListItem(claim: (typeof seededClaims)[number]): ClaimListItem {
+export function toListItem(claim: (typeof seededClaims)[number]): ClaimListItem {
   return {
     id: claim.id,
     title: claim.title,
@@ -35,7 +53,7 @@ function toListItem(claim: (typeof seededClaims)[number]): ClaimListItem {
 }
 
 /** Build a validated claims-list envelope for the given query parameters. */
-function claimsListEnvelope(params: URLSearchParams): ClaimsListEnvelope {
+export function claimsListEnvelope(params: URLSearchParams): ClaimsListEnvelope {
   const search = (params.get('search') ?? '').trim().toLowerCase();
   const rawStatus = params.get('status');
   const status = rawStatus
@@ -63,6 +81,35 @@ function claimsListEnvelope(params: URLSearchParams): ClaimsListEnvelope {
   };
 }
 
+/**
+ * Contract-sourced stake / effective-weight review projection.
+ *
+ * These values are stub projections only. They are freshness-labelled and
+ * never grant authority: the UI must treat them as display data and require a
+ * contract read before any authorization. `changedBeforeAuthorization` is
+ * always false here; tests that need the changed state override the route.
+ */
+export const SEEDED_STAKE_REVIEW: StakeEffectiveWeightReview = {
+  claimId: 'claim-1',
+  rawStake: { value: '1500000000000000000', unit: 'wei', source: 'contract' },
+  adjustmentInputs: [
+    { id: 'reputation', label: 'Reputation adjustment', value: '250000000000000000', unit: 'wei', source: 'contract' },
+    { id: 'history', label: 'History adjustment', value: '-100000000000000000', unit: 'wei', source: 'contract' },
+  ],
+  effectiveWeight: { value: '1650000000000000000', unit: 'wei', source: 'contract' },
+  rewardRange: {
+    min: { value: '50000000000000000', unit: 'wei', source: 'contract' },
+    max: { value: '250000000000000000', unit: 'wei', source: 'contract' },
+  },
+  slashingExposure: { value: '1500000000000000000', unit: 'wei', source: 'contract' },
+  projection: { freshness: 'fresh', generatedAt: '2024-01-02T00:00:00.000Z' },
+  changedBeforeAuthorization: false,
+};
+
+export function stakeReviewEnvelope(claimId: string): StakeEffectiveWeightReview {
+  return { ...SEEDED_STAKE_REVIEW, claimId };
+}
+
 function json(body: unknown, status = 200) {
   return {
     status,
@@ -72,6 +119,12 @@ function json(body: unknown, status = 200) {
 }
 
 export async function stubClaimsApi(page: Page) {
+  await page.route('**/api/claims/*/stake-review', async (route) => {
+    const segments = new URL(route.request().url()).pathname.split('/');
+    const claimId = segments[segments.length - 2] ?? '';
+    await route.fulfill(json(stakeReviewEnvelope(claimId)));
+  });
+
   await page.route('**/api/claims/*', async (route) => {
     const id = new URL(route.request().url()).pathname.split('/').pop() ?? '';
     const claim = seededClaimById.get(id);
@@ -80,6 +133,11 @@ export async function stubClaimsApi(page: Page) {
 
   await page.route('**/api/claims*', async (route) => {
     const request = route.request();
+
+    if (request.method() === 'POST' && /\/stake-review\/?$/.test(new URL(request.url()).pathname)) {
+      await route.fulfill(json({ message: 'Contract mutation required' }, 405));
+      return;
+    }
 
     if (request.method() === 'POST') {
       const payload = request.postDataJSON() as { title?: string; description?: string };
@@ -124,10 +182,115 @@ export async function stubClaimsApi(page: Page) {
   });
 }
 
+/**
+ * Error categories surfaced by the accessible error-summary primitive.
+ *
+ * These mirror the authoritative source of the failure so summaries never
+ * collapse a server/authorization failure into a client validation error.
+ */
+export type FormErrorCategory =
+  | 'validation'
+  | 'server'
+  | 'simulation'
+  | 'authorization';
+
+export interface FormErrorSummaryEntry {
+  /** Stable id of the invalid control the summary link targets. */
+  fieldId: string;
+  /** Human-readable, non-sensitive label. Never contains protected evidence. */
+  label: string;
+  /** Authoritative category of the failure. */
+  category: FormErrorCategory;
+}
+
+
+/**
+ * Locate the accessible error-summary primitive for a form.
+ *
+ * The summary is expected to expose `role="alert"` (or `aria-live`) and be
+ * linked to invalid controls via `aria-describedby`/`aria-errormessage`.
+ */
+export function errorSummary(page: Page, formId?: string): Locator {
+  const scope = formId ? page.locator(`#${formId}`) : page;
+  return scope
+    .locator('[data-testid="error-summary"], [role="alert"][data-error-summary]')
+    .first();
+}
+
+/**
+ * Assert that a failed submission produced a perceivable summary and that the
+ * summary received focus (or that focus intentionally remained on the
+ * transaction-recovery control).
+ */
+export async function expectErrorSummaryFocused(
+  page: Page,
+  options: { formId?: string; recoveryControlId?: string } = {},
+): Promise<void> {
+  const summary = errorSummary(page, options.formId);
+  await expect(summary).toBeVisible();
+
+  if (options.recoveryControlId) {
+    // Focus must remain on transaction recovery rather than jump to a field.
+    await expect(page.locator(`#${options.recoveryControlId}`)).toBeFocused();
+    return;
+  }
+
+  await expect(summary).toBeFocused();
+}
+
+/**
+ * Click the summary link for the first invalid field and assert that focus
+ * lands on the correct control. Deterministic first-invalid navigation.
+ */
+export async function navigateToFirstInvalidField(
+  page: Page,
+  options: { formId?: string } = {},
+): Promise<Locator> {
+  const summary = errorSummary(page, options.formId);
+  const firstLink = summary.locator('a[href^="#"], [data-error-link]').first();
+  await expect(firstLink).toBeVisible();
+
+  const targetId = await firstLink.evaluate((el) => {
+    const href = el.getAttribute('href');
+    if (href && href.startsWith('#')) return href.slice(1);
+    return el.getAttribute('data-error-link') ?? '';
+  });
+
+  if (!targetId) throw new Error('Error summary link is missing a target field id');
+  await firstLink.click();
+  const target = page.locator(`#${targetId}`);
+  await expect(target).toBeFocused();
+  return target;
+}
+
+/**
+ * Read the summary entries as structured data so tests can assert that error
+ * categories retain their authoritative source.
+ */
+export async function readErrorSummaryEntries(
+  page: Page,
+  options: { formId?: string } = {},
+): Promise<FormErrorSummaryEntry[]> {
+  const summary = errorSummary(page, options.formId);
+  await expect(summary).toBeVisible();
+  return summary.locator('[data-error-entry]').evaluateAll((nodes) =>
+    nodes.map((node) => ({
+      fieldId: node.getAttribute('data-field-id') ?? '',
+      label: node.textContent?.trim() ?? '',
+      category: (node.getAttribute('data-error-category') ?? 'validation') as FormErrorCategory,
+    })),
+  );
+}
+
 export const test = base.extend<{ stubbedApi: void }>({
   stubbedApi: [
     async ({ page }, use) => {
+      // Re-assert the environment contract per test so a production build
+      // cannot silently run against placeholder or wrong-chain configuration.
+      assertProductionEnv(process.env);
+
       await stubClaimsApi(page);
+      await stubSupportApi(page);
       await use();
     },
     { auto: true },

@@ -2,7 +2,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function ActiveClaimsTableSkeleton() {
   return (
-    <div className="bg-[#18181b] rounded-xl p-6 border border-[#232329]">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading claims table"
+      className="bg-[#18181b] rounded-xl p-6 border border-[#232329]"
+    >
+      <span className="sr-only">Loading claims table skeleton shimmer...</span>
       {/* Header with filters */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-2">

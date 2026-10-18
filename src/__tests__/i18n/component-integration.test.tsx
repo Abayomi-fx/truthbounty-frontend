@@ -5,6 +5,16 @@
  * Ensures no hardcoded strings in user-facing components.
  */
 
+// next-intl ships ESM-only in v4; mock it for the CommonJS Jest environment
+// so the module graph can resolve. The tests in this file check enMessages
+// keys directly and do not depend on real NextIntlClientProvider behaviour.
+jest.mock('next-intl', () => ({
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  useTranslations: () => (key: string) => key,
+  useLocale: () => 'en',
+  useMessages: () => ({}),
+}));
+
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
