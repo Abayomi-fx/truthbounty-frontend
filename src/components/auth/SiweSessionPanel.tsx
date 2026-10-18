@@ -12,11 +12,12 @@ import React, {
 import { Button } from '@/components/ui/button';
 import { ConnectButton } from '@/components/ui/ConnectButton';
 import { useSiweAuth, type UseSiweAuthOptions } from '@/hooks/useSiweAuth';
+import { useAccount, useChainId } from 'wagmi';
 import {
   describeSiweFailure,
   siweStatusAnnouncement,
   toSiweSignInIntent,
-  type SiweSignInIntent,
+  type SiweSignIntent,
 } from '@/lib/auth/siwe-presentation';
 import type {
   SiweFailure,
@@ -26,10 +27,12 @@ import type {
 
 export interface SiweSessionPanelViewProps {
   status: SiweStatus;
-  intent: SiweSignInIntent | null;
+  intent: SiweSignIntent | null;
   error: SiweFailure | null;
   session: SiweSession | null;
   address: string | null;
+  chainId?: number | null;
+  supportedChainIds?: readonly number[];
   isBusy?: boolean;
   onBegin: () => void;
   onSign: () => void;
@@ -67,6 +70,8 @@ export function SiweSessionPanelView({
   error,
   session,
   address,
+  chainId = null,
+  supportedChainIds,
   isBusy = false,
   onBegin,
   onSign,
@@ -78,10 +83,16 @@ export function SiweSessionPanelView({
   const [reviewed, setReviewed] = useState(false);
   const consentId = useId();
 
+  const isWrongChain =
+    chainId !== null &&
+    supportedChainIds !== undefined &&
+    supportedChainIds.length > 0 &&
+    !supportedChainIds.includes(chainId);
+
   // Require a fresh review for each new challenge.
   useEffect(() => {
     setReviewed(false);
-  }, [intent?.nonce]);
+  }, [intent?.nonce, address, chainId]);
 
   const announcement = siweStatusAnnouncement(status, error);
   const failure = status === 'error' && error ? describeSiweFailure(error) : null;
@@ -90,6 +101,27 @@ export function SiweSessionPanelView({
   const handleNewChallenge = useCallback(() => onBegin(), [onBegin]);
 
   const renderBody = () => {
+    if (isWrongChain) {
+      return (
+        <div className="space-y-3">
+          <div
+            role="alert"
+            data-testid="siwe-wrong-chain"
+            className="rounded-md border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-3"
+          >
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              Unsupported network
+            </p>
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              Your wallet is connected to chain {chainId}. Switch to a supported
+              network to continue. This selection does not grant any protocol
+              authority.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     if (address === null) {
       return (
         <div className="space-y-3">
@@ -116,6 +148,9 @@ export function SiweSessionPanelView({
             </IntentField>
             <IntentField label="Chain">
               <span data-testid="siwe-session-chain">{session.chainId}</span>
+            </IntentField>
+            <IntentField label="Connected chain">
+              <span data-testid="siwe-connected-chain">{chainId ?? 'unknown'}</span>
             </IntentField>
             <IntentField label="Session expires">
               <span data-testid="siwe-session-expiry">
@@ -327,7 +362,7 @@ export function SiweSessionPanelView({
 
 export interface SiweSessionPanelProps {
   className?: string;
-  /** Inject auth client/overrides for tests or non-wagmi hosts. */
+  /** Inject auth client/overrides for tests or non-wagmm hosts. */
   authOptions?: UseSiweAuthOptions;
 }
 
@@ -336,30 +371,8 @@ export interface SiweSessionPanelProps {
  */
 export function SiweSessionPanel({ className, authOptions }: SiweSessionPanelProps) {
   const auth = useSiweAuth(authOptions);
+  const { address: connectedAddress } = useAccount();
+  const connectedChainId = useChainId();
   const intent = useMemo(
     () =>
       auth.challenge
-        ? toSiweSignInIntent(auth.challenge, authOptions?.now?.() ?? Date.now())
-        : null,
-    [auth.challenge, authOptions?.now],
-  );
-
-  return (
-    <SiweSessionPanelView
-      className={className}
-      status={auth.status}
-      intent={intent}
-      error={auth.error}
-      session={auth.session}
-      address={auth.address}
-      isBusy={auth.isBusy}
-      onBegin={auth.begin}
-      onSign={auth.signAndSubmit}
-      onLogout={auth.clear}
-      onReset={auth.resetError}
-      connectSlot={<ConnectButton label="Connect Wallet" />}
-    />
-  );
-}
-
-export default SiweSessionPanel;

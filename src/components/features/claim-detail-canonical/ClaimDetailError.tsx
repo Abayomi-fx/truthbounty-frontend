@@ -10,6 +10,10 @@
  * Aligned with the canonical system-state contract: meaning never depends
  * on color alone, denied/unavailable/not-found remain semantically distinct,
  * and recoverable identifiers are preserved.
+ *
+ * Note: when this error represents a transaction recovery state (e.g.
+ * pending on-chain submission), focus must remain on the recovery control
+ * rather than jumping to a field. The `preserveFocus` prop enforces this.
  */
 
 import React from 'react';
@@ -39,6 +43,12 @@ export interface ClaimDetailErrorProps {
   claimId?: string;
   /** Optional freshness metadata for the failed projection. */
   freshness?: { label?: string; timestamp?: string };
+  /**
+   * When true, the component does not move focus on mount. Use this for
+   * transaction recovery states where focus must remain on the recovery
+   * control.
+   */
+  preserveFocus?: boolean;
 }
 
 interface StateDescriptor {
@@ -140,18 +150,21 @@ export function ClaimDetailError({
   onRetry,
   claimId,
   freshness,
+  preserveFocus = false,
 }: ClaimDetailErrorProps) {
   const state = describeState(error, errorCode);
   const canRetry = state.canRetry && Boolean(onRetry);
   const headingRef = React.useRef<HTMLHeadingElement>(null);
   const HeadingIcon = state.icon;
 
-  // Focus management: move focus to error heading when error appears
+  // Focus management: move focus to error heading when error appears.
+  // Skipped when preserveFocus is true (transaction recovery states).
   React.useEffect(() => {
+    if (preserveFocus) return;
     if (headingRef.current) {
       headingRef.current.focus();
     }
-  }, []);
+  }, [preserveFocus]);
 
   return (
     <div
