@@ -251,12 +251,15 @@ describe('Issue #439 V2-FE-154 — Bounded Admin Operations Dashboard', () => {
       // Mobile card alternative exists in DOM
       expect(screen.getByTestId('operational-queue-mobile-cards')).toBeInTheDocument();
 
-      // Clicking action triggers selection callback
+      // Retry remains unavailable without a protected adapter, even if a row
+      // describes the operation as retryable.
       const reviewButtons = screen.getAllByRole('button', {
         name: /authorize retry failed event indexer batch #4410/i,
       });
+      expect(reviewButtons[0]).toBeDisabled();
       fireEvent.click(reviewButtons[0]);
-      expect(handleSelect).toHaveBeenCalledWith(defaultMockData.operationalQueue[0]);
+      expect(handleSelect).not.toHaveBeenCalled();
+      expect(screen.getAllByRole('link', { name: /review details for retry failed event indexer batch #4410/i })).toHaveLength(2);
     });
 
     it('renders reassuring empty state when operational queue is clear', () => {

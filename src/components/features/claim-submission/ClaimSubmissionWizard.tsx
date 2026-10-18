@@ -19,9 +19,12 @@
 
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
+import { useUnsavedChangesDialog } from '@/hooks/useUnsavedChangesDialog';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
+import { UnsavedChangesDialog } from '@/components/ui/UnsavedChangesDialog';
 import { useClaimSubmissionWizard, type WizardStep } from '@/hooks/useClaimSubmissionWizard';
 import ClaimDetailsStep from './wizard/ClaimDetailsStep';
 import EvidenceUploadStep from './wizard/EvidenceUploadStep';
@@ -57,9 +60,37 @@ export default function ClaimSubmissionWizard({
   const [state, actions] = useClaimSubmissionWizard();
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  
-  // Dialog focus management
-  useDialogFocus(true, modalRef, closeButtonRef, onClose);
+
+  // UI-FE-084: nontrivial input exists before the submission is confirmed.
+  const hasUnsavedInput = useMemo(() => {
+    if (state.currentStep === 'confirmation') return false;
+    const details = state.claimDetails;
+    return (
+      details.title.trim().length > 0 ||
+      details.description.trim().length > 0 ||
+      details.category.trim().length > 0 ||
+      details.impact.trim().length > 0 ||
+      details.source.trim().length > 0 ||
+      Boolean(state.evidence.source)
+    );
+  }, [state.currentStep, state.claimDetails, state.evidence.source]);
+
+  // Ask before discarding, and block refresh/back/internal navigation while dirty.
+  const guardDialog = useUnsavedChangesDialog();
+  useUnsavedChangesGuard({ when: hasUnsavedInput, confirm: guardDialog.confirm });
+
+  const handleClose = () => {
+    if (hasUnsavedInput) {
+      void guardDialog.confirm().then((allowed) => {
+        if (allowed) onClose();
+      });
+      return;
+    }
+    onClose();
+  };
+
+  // Dialog focus management (Escape routes through the guard).
+  useDialogFocus(true, modalRef, closeButtonRef, handleClose);
 
   // Announce step changes to screen readers
   const previousStepRef = useRef<WizardStep>(state.currentStep);
@@ -89,20 +120,6 @@ export default function ClaimSubmissionWizard({
       onSuccess(state.claimId);
     }
   }, [state.currentStep, state.claimId, onSuccess]);
-
-  const handleClose = () => {
-    // Confirm if user has entered data
-    const hasData = state.claimDetails.title.length > 0 || 
-                    state.claimDetails.description.length > 0;
-    
-    if (hasData && state.currentStep !== 'confirmation') {
-      if (window.confirm('Are you sure you want to close? Your progress will be saved.')) {
-        onClose();
-      }
-    } else {
-      onClose();
-    }
-  };
 
   const currentStepIndex = STEP_ORDER.indexOf(state.currentStep);
 
@@ -258,6 +275,12 @@ export default function ClaimSubmissionWizard({
           )}
         </div>
       </div>
+
+      <UnsavedChangesDialog
+        open={guardDialog.isConfirmOpen}
+        onConfirmLeave={guardDialog.confirmLeave}
+        onCancel={guardDialog.cancelLeave}
+      />
     </div>
   );
 }
