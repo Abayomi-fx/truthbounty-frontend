@@ -7,6 +7,9 @@ import {
   AggregationVerdict,
   summarizeAggregation,
 } from '@/app/types/aggregation';
+import { ConfidenceMeter } from '@/components/ui/primitives/ConfidenceMeter';
+import { StakeWeightDisplay } from '@/components/ui/primitives/StakeWeightDisplay';
+import { OutcomeBadge } from '@/components/ui/primitives/OutcomeBadge';
 
 /**
  * V2-FE-056 — Aggregation visualization.
@@ -35,10 +38,6 @@ const VERDICT_LABEL: Record<AggregationVerdict, string> = {
   TIE: 'Tied',
   UNDECIDED: 'No weight yet',
 };
-
-function pct(value: number): string {
-  return `${(value * 100).toFixed(1)}%`;
-}
 
 function ErrorState({
   message,
@@ -126,6 +125,19 @@ export function AggregationSummary({ state, onRetry }: AggregationSummaryProps) 
   const supportingPct = view.confidence;
   const opposingPct = view.total === 0n ? 0 : 1 - view.confidence;
 
+  // Determine outcome kind
+  let outcomeKind: 'verified' | 'disputed' | 'rejected' | 'inconclusive' | 'provisional' = 'inconclusive';
+  if (view.total > 0n) {
+    if (view.verdict === 'SUPPORTED') {
+      outcomeKind = 'verified';
+    } else if (view.verdict === 'OPPOSED') {
+      outcomeKind = 'rejected';
+    } else if (view.verdict === 'TIE') {
+      outcomeKind = 'disputed';
+    }
+  }
+  const isProvisional = !view.finalized;
+
   return (
     <section
       aria-label="Aggregation"
@@ -133,18 +145,11 @@ export function AggregationSummary({ state, onRetry }: AggregationSummaryProps) 
     >
       {/* Finality — driven only by the canonical projection, never a timer. */}
       <div className="flex flex-wrap items-center gap-2">
-        {view.finalized ? (
-          <span className="rounded bg-green-500/20 px-2 py-1 text-xs font-medium text-green-400">
-            Final
-          </span>
-        ) : (
-          <span
-            role="status"
-            className="rounded bg-amber-500/20 px-2 py-1 text-xs font-medium text-amber-300"
-          >
-            Provisional — not final
-          </span>
-        )}
+        <OutcomeBadge
+          kind={outcomeKind}
+          provisional={isProvisional}
+          compact
+        />
         {projection.stale ? (
           <span className="rounded bg-orange-500/20 px-2 py-1 text-xs font-medium text-orange-300">
             Stale
@@ -157,6 +162,42 @@ export function AggregationSummary({ state, onRetry }: AggregationSummaryProps) 
         </span>
       </div>
 
+      {/* Confidence Meter */}
+      <ConfidenceMeter
+        value={view.total === 0n ? 0 : supportingPct * 100}
+        label="Supporting Weight Share"
+        source="Aggregation Projection"
+        provisional={isProvisional}
+        showValue={true}
+        showBandLabel={true}
+      />
+
+      {/* Stake Weight Display */}
+      <StakeWeightDisplay
+        supporting={{
+          label: 'Supporting',
+          value: projection.supportingWeight,
+          unit: 'wei',
+          icon: <span aria-hidden="true">▲</span>,
+          tone: 'success',
+        }}
+        opposing={{
+          label: 'Opposing',
+          value: projection.opposingWeight,
+          unit: 'wei',
+          icon: <span aria-hidden="true">▼</span>,
+          tone: 'danger',
+        }}
+        total={view.total.toString()}
+        quorum={view.quorum?.toString()}
+        provisional={isProvisional}
+        stale={projection.stale}
+        source="Aggregation Projection"
+        showBars={true}
+        showTable={true}
+      />
+
+      {/* Verdict */}
       <div>
         <h3 className="text-sm font-medium text-slate-300">Verdict</h3>
         <p className="text-lg font-semibold text-white">
@@ -167,32 +208,6 @@ export function AggregationSummary({ state, onRetry }: AggregationSummaryProps) 
             </span>
           ) : null}
         </p>
-      </div>
-
-      {/* Confidence + weight split. Bars are factual ratios of reported weight. */}
-      <div>
-        <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
-          <span>Supporting</span>
-          <span>Confidence {pct(view.confidence)}</span>
-        </div>
-        <div
-          role="progressbar"
-          aria-label="Supporting weight share"
-          aria-valuenow={Math.round(supportingPct * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="h-2 w-full overflow-hidden rounded-full bg-slate-800"
-        >
-          <div
-            className="h-full bg-green-500"
-            style={{ width: pct(supportingPct) }}
-          />
-        </div>
-        <div className="mt-2 flex justify-between text-xs text-slate-500">
-          <span>Supporting weight: {projection.supportingWeight}</span>
-          <span>Opposing weight: {projection.opposingWeight}</span>
-        </div>
-        <p className="sr-only">Opposing weight share {pct(opposingPct)}</p>
       </div>
 
       {/* Quorum */}

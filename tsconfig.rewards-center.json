@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "types": ["node", "jest", "@testing-library/jest-dom", "next"]
+  },
+  "include": [
+    "next-env.d.ts",
+    "vitest.shims.d.ts",
+    "src/components/features/rewards-center/**/*.ts",
+    "src/components/features/rewards-center/**/*.tsx",
+    "src/hooks/useRewardsCenterData.ts",
+    "src/hooks/useRecoveryReferences.ts",
+    "src/hooks/__tests__/useRewardsCenterData.test.tsx",
+    "src/hooks/__tests__/useRecoveryReferences.center.test.tsx",
+    "src/lib/transaction-machine/recovery-references.ts",
+    "vitest.rewards-center.config.ts",
+    "playwright.rewards-center.config.ts",
+    "types/rewards-center.d.ts"
+  ],
+  "exclude": ["node_modules"]
+}

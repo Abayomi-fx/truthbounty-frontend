@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { ActiveClaimsTableSkeleton } from "@/components/skeletons";
 import { getCategoryIcon } from "@/lib/category-icons";
+import { ConfidenceMeter } from "@/components/ui/primitives/ConfidenceMeter";
 
 export interface ActiveClaim {
   category: string;
@@ -8,7 +9,7 @@ export interface ActiveClaim {
   title: string;
   source: string;
   status: string;
-  confidence: string;
+  confidence: number | null; // 0-100, null = unknown
   votes: string;
   stake: string;
   time: string;
@@ -186,7 +187,14 @@ const ActiveClaimsTable = ({
                           {claim.status}
                         </span>
                       </td>
-                      <td className="py-3">{claim.confidence}</td>
+                      <td className="py-3">
+                        <ConfidenceMeter
+                          value={claim.confidence}
+                          label={`Confidence for ${claim.title}`}
+                          showValue={true}
+                          showBandLabel={false}
+                        />
+                      </td>
                       <td className="py-3">
                         {claim.votes}{" "}
                         <span className="text-[#a1a1aa]">/ {claim.stake}</span>
