@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Shield, Clock, AlertTriangle, CheckCircle, ArrowRight, Zap } from 'lucide-react';
 import type { OperationalQueueItem } from '@/app/types/admin';
 
@@ -9,6 +10,25 @@ export interface OperationalQueueTableProps {
   isLoading?: boolean;
   onSelectOperation: (item: OperationalQueueItem) => void;
   className?: string;
+}
+
+function isRetryItem(item: OperationalQueueItem): boolean {
+  return /retry/i.test(`${item.id} ${item.title}`);
+}
+
+function hasRetryProof(item: OperationalQueueItem): boolean {
+  return Boolean(
+    item.retryEligibility?.eligible &&
+    item.retryEligibility.permissionMapped &&
+    item.retryEligibility.idempotencyProofRef?.trim()
+  );
+}
+
+function retryUnavailableReason(item: OperationalQueueItem): string {
+  if (!hasRetryProof(item)) {
+    return 'Retry unavailable: mapped permission and verified idempotency proof are required.';
+  }
+  return 'Retry unavailable: no protected retry command is wired to validate and consume this proof.';
 }
 
 export function OperationalQueueTable({
@@ -124,13 +144,18 @@ export function OperationalQueueTable({
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <Link href={`/admin/operations/${encodeURIComponent(item.id)}`} className="mr-2 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold underline underline-offset-2" aria-label={`Review details for ${item.title}`}>
+                          Details
+                        </Link>
                         <button
                           type="button"
                           onClick={() => onSelectOperation(item)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs"
+                          disabled={isRetryItem(item)}
+                          title={isRetryItem(item) ? retryUnavailableReason(item) : undefined}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs disabled:cursor-not-allowed disabled:opacity-50"
                           aria-label={`Authorize ${item.title}`}
                         >
-                          <span>Review & Execute</span>
+                          <span>{isRetryItem(item) ? 'Retry unavailable' : 'Review & Execute'}</span>
                           <ArrowRight className="h-3 w-3" aria-hidden="true" />
                         </button>
                       </td>
@@ -182,13 +207,18 @@ export function OperationalQueueTable({
                   Target: {item.targetResource}
                 </div>
 
+                <Link href={`/admin/operations/${encodeURIComponent(item.id)}`} className="block w-full rounded-lg border border-border px-3 py-2 text-center text-xs font-semibold underline underline-offset-2" aria-label={`Review details for ${item.title}`}>
+                  Review details
+                </Link>
                 <button
                   type="button"
                   onClick={() => onSelectOperation(item)}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs"
+                  disabled={isRetryItem(item)}
+                  title={isRetryItem(item) ? retryUnavailableReason(item) : undefined}
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={`Authorize ${item.title}`}
                 >
-                  <span>Review & Execute</span>
+                  <span>{isRetryItem(item) ? 'Retry unavailable' : 'Review & Execute'}</span>
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </div>

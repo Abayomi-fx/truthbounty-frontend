@@ -1,0 +1,553 @@
+{
+  "owner": "@truthbounty/v2-maintainers",
+  "purpose": "Review inventory of existing URL literals, environment reads and network call sites. Inventory is not CSP authorization; only provider-policy.mjs grants egress.",
+  "dependencies": {
+    "package.json": "696b8913e433c6f6c15070b685589eb3fd1728e55a950ca9dba53de521894520",
+    "pnpm-lock.yaml": "11fd923db0d6412d214e7b0037f0e6d0cb88a064fc21b30af503ce1d7ad6e775"
+  },
+  "sources": {
+    "middleware.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "next.config.ts": [],
+    "public/file.svg": [
+      "asset:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "public/globe.svg": [
+      "asset:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "public/next.svg": [
+      "asset:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "public/vercel.svg": [
+      "asset:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "public/window.svg": [
+      "asset:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "src/adapters/claimantAdapter.ts": [
+      "network:4de1371d9994995a8082cfea8b3b0f250a7d80f716718cc5aafa0a3b8afaed6a",
+      "network:787b2374b61e7a4058d7023013b1b2e4e102e1c3b4c5e5a1713a655150064dfa"
+    ],
+    "src/app/(dashboard)/disputes/page.tsx": [
+      "network:7be210fddba32f00d4ee48900bafd68ce808cc1bf5d8eda5c875620ec154d777"
+    ],
+    "src/app/(dashboard)/page.tsx": [
+      "url:59dbf4bdcfee6b6eff4cdceaba1b549d7426ea10b031b28284175ecdb6e22566"
+    ],
+    "src/app/(dashboard)/terms/TermsPageClient.tsx": [
+      "network:3abed5d1b4ac2d367d39288ca1cd9159326bff0a88d886ca4fb5ef1290e02ff3"
+    ],
+    "src/app/api/admin.api.ts": [
+      "network:220944686766452e1cf8846322f62233ef96069643831ab50b8a9f8dd3f5f087",
+      "network:a2a68e2c3a3325429084bd8656b83ac52cc30d7f88e695182c9421f7db830dc5"
+    ],
+    "src/app/api/admin/operations/route.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:b073b8acafa6d791425b39df76586ee52372b073861846e6c6d0eedac489cf93",
+      "network:5e929f168413db1cf2cc83bf6a1afaa663a505d91dd06f3241de7c094932b3ef"
+    ],
+    "src/app/api/admin/overview/route.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:b073b8acafa6d791425b39df76586ee52372b073861846e6c6d0eedac489cf93",
+      "network:5e929f168413db1cf2cc83bf6a1afaa663a505d91dd06f3241de7c094932b3ef"
+    ],
+    "src/app/api/claim-detail.api.ts": [
+      "network:81d9d5113d98ba1fb3494c5f91126e18b777618cf1240aae7dfda65d54db5609"
+    ],
+    "src/app/api/claims/catchup.ts": [
+      "network:4aa994c77b8141bf422d7a60d1b8ccf6cdbfa83b7f5e234b84d8abcb9828726c",
+      "network:51691b4126aad0eaf782eccaa72fd7afc6461c1612ec52f503d3126267b0faab"
+    ],
+    "src/app/api/csp-report/route.ts": [
+      "network:6e5a0063be3bed41320e3d6c50047e52c7656ad747e824fe6ee28d95475a48c4"
+    ],
+    "src/app/api/disputes.api.ts": [
+      "network:12e9894e91a19490a1614d9bec7cff05d10e977ca73b45016d305cd93504b91e",
+      "network:575cc28c89d230e0f7a395199d597616907265674c8c43e85d12ae187dddf484",
+      "network:7ed565d6e5ef74bac0dcc5fdbf581472036d17b83582260e8ea7f37ef7967014"
+    ],
+    "src/app/api/freshness.api.ts": [
+      "network:eb843768edd92b2bc9ba5889c245c820246d2eaa9ee8772b1a3ba8759cca9f91"
+    ],
+    "src/app/api/identity/worldcoin/rp-context/route.ts": [
+      "env:1a4ba1ef088d33269d3f4322a31360f39e0ea6181acde45373230cb903a2c2bb",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/app/api/leaderboard.api.ts": [
+      "network:d22bdaff429bf0ba509b3128672aa83bc4f29f3d26eb4bc5283a553f4dca0cf3",
+      "network:efc3aef52584c8f868ada1ffc79d268f9f41ba3091c8cb643559fd26570fd64d"
+    ],
+    "src/app/api/rewards.api.ts": [
+      "network:4e1e62df106d578ee6b9262a93c062a1ed32ebd9beb01e987c599fc2c34f0c22"
+    ],
+    "src/app/api/rewards/route.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:ee4758c954c10af92379b0a182e407607aa051b26b5dcc003ce2b4c0a86cb743",
+      "network:4aa994c77b8141bf422d7a60d1b8ccf6cdbfa83b7f5e234b84d8abcb9828726c",
+      "network:6e4fbdc1be90f90fa4cfb8ff332b093eb4ca76403b44fbadf451ec2d701b6597",
+      "network:e5cca5a3835f95661daa9ed5a6a73967446da25bee5c64c6e7cb659a03adb364"
+    ],
+    "src/app/api/user.api.ts": [
+      "network:0e22db7783ae924267061682c6490c73b87845e82fe44a1f40e996618d2dd659",
+      "network:66ac9039c55a9b203b7cb851520c617da9bf1bbca6c0c220f29588090194d347",
+      "network:daefa419e67b14d512f7336becc14ac70e8ed82246030b6a7b9e819301ef0511",
+      "network:e60c90c272e348b5b8db15c766ae3bf3603caa41f2a83c3f9639d111662ecec7"
+    ],
+    "src/app/e2e/deployment-preview/page.tsx": [
+      "env:065086d28b988bf8f7f63d2f94b66bd15e87ac636a2edc1f2554ff911d40a56d",
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/app/e2e/transactions/page.tsx": [
+      "env:065086d28b988bf8f7f63d2f94b66bd15e87ac636a2edc1f2554ff911d40a56d",
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/app/e2e/transactions/TransactionStatesHarness.tsx": [
+      "network:1404aec6f236181c81a8028e062cb38a7193d592bf1d1afb902334d2bca56268"
+    ],
+    "src/app/layout.tsx": [
+      "network:a7e169d0b82613de91945e0a56a02479f508e781ae0a85b1fbc65e1f22be247e"
+    ],
+    "src/app/lib/api.ts": [
+      "network:cf629dd23c7d054018bb5e2ca987ded5018891ab403af6c4f0e249fbe72df000",
+      "network:df2763d634242784bb55393d8347b087e99b438b82941d2ed0f239f0fb9282a1"
+    ],
+    "src/app/lib/claim-list-url.ts": [
+      "network:44927fc6112cbc788aeb45dc5ef195ff2904e7d5895292551297403c39030934",
+      "network:47398b674c59e29647db6bc3e418138f941ac6e95ccfaeab33528351f42e2b80",
+      "network:68bcca009da28a0d40f1d892e971bf0f3826c806c06062a527391bcbf08d1ff6",
+      "network:9708b2dc6bdf2d28dad75878ee5a21466c6487be674f7c5ff2064d3e8f6cd3e2"
+    ],
+    "src/app/lib/persistedState.ts": [
+      "network:3fe2f00556202a1d2abebbe011aba0168074d09f9e7b92ec94b98197dfb65b20"
+    ],
+    "src/app/lib/verification-reconcile.ts": [
+      "network:0fff318d15852d6c6bae91c702dfd60326bcf5392fd1807a5baa9f38aa036a60",
+      "network:9b6fefd4020d21ff515ed506c63958a581ce3b499f02405fb8bd228cea1f3948"
+    ],
+    "src/app/lib/worldcoin.ts": [
+      "network:a8dbcd0b4715160f544d73bddb44bdf46a4693c66713a81d1ec6777ebe9282f2",
+      "network:cc629f4b4a4feb2170abc98efc45e910144f1ff51529f90806510145688a9657"
+    ],
+    "src/app/queries/status.queries.ts": [
+      "network:1235b596bf032c75a9f0a274d1fac210faed0ec396ec6640c8246df841a9bc6b",
+      "network:64f02c81207c27788123ac0b3e7f2e74947db19ee2d27df3fa4afe19f230d638"
+    ],
+    "src/components/common/ErrorBoundary.tsx": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/components/features/claim-detail-canonical/ClaimDetailWithActions.example.tsx": [
+      "network:29ca9692838b795a8e9812f14d0bbdc692feea832931c1cd96b3df4a35dc03dd"
+    ],
+    "src/components/features/claim-detail-canonical/ClaimSettlement.tsx": [
+      "url:b9e58f3aa5dc7581394f08c882370dc1af9c3d61644b2a709fb88f5f6e917f01"
+    ],
+    "src/components/features/claim-lifecycle/ClaimLifecycleTimeline.tsx": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "url:f81f9e6c387c2354588355a93a5d19122a75374a393d116811cbdef42a9e162a"
+    ],
+    "src/components/features/claim-submission/ClaimSubmissionForm.tsx": [
+      "env:06b99ad19e12fb7abc722c8bcef9d9ee3be96aef8e6528bc85e828ca1bf1ffa8",
+      "env:4a986c8278a1edaf56922cc18be692435b994c5fc316aa0fb4f16d8114bf93eb",
+      "env:54f9448031d026eaafe7178c0d264553e4fc6809ac7fd3feaf9e8547caccdddf",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:e31ba96f8c8d1a855110fd8db3c6a1c3b9ef1d14ff2cdf636ab01334cb943481",
+      "env:e3cfe3d687433eaad73ba2dedc6ed504518a9ea6436df8e0e1be7d771b987dbb",
+      "url:100680ad546ce6a577f42f52df33b4cfdca756859e664b8d7de329b150d09ce9"
+    ],
+    "src/components/features/claim-submission/wizard/ClaimDetailsStep.tsx": [
+      "url:65a8ad8e22723880a03ca30264e56322cdceaee6d6ac3b65af0a4747ca4b7bf9"
+    ],
+    "src/components/features/claim-verification/EvidenceViewer.tsx": [
+      "url:100680ad546ce6a577f42f52df33b4cfdca756859e664b8d7de329b150d09ce9",
+      "url:c4fb91da8b9c2d42c30e26765f2478fa8d63f15a1b558e92e7ba8705977ae382"
+    ],
+    "src/components/features/claim-verification/TransactionStatus.tsx": [
+      "url:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "src/components/features/disputes/DisputeEvidenceEntry.tsx": [
+      "url:ee7bd89d6c85997d6097de9aeed4e406f63401ab7be7692e5f166c1eca7fb151"
+    ],
+    "src/components/features/public-claims/ClaimsExplorer.tsx": [
+      "network:7d0cfadc6913119dd7d6e45bbc71a9c296033c1853007ba8e4b47d345209ee32"
+    ],
+    "src/components/features/terms/TermsRenderer.tsx": [
+      "network:7b82c51994b662bdccb8b346e1011d2e77be32ca7d189c8db1cd294b841a1667",
+      "network:bc5749f088023b6b82ad659ee1ba7f619d57bbbe6fb9c474c9f03824f97a771b"
+    ],
+    "src/components/features/worldcoin/VerificationErrorCard.tsx": [
+      "network:d26e40f81128d59a7788d794f33015b8d9b6ccac1a0f0e24c3eff25ef83e7855",
+      "url:0b253f0d9e804e8d88b0e5b3c135d72c78157cdcf12f4f2555ef4a8e4c90d62f"
+    ],
+    "src/components/features/worldcoin/WorldcoinInfoTooltip.tsx": [
+      "url:d3a213d057310f09b279f2f5026ff2f1619e108aeb9bcd5f4659e5b40c505580"
+    ],
+    "src/components/features/worldcoin/WorldcoinVerifyButton.tsx": [
+      "network:8680886f199ad6ae74d1d34beb6bb3d3ab0b0da66896e15f54818545cf90fa0c"
+    ],
+    "src/components/hooks/useTrust.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/components/layout/NetworkContextSelector.tsx": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/components/providers/FeatureFlagPanel.tsx": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/components/providers/QueryDevtools.tsx": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/components/providers/QueryProvider.tsx": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:ef52e82c8e21e7dd7382b9215bccf21a39a61216f9fcfc9ddaa1df645808a761",
+      "url:aa73222fccc35b0ccbfd4de258488a3af689334b7725e20b947e60e3684f0b0c"
+    ],
+    "src/components/providers/SessionLifecycleProvider.tsx": [
+      "env:723af9097584c77488dc0d9e87579a272e4ea15ccc55b27454b0fd340bcfdcb1",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/components/providers/TelemetryProvider.tsx": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:ff7c6412e8caac666ccfea5ae73ea47e1e5fe39db678efea63643a3308d49672"
+    ],
+    "src/components/security/IntegrityBoundary.tsx": [
+      "env:4922061ef5e0d0c5e39eae83599ef8a5aa7d6247df81f76155599281e0883047",
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:c10256ea4923c5b94eb6773bd8a52d6f0f2c554a251c84430700ac5b0bcb7739",
+      "env:e40107994149014a4623e521c73631e2c453a5a02200e2320c32234cd368737d"
+    ],
+    "src/components/security/SafeExternalLink.tsx": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/components/ui/AllowanceDisplay.tsx": [
+      "url:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "src/components/ui/ApprovalButton.tsx": [
+      "url:dd47c910e24e3a8b465584a63ff52f40333082add135aba120c93203b2536901"
+    ],
+    "src/components/ui/primitives/EvidenceSourcesList.tsx": [
+      "url:02bff27e0be70e3190079611ca6c31b600caa660cc540f986f92c1a1a1faf0af",
+      "url:26fc60ade5ed4941a0d94ce71d84dff85faa5cd3899aa8ad47c169fb75f946a1",
+      "url:4118e7ac2254dab86c171eb391e753d67e5241e7ded9c7c281a7b62f6289babc",
+      "url:41c71d95387f0ed5e629758eb9334dcc51c529b891efcbcd284084e1e0650884",
+      "url:4e53ab68d2d49d6af712d5154ea805b4c88f6e536768792cec7b70fd894e41f2",
+      "url:60c2fa7a634034b5044520f700c119399353969e043dc373d41bb73d42fe425b",
+      "url:90b6a75a5196b685fa2f88700d0c183a916269a8649ba5477409c171e749a258",
+      "url:ace3525e14ba286bf2ace0f1689c177497df7e4cc7619ee29cce811ba24b0883",
+      "url:b8b26899756a299916eb29dbe47abc80ea80ba592335e782bc37a688c19478b2",
+      "url:b9158886174b87ae635ab9af665e87d8341c76cf552ce0dff073f51dacf9bbe1",
+      "url:b9e58f3aa5dc7581394f08c882370dc1af9c3d61644b2a709fb88f5f6e917f01",
+      "url:bbc48652abb2a2cbdbfc6daef36b29aa7b293e78ac5596ca950de40ed42b5bb4",
+      "url:cc5f75be5c4a598ee7fa743ddf9b468fc3c1ad750dc281a311d51a971de5ca7c",
+      "url:e1ce57033f1488e2fd9f2e41a7809c5e9ed3043b51786879f58be0b9fa3dbeae",
+      "url:f35f469105db29fa821454ac83f05d65108683e3e42e816b7321f99481966cd8",
+      "url:f81f9e6c387c2354588355a93a5d19122a75374a393d116811cbdef42a9e162a"
+    ],
+    "src/config/chains.ts": [
+      "url:3e6ebd09cba57913b18d47385dcefd3cc4a3211ba86b33f88f80e149f3a32206",
+      "url:4d1ffb4434318cc99bb3816adb8fee5a80008e9c8fd64a18187ee184ac2ce90e",
+      "url:72dc357d04ecf51551ea747fd7c46e33f0eadd4844ee81d4ac939ccff03ef4e8",
+      "url:7fcd2c6793e0c83611ee90fcc5da1cb2fbcd67561f29ea84fbecce8d86695f2e",
+      "url:ac09ad2ed5fb4f87d15407ef01df37bf44fe5d48febba07d65e8ca22ab6818a1",
+      "url:b878f039b85ae7a554648fd958bf5a821a577a6401da3a1b7e051042e58df329",
+      "url:cb3a23a72e7a1c6bd9ab141e3f1d4d8646ce5d1420b3e3c66b63d3e130dd0fe0",
+      "url:da1e4a0b726081a615f3a070f91579a54a9a7deb09de13f8c5f6687d4079cf27",
+      "url:f0265a80e1b9f345991ef5e585c216d795811ec66e0c6c7b543d4cb64dc67a62",
+      "url:f7d7cfa1c30413e6b08615cad3f33e170df804ac09d1a28870289aac09c112c8",
+      "url:fa8d01891bbc61be89f01c4a3d77c81a813899f53e6601fa3557803abcd035ff"
+    ],
+    "src/config/feature-flags.ts": [
+      "env:1f2160c8966c01892c4339dda7b7fecada6121e387a35666a04bd38841c308e8",
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:623af45e7b37cff76df00214c3044238559dbb05e51133a2cd874af54ab14f30",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:b405affb43d93f74b7458639358ef0b7ece4d6a649a3034033de3d3d4953c252"
+    ],
+    "src/config/navigation.ts": [
+      "url:08f6d22d58c9619a84a0b169fd459224fb22d86d7743dd7c6313e8018732569f",
+      "url:5ed2dd043173aa25d8b5ba88fbc904475b666a119bf246a8eb00fd8c8c09802b",
+      "url:68e9b5d526bdc2c554112d6444f82a3253851838b28d71b8fd4199ff4c23834f",
+      "url:7e59469b4b6b8c0ec292fa66f7e2df4a1b73b3d2e9f38b884a06251ddc47a67b"
+    ],
+    "src/config/protocol/appeal-artifact.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/config/protocol/dispute-artifact.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/config/protocol/verification-artifact.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/config/wagmi.ts": [
+      "env:4922061ef5e0d0c5e39eae83599ef8a5aa7d6247df81f76155599281e0883047",
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:76c6687d2747951444061c4b76f89bf9d808c3b7e12d81cbdae3125e22d53985",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:d3db8b77db1fa0908543498ed6230655954b75e55720b68683fe9e7e74a447e3",
+      "network:38ea8ea6e958d9015af1f6dfeb530277524e4e1bc0b34ad527fbd4e31d0c600f",
+      "network:cf1a229a00ea43d30e34f185db9ca10db65bcf58f0b5420b50ac75e35a68c6c4"
+    ],
+    "src/config/worldcoin-client.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:8781f44d129bb82a7a9ac281f0aba14f9eb476f1f5a760fa864434aebbc6775d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:bea8c53ee921d3e2165143d1a584eb0e75606de5d82252d226ac14273ba813ae",
+      "env:ebe458f9440f435a78fb97decfc6f09e595aabbf4954ca2955c2088394111b7b"
+    ],
+    "src/context/AppShellContext.tsx": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:b073b8acafa6d791425b39df76586ee52372b073861846e6c6d0eedac489cf93",
+      "env:cd221a3acea2156dbfdea5698a727f205e39f7d26ff6d85f4d8b70356fb5ee1b"
+    ],
+    "src/context/SiweAuthProvider.tsx": [
+      "network:1782295b9144dd5d54a36af3364373c537d842bcc6be04323715ed8a6d629064"
+    ],
+    "src/features/evidence-upload/EvidenceUploader.tsx": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:cff13fbf0d2cf4e640622a2f6cc2fdba2ef93f76c402cc75d12a2155879493c6",
+      "network:a13894fd008c1dc5dbeafabd4ab87745bba953b50697fb5bc36e1e71269ec766",
+      "network:ca1f2ee3f28230a0e8ff2e7a6d5dbf7aae92ca96821888838231cb3e68a6061c"
+    ],
+    "src/hooks/useAdminDashboardData.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:b073b8acafa6d791425b39df76586ee52372b073861846e6c6d0eedac489cf93"
+    ],
+    "src/hooks/useCanonicalWallet.ts": [
+      "network:33e6953ee21c19c7d4b2cf99e0eb7fc13368c10a88b63bcca84be7d9a32fdcc0",
+      "url:3e6ebd09cba57913b18d47385dcefd3cc4a3211ba86b33f88f80e149f3a32206",
+      "url:4728b3d962866da01208980fb15fdd417d8600e0d3dbbebd08f99e0b327969ea",
+      "url:7fcd2c6793e0c83611ee90fcc5da1cb2fbcd67561f29ea84fbecce8d86695f2e",
+      "url:b878f039b85ae7a554648fd958bf5a821a577a6401da3a1b7e051042e58df329"
+    ],
+    "src/hooks/useClaimSubmissionWizard.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:e31ba96f8c8d1a855110fd8db3c6a1c3b9ef1d14ff2cdf636ab01334cb943481"
+    ],
+    "src/hooks/useFeatureFlag.ts": [
+      "network:dff4d80982138d0fad908e35c2531c99c86b95825de22f2a3c2b300c26030d07"
+    ],
+    "src/hooks/useReceipt.ts": [
+      "network:52c8df441431d8b4eb3f6f94e578f1e2ce6cf20435ce9b5507379f707b1b6d68",
+      "network:8222cb2c1f0317e9ecbd8abf2c22e93037ab2aba58c8aa003b20303b95ef8c2e"
+    ],
+    "src/hooks/useResumableStream.ts": [
+      "network:27cfa8122fea60f835ba19d5e74a73f743933d5e1d782cbd5d159f100ac75a80"
+    ],
+    "src/hooks/useRewardsClaim.ts": [
+      "network:236861287ad713f2e65183a94a772e6a0baf40b4fa6116ca85314524cf3b79a7"
+    ],
+    "src/hooks/useRpcFallback.ts": [
+      "network:b32c1b219f60398411b1faccec3958e2a5c1b71b48baae5066c7f2c722610c5f"
+    ],
+    "src/hooks/useSessionLifecycle.ts": [
+      "network:1782295b9144dd5d54a36af3364373c537d842bcc6be04323715ed8a6d629064"
+    ],
+    "src/hooks/useSiweAuth.ts": [
+      "env:723af9097584c77488dc0d9e87579a272e4ea15ccc55b27454b0fd340bcfdcb1",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "network:cbd79543b1f5124fc71661e44c19fe3f4c56accfde0daf2b3622684eaf927241"
+    ],
+    "src/hooks/useStakeTreasuryWithdrawal.ts": [
+      "network:81641a0c83b472f94b730efa2bd478d9dfd11c95fb70d441f14a0a2f665247b9"
+    ],
+    "src/hooks/useUpgradeReviewData.ts": [
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:b073b8acafa6d791425b39df76586ee52372b073861846e6c6d0eedac489cf93",
+      "env:cd221a3acea2156dbfdea5698a727f205e39f7d26ff6d85f4d8b70356fb5ee1b"
+    ],
+    "src/hooks/useWalletNetwork.ts": [
+      "url:3e6ebd09cba57913b18d47385dcefd3cc4a3211ba86b33f88f80e149f3a32206",
+      "url:4728b3d962866da01208980fb15fdd417d8600e0d3dbbebd08f99e0b327969ea",
+      "url:7fcd2c6793e0c83611ee90fcc5da1cb2fbcd67561f29ea84fbecce8d86695f2e",
+      "url:b878f039b85ae7a554648fd958bf5a821a577a6401da3a1b7e051042e58df329"
+    ],
+    "src/hooks/useWebSocket.ts": [
+      "network:1044f40cd83af4fc5ef16a838d3867c987d3599d620cb1e24a586336acc77a66",
+      "network:918af180eb0af69b1d454ef835f6fe0e90656b65caccd86fda4d5ff9c7c23c12",
+      "network:91fc87005a934a08b1a8b5ccfaa19746a05c050b4502a6d794549c6d028c9011",
+      "network:a480b318144c88a3bad54d662be8e116c19a62902dd623a1dcbdf152020c90b1",
+      "network:a5477b94a194b1cd48744823879573c5b917d663957cfce4aa65a9c4a201685b",
+      "network:b112f9fe5cb47dbc46b48adf1368ce2a4b713eecaea1b0a45c9c1fb66484663e",
+      "network:fc12e6b205b62fcc1767a32d0e4b8740d2675a1bd017e6412b9ed3f40bcf6960"
+    ],
+    "src/hooks/useWorldcoinVerification.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/i18n/formatters.ts": [
+      "url:3e6ebd09cba57913b18d47385dcefd3cc4a3211ba86b33f88f80e149f3a32206",
+      "url:4728b3d962866da01208980fb15fdd417d8600e0d3dbbebd08f99e0b327969ea",
+      "url:fa8d01891bbc61be89f01c4a3d77c81a813899f53e6601fa3557803abcd035ff"
+    ],
+    "src/i18n/utils.ts": [
+      "url:3e6ebd09cba57913b18d47385dcefd3cc4a3211ba86b33f88f80e149f3a32206",
+      "url:4728b3d962866da01208980fb15fdd417d8600e0d3dbbebd08f99e0b327969ea",
+      "url:fa8d01891bbc61be89f01c4a3d77c81a813899f53e6601fa3557803abcd035ff"
+    ],
+    "src/lib/appeals/projection.ts": [
+      "network:85329c3a957f126fc0bc92bd44011f411b4fcfe99b0cdd1ff2cbe91fb07bf025"
+    ],
+    "src/lib/auth/session-store.ts": [
+      "network:2b8c873646ef34b6dd48f6b2864f612a7c58f6762270380979fe72793efa66a4"
+    ],
+    "src/lib/auth/session-sync.ts": [
+      "network:aeec4b6fe13465dd093899d1f552efcc265e89d2646e1191b3422d0bb8f18d77"
+    ],
+    "src/lib/canonicalBackfill.ts": [
+      "network:9a44b1ab1a563dadc3c95806e796557e4b15ca568ef617b46501385f03a79ab0"
+    ],
+    "src/lib/contracts/contract-evolution.ts": [
+      "network:0bef08faa18ce2013aeb92bdbc32b6b33826d6e4b7d9e672a3c53c9c53926e8a"
+    ],
+    "src/lib/contracts/load-artifacts.ts": [
+      "env:2dd837c1b478fc2898172dfe1b67c443c68fde0eabb35ce67a202c2e578eb135",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:ff7c6412e8caac666ccfea5ae73ea47e1e5fe39db678efea63643a3308d49672"
+    ],
+    "src/lib/contracts/registry.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/lib/deployment/preview-manifest.ts": [
+      "env:02cb8a46b33b3713764ef788f2ae63d4e9065e5f4b8a69c67fe6162cb7b78e21",
+      "env:4d77b417be5c3d59692d79af4703976270d755f7e8f0ed1a9d970a92b1feee2a",
+      "env:4f9303a1a7c97b8a1508ebd385e52fd57cd6d08a2ddea0b5e355e3e833cc5474",
+      "env:623af45e7b37cff76df00214c3044238559dbb05e51133a2cd874af54ab14f30",
+      "env:71f25d6451482c6dc14a73cad6ba986304d6f34fd1d847d760647564067aaf45",
+      "env:7b885d6eea2c9bbb435e9dbbd35169b9af98b8fcdae988cc46a8e74d903fac75",
+      "env:9f05bbcd0bed4320887dae7317e760c4434291c15f0982c5bb7847b8b0a2f0e1",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:c9735ad83a87f0f85eb6bcf44991fa55b3a6b312e7d81ca4fc58dd1839ffbcd4",
+      "env:dc3fd01d1684c6514472f689a0ec22a7867ec8ab0d6d2ded0f9d8204bb633e71",
+      "env:ee90b54eaefc88f56033a28cc75efbe34c3ac18c7fe389cdfff6852b4ca1c40b",
+      "env:f63ecdf203c50f9f37a8c47000f013486a25fbd15c63c1a3dbe460cb4b185457",
+      "env:f8c11028ef341598f0acf6f3830605981ec8fc7ded079ac9206007d2aec45602"
+    ],
+    "src/lib/dispute/draft.ts": [
+      "network:030f31b2fc4b6af428182710ce5767e9c3cb10e5d2a8f3c15c87f3e1e9da0627",
+      "network:1d40dd5bec9f19bcbf5a8c8163e693d642c61755f8ae5507ec6abce99f33e208"
+    ],
+    "src/lib/env.ts": [
+      "env:1a4ba1ef088d33269d3f4322a31360f39e0ea6181acde45373230cb903a2c2bb",
+      "env:2dd837c1b478fc2898172dfe1b67c443c68fde0eabb35ce67a202c2e578eb135",
+      "env:2e3fe203389e6878365229d2b415c6eff2ef72aa749ae36f69f321d707f42960",
+      "env:4922061ef5e0d0c5e39eae83599ef8a5aa7d6247df81f76155599281e0883047",
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:723af9097584c77488dc0d9e87579a272e4ea15ccc55b27454b0fd340bcfdcb1",
+      "env:72a9736b1349f11f1911b090fff5fa53085295318f47ed4d07b670ace629a7b6",
+      "env:76c6687d2747951444061c4b76f89bf9d808c3b7e12d81cbdae3125e22d53985",
+      "env:8781f44d129bb82a7a9ac281f0aba14f9eb476f1f5a760fa864434aebbc6775d",
+      "env:9b0ddff716566c68f589eb23b50880fa8a898a2642792adc4e5eb466f3c19939",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:bea8c53ee921d3e2165143d1a584eb0e75606de5d82252d226ac14273ba813ae",
+      "env:d3db8b77db1fa0908543498ed6230655954b75e55720b68683fe9e7e74a447e3",
+      "env:dc4b5708176739643c98ad786a0c64fb385dc4f84eaaa032668a5ed4eb1ea74d",
+      "env:ebe458f9440f435a78fb97decfc6f09e595aabbf4954ca2955c2088394111b7b",
+      "env:ef52e82c8e21e7dd7382b9215bccf21a39a61216f9fcfc9ddaa1df645808a761",
+      "env:ff7c6412e8caac666ccfea5ae73ea47e1e5fe39db678efea63643a3308d49672",
+      "url:28e9af6645fd1a7864d0e0085bfd885d79b0bc885e93bf2908911245aef8519a",
+      "url:aa73222fccc35b0ccbfd4de258488a3af689334b7725e20b947e60e3684f0b0c"
+    ],
+    "src/lib/explorer.ts": [
+      "network:5ddd5eb29ecc1304dd0f46a70092eaa21f748054eb2274e442e02dbdad1d2758",
+      "url:3e6ebd09cba57913b18d47385dcefd3cc4a3211ba86b33f88f80e149f3a32206",
+      "url:4728b3d962866da01208980fb15fdd417d8600e0d3dbbebd08f99e0b327969ea"
+    ],
+    "src/lib/localization/i18n.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/lib/metadata/canonical-url.ts": [
+      "env:72a9736b1349f11f1911b090fff5fa53085295318f47ed4d07b670ace629a7b6",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "url:100680ad546ce6a577f42f52df33b4cfdca756859e664b8d7de329b150d09ce9",
+      "url:72445bfff6dff2ec87efeab6a64aa8b0a746e6a192a76765ec7077197499d163"
+    ],
+    "src/lib/rewards/reconcile-claim.ts": [
+      "network:60eae1db1ebb7f2bbbf0b1793c30fb3834bc94099055375e6ef2f4511748dfe7",
+      "network:642ab2f6d3b4d52a1f8ad2032c6ed60170f09fec30c8750c4d63770f3827b11a",
+      "network:7165da104a3a228d6673091392d47177c652bb312ef1aa3a95c2b1f9b55f2675",
+      "network:e262ff5172075d9e552fb600fcdd895ebee0b65e6c63242c898ef632c1f74603"
+    ],
+    "src/lib/rewards/validate-entitlements.ts": [
+      "network:5d6540b2ea6e4afba16d13faf0c6c1dc94ebc01a570edd6e4f08342d6f2413d8",
+      "network:d05f337a1c049daac285f21c474b602e1e39294a653aa88dd5b035b493d2dd9e"
+    ],
+    "src/lib/rpc-health/quorum.ts": [
+      "network:39ba7945c7a1769a10a35dc9ebe30025678f35039175f1c120fe5f99f1da0f57",
+      "network:57c044c561aff05675e714054dbc39074412c4835712cc93152c20a4eff2261d",
+      "network:61d0dbeb25dfee367824f236876d16110722bc8ff6d008edbf4bdb7287ae070c",
+      "network:785c3514c7aa51837e68c088fb4fe38a28a7cb2e64d9723dbceba316ce7a1ea1",
+      "network:934a9f4b5994c2b0164fff78f1c77dbd37bee41f11f75e455e87f19e1be9b05d"
+    ],
+    "src/lib/sanitize-error.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/lib/security/evidence-sanitizer.ts": [
+      "url:4871badff967099bf27f9469cd46ee5a7f1c2f2adce91f7a45ecc66cf1f48cac",
+      "url:a2c2339691fc48fbd14fb307292dff3e21222712d9240810742d7df0c6d74dfb"
+    ],
+    "src/lib/security/headers.ts": [
+      "env:723af9097584c77488dc0d9e87579a272e4ea15ccc55b27454b0fd340bcfdcb1",
+      "env:76c6687d2747951444061c4b76f89bf9d808c3b7e12d81cbdae3125e22d53985",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:d3db8b77db1fa0908543498ed6230655954b75e55720b68683fe9e7e74a447e3",
+      "env:ef52e82c8e21e7dd7382b9215bccf21a39a61216f9fcfc9ddaa1df645808a761",
+      "url:05085bdad26183d18a29a0ddeeeea1915f1700a4d07cbc84a425127e29062311",
+      "url:2d18322d9525b6172d9067df3153cfb8857bcf3dab2800b10ed0d4db2d59e975",
+      "url:7fcd2c6793e0c83611ee90fcc5da1cb2fbcd67561f29ea84fbecce8d86695f2e",
+      "url:ad5fbc1f261fa0b7e9a901b3d9397ed48f5c324be4f8e5b90343f6908cb00641",
+      "url:b878f039b85ae7a554648fd958bf5a821a577a6401da3a1b7e051042e58df329",
+      "url:cad6da7f0c4d2756798dcd9544e1941bcc9516924022db7fe27e0872d2db3fff",
+      "url:e859e47618ccbced32e6c77832f1606808050f5f892dac09a6419f1f1d2af0fb"
+    ],
+    "src/lib/security/privacy-logger.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/lib/security/provider-usage.mjs": [
+      "url:05085bdad26183d18a29a0ddeeeea1915f1700a4d07cbc84a425127e29062311",
+      "url:3cfa1db4b4bb61786144addf11e0e46d2a29a32c90356d2723756c991601d902",
+      "url:4871badff967099bf27f9469cd46ee5a7f1c2f2adce91f7a45ecc66cf1f48cac",
+      "url:4b9c287fa7f329fac07ef355529044b99b50ad48f6d158c2ef1e2c3c42edeb29",
+      "url:5853775de6289da41bd66cc557c8c7ddf265a1a625d0e987392cb7ac968b62f3",
+      "url:7fcd2c6793e0c83611ee90fcc5da1cb2fbcd67561f29ea84fbecce8d86695f2e",
+      "url:96ff12c9bf63e54fad09a40163476eaa9c9b2e580aca292ddd02a792cec29275",
+      "url:994e8c0f90d5da4ad76347481db055b88c3bc8c634c5b45aa511e3df33c7c6f3",
+      "url:b878f039b85ae7a554648fd958bf5a821a577a6401da3a1b7e051042e58df329",
+      "url:d219e493a1fa4bb5eb1123b3e2918ca74b1080a592634f7aa6306acf81222ee7",
+      "url:d9abe3800febd1aa0fa1925226d3958e8ab2edb9342aa5e619246997ff7309ac",
+      "url:e9156bff69e732b4c5c813b2c59797beaf921ee159556cf624e7aeb3da6fbec0",
+      "url:f97b745a875a86b1c23807af72d81161ab7462ac2cd6d8cf988bda93d86af628"
+    ],
+    "src/lib/telemetry.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457",
+      "env:ff7c6412e8caac666ccfea5ae73ea47e1e5fe39db678efea63643a3308d49672"
+    ],
+    "src/lib/validation/evidenceUri.ts": [
+      "url:9f0acec2370ea21ca6bfc2067dede675c7ffe2b0300681d287b6f87df56534f0"
+    ],
+    "src/lib/wallet-boundary/config-guard.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ],
+    "src/middleware.ts": [
+      "env:5457474c941c23c7a87a391cedabafb4225fde0e25aaa79bc0b1626d4c0f408d",
+      "env:a97d7492edeb30eaf7b260e2b02ffe125474c2adcf5764051a055aeb22e51457"
+    ]
+  }
+}

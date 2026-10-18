@@ -7,6 +7,13 @@ export { ThemeProvider, useTheme } from './ThemeProvider';
 export { Web3Provider, RainbowKitThemedProvider } from './Web3Provider';
 export { WalletStateGuard } from './WalletStateGuard';
 
+// Cross-tab wallet & session context synchronization — UI-FE-059
+export {
+  CrossTabSyncProvider,
+  useCrossTabSyncContext,
+} from './CrossTabSyncProvider';
+export type { CrossTabSyncProviderProps } from './CrossTabSyncProvider';
+
 // Feature Flags
 export { 
   FeatureFlagProvider, 
@@ -28,3 +35,14 @@ export {
   useTelemetryContext,
 } from './TelemetryProvider';
 export type { TelemetryContextValue, TelemetryProviderProps } from './TelemetryProvider';
+
+// Reduced data & constrained network — UI-FE-082
+export {
+  ReducedDataProvider,
+  ReducedDataContext,
+  useReducedDataContext,
+} from './ReducedDataProvider';
+export type {
+  ReducedDataContextValue,
+  ReducedDataProviderProps,
+} from './ReducedDataProvider';

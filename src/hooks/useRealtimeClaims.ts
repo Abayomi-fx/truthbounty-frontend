@@ -1,23 +1,14 @@
 // src/hooks/useRealtimeClaims.ts
 
-"use client";
+'use client';
 
-import { useEffect, useCallback, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useWebSocketContext } from "@/components/providers/WebSocketProvider";
-import { queryKeys } from "@/app/queries/queryKeys";
-import type { TransactionStatus } from "@/lib/transaction-machine/transaction-machine.types";
-import type { ClaimStatus } from "@/app/types/claim";
-
-function isClaimStatus(status: unknown): status is ClaimStatus {
-  return (
-    status === "OPEN" ||
-    status === "UNDER_REVIEW" ||
-    status === "VERIFIED" ||
-    status === "REJECTED" ||
-    status === "DISPUTED"
-  );
-}
+import { useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useWebSocketContext } from '@/components/providers/WebSocketProvider';
+import { queryKeys } from '@/app/queries/queryKeys';
+import type { Claim, ClaimStatus } from '@/app/types/claim';
+import { useOptimisticUpdate } from '@/hooks/useOptimisticUpdate';
+import { OptimisticUpdateError } from '@/lib/optimistic-updates';
 
 /**
  * Hook for real-time claim updates
@@ -128,124 +119,46 @@ export function useRealtimeClaimsList() {
 }
 
 /**
- * Apply a provisional claim status while a transaction is pending. Pass the
- * transaction-machine status to restore it on terminal outcomes; call rollback
- * directly when a wallet rejects before an active state is observed.
+ * Hook to get optimistic updates for claim status changes.
+ *
+ * UI-FE-086: only the allowlisted `claim.status.under_review` operation is
+ * permitted. Final, economic, permission, and dispute outcomes must never be
+ * anticipated; they wait for canonical receipts/projections.
  */
-export function useOptimisticClaimUpdate(
-  claimId: string,
-  transactionStatus?: TransactionStatus,
-) {
-  const queryClient = useQueryClient();
-  const pendingUpdate = useRef<{
-    claimId: string;
-    previous: unknown;
-    optimistic: unknown;
-    dataUpdateCount: number;
-  } | null>(null);
-  const observedActiveTransaction = useRef(false);
-
-  const restorePending = useCallback(() => {
-    const pending = pendingUpdate.current;
-    if (!pending) return claimId;
-
-    pendingUpdate.current = null;
-    const key = queryKeys.claims.detail(pending.claimId);
-    const currentState = queryClient.getQueryState(key);
-
-    if (
-      queryClient.getQueryData(key) === pending.optimistic &&
-      currentState?.dataUpdateCount === pending.dataUpdateCount
-    ) {
-      queryClient.setQueryData(key, pending.previous);
-    }
-
-    return pending.claimId;
-  }, [claimId, queryClient]);
-
-  const rollback = useCallback(async () => {
-    const affectedClaimId = restorePending();
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.claims.detail(affectedClaimId),
-      exact: true,
-    });
-  }, [queryClient, restorePending]);
+export function useOptimisticClaimUpdate(claimId: string) {
+  const {
+    begin,
+    rollback: rollbackOptimisticUpdate,
+    isPending,
+    handleTransactionStatus,
+  } = useOptimisticUpdate<Claim>({
+    operationId: 'claim.status.under_review',
+    queryKey: queryKeys.claims.detail(claimId),
+  });
 
   const optimisticUpdate = useCallback(
-    async (newStatus: ClaimStatus) => {
-      if (!isClaimStatus(newStatus)) {
-        throw new TypeError("Unsupported optimistic claim status.");
+    (newStatus: ClaimStatus) => {
+      if (newStatus !== 'UNDER_REVIEW') {
+        throw new OptimisticUpdateError(
+          'PROHIBITED_OUTCOME',
+          `claim status "${newStatus}" cannot be optimistic; only UNDER_REVIEW is allowlisted`,
+        );
       }
-
-      if (
-        transactionStatus === "reverted" ||
-        transactionStatus === "replaced" ||
-        transactionStatus === "dropped" ||
-        transactionStatus === "reorged" ||
-        transactionStatus === "finalized"
-      ) {
-        return;
-      }
-
-      restorePending();
-
-      const key = queryKeys.claims.detail(claimId);
-      await queryClient.cancelQueries({ queryKey: key, exact: true });
-
-      const previous = queryClient.getQueryData(key);
-      if (
-        !previous ||
-        typeof previous !== "object" ||
-        Array.isArray(previous) ||
-        !("id" in previous) ||
-        previous.id !== claimId ||
-        !("status" in previous) ||
-        !isClaimStatus(previous.status)
-      ) {
-        return;
-      }
-
-      const optimistic = { ...previous, status: newStatus };
-      queryClient.setQueryData(key, optimistic);
-      pendingUpdate.current = {
-        claimId,
-        previous,
-        optimistic: queryClient.getQueryData(key),
-        dataUpdateCount: queryClient.getQueryState(key)?.dataUpdateCount ?? 0,
-      };
+      return begin({ status: newStatus });
     },
-    [queryClient, claimId, restorePending, transactionStatus],
+    [begin],
   );
 
-  useEffect(() => {
-    if (!transactionStatus) return;
+  const rollback = useCallback(
+    (reason: Parameters<typeof rollbackOptimisticUpdate>[0] = 'rejected') =>
+      rollbackOptimisticUpdate(reason),
+    [rollbackOptimisticUpdate],
+  );
 
-    if (transactionStatus !== "idle") {
-      observedActiveTransaction.current = true;
-    }
-
-    const terminalFailure =
-      transactionStatus === "reverted" ||
-      transactionStatus === "replaced" ||
-      transactionStatus === "dropped" ||
-      transactionStatus === "reorged";
-    const rejected =
-      transactionStatus === "idle" && observedActiveTransaction.current;
-    const finalized = transactionStatus === "finalized";
-
-    if (terminalFailure || rejected || finalized) {
-      observedActiveTransaction.current = false;
-      void rollback();
-    }
-  }, [transactionStatus, rollback]);
-
-  useEffect(() => {
-    return () => {
-      if (pendingUpdate.current?.claimId === claimId) {
-        void rollback();
-      }
-    };
-  }, [claimId, rollback]);
-
-  return { optimisticUpdate, rollback };
+  return {
+    optimisticUpdate,
+    rollback,
+    isPending,
+    handleTransactionStatus,
+  };
 }

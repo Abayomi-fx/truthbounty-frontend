@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "policyVersion": "1.0.0",
+  "name": "TruthBounty Production Browser Security & Embedding Boundary Policy",
+  "issue": "UI-FE-092 (#663)",
+  "description": "Canonical browser security headers, embedding boundaries, permissions policies, and caching boundaries for TruthBounty across local, preview, testnet, and production environments.",
+  "environments": {
+    "local": {
+      "httpsRequired": false,
+      "allowUnsafeEval": true,
+      "allowLocalhostConnect": true,
+      "targetNetwork": "local-dev",
+      "expectedHeaders": {
+        "xContentTypeOptions": "nosniff",
+        "xFrameOptions": "DENY",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "crossOriginOpenerPolicy": "same-origin-allow-popups",
+        "crossOriginResourcePolicy": "same-site",
+        "xDnsPrefetchControl": "off"
+      }
+    },
+    "preview": {
+      "httpsRequired": true,
+      "allowUnsafeEval": false,
+      "allowLocalhostConnect": false,
+      "targetNetwork": "preview-testnet",
+      "expectedHeaders": {
+        "strictTransportSecurity": "max-age=63072000; includeSubDomains; preload",
+        "xContentTypeOptions": "nosniff",
+        "xFrameOptions": "DENY",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "crossOriginOpenerPolicy": "same-origin-allow-popups",
+        "crossOriginResourcePolicy": "same-site",
+        "xDnsPrefetchControl": "off"
+      }
+    },
+    "testnet": {
+      "httpsRequired": true,
+      "allowUnsafeEval": false,
+      "allowLocalhostConnect": false,
+      "targetChainId": 11155420,
+      "targetNetwork": "optimism-sepolia",
+      "expectedHeaders": {
+        "strictTransportSecurity": "max-age=63072000; includeSubDomains; preload",
+        "xContentTypeOptions": "nosniff",
+        "xFrameOptions": "DENY",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "crossOriginOpenerPolicy": "same-origin-allow-popups",
+        "crossOriginResourcePolicy": "same-site",
+        "xDnsPrefetchControl": "off"
+      }
+    },
+    "production": {
+      "httpsRequired": true,
+      "allowUnsafeEval": false,
+      "allowLocalhostConnect": false,
+      "targetChainId": 10,
+      "targetNetwork": "optimism-mainnet",
+      "expectedHeaders": {
+        "strictTransportSecurity": "max-age=63072000; includeSubDomains; preload",
+        "xContentTypeOptions": "nosniff",
+        "xFrameOptions": "DENY",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "crossOriginOpenerPolicy": "same-origin-allow-popups",
+        "crossOriginResourcePolicy": "same-site",
+        "xDnsPrefetchControl": "off"
+      }
+    }
+  },
+  "boundaries": {
+    "embedding": {
+      "policy": "deny-all",
+      "frameAncestors": "'none'",
+      "xFrameOptions": "DENY",
+      "approvedExceptions": [],
+      "rationale": "TruthBounty handles cryptographic wallet signatures, identity credentials, and bounty evidence; framing could enable UI redressing and clickjacking attacks."
+    },
+    "permissionsPolicy": {
+      "allowed": {
+        "camera": ["self", "https://id.worldcoin.org"]
+      },
+      "denied": [
+        "microphone",
+        "geolocation",
+        "payment",
+        "usb",
+        "display-capture",
+        "screen-wake-lock",
+        "accelerometer",
+        "gyroscope",
+        "magnetometer",
+        "midi",
+        "encrypted-media"
+      ],
+      "rationale": "Least-permissive posture disables all unneeded hardware sensors and native payment/capture APIs while scoping camera exclusively to Worldcoin IDKit credential verification."
+    },
+    "caching": {
+      "document": {
+        "cacheControl": "no-store, max-age=0, must-revalidate",
+        "pragma": "no-cache",
+        "rationale": "HTML document responses contain dynamic wallet session state and anti-tamper nonces that must never be cached by shared intermediate proxies."
+      },
+      "api": {
+        "cacheControl": "no-store, max-age=0, must-revalidate",
+        "pragma": "no-cache",
+        "rationale": "API routes return dynamic protocol freshness, identity proofs, and claim data that require real-time validation without cache persistence."
+      },
+      "staticAssets": {
+        "cacheControl": "public, max-age=31536000, immutable",
+        "rationale": "Hashed static JavaScript, CSS, and font chunks are strictly immutable."
+      }
+    },
+    "integrations": {
+      "walletConnect": {
+        "requiredConnectHosts": [
+          "https://relay.walletconnect.com",
+          "wss://relay.walletconnect.com",
+          "https://rpc.walletconnect.com",
+          "https://verify.walletconnect.com",
+          "https://verify.walletconnect.org",
+          "https://explorer-api.walletconnect.com"
+        ],
+        "requiredFrameHosts": [
+          "https://verify.walletconnect.com",
+          "https://verify.walletconnect.org"
+        ],
+        "coopRequired": "same-origin-allow-popups",
+        "wasmRequired": "'wasm-unsafe-eval'"
+      },
+      "worldcoin": {
+        "requiredConnectHosts": [
+          "https://id.worldcoin.org"
+        ],
+        "requiredFrameHosts": [
+          "https://id.worldcoin.org"
+        ],
+        "cameraPermissionRequired": true
+      },
+      "rpc": {
+        "optimismMainnet": [
+          "https://mainnet.optimism.io"
+        ],
+        "optimismSepolia": [
+          "https://sepolia.optimism.io"
+        ]
+      }
+    }
+  }
+}
+

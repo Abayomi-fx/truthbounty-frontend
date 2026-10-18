@@ -4,7 +4,7 @@
 
 TruthBounty is a canonical client for the Optimism/EVM protocol. Because users interact with blockchain states, cryptographic transactions, and financial commitments, total clarity and accessibility across all UI states is a strict requirement.
 
-This document defines the UI state model, ARIA live region conventions, keyboard navigation rules, reduced motion adaptations, and automated CI enforcement gates.
+This document defines the UI state model, ARIA live region conventions, keyboard navigation rules, reduced motion adaptations, and automated CI enforcement gates. For the comprehensive per-screen and per-journey acceptance specifications, see [RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md](./RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md) (STAB-DOC-FE-002).
 
 ---
 

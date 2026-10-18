@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getProtocolRelease } from '@/lib/contracts/registry';
 import type { ExecuteOperationRequest, ExecuteOperationResponse, AdminAuditRecord } from '@/app/types/admin';
+import { composeOperationalHealth } from '@/lib/health/composeOperationalHealth';
+import type { OperationalHealthSnapshot } from '@/app/types/health';
+
+// UI-FE-036: This route is a protected administrator diagnostic endpoint.
+// Its payloads MUST NOT be reused by the public /status adapter. The public
+// service-status surface composes sanitized observations only and never
+// forwards admin health responses, operator addresses, or audit records.
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   const adminHeader = request.headers.get('x-admin-address');
@@ -52,7 +60,7 @@ export async function POST(request: Request) {
       'op-archive-dlq': {
         action: 'Archive Stale DLQ Dead-Letter Records',
         authority: 'AUDIT_ADMIN',
-        targetResource: 'DeadLetterQueue Storage',
+        targetResource: 'DeadLetterQeuue Storage',
       },
     };
 
@@ -71,7 +79,7 @@ export async function POST(request: Request) {
     const randomBytes = new Uint32Array(1);
     crypto.getRandomValues(randomBytes);
     const randomHex = randomBytes[0].toString(16).padStart(8, '0');
-    const consequenceHash = `0x${randomHex}${Date.now().toString(16)}0000000000000000000000000000000000000000`.slice(0, 66);
+    const consequenceHash = `0x${randomHex}${Date.now().toString(16)}000000000000000000000000000000000000000000000`.slice(0, 66);
     const auditId = `AUD-${Date.now().toString().slice(-8)}`;
 
     const auditRecord: AdminAuditRecord = {
@@ -93,12 +101,42 @@ export async function POST(request: Request) {
       message: `Bounded operation "${targetOp.action}" executed successfully. Audit reference: ${auditId}`,
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        // UI-FE-036: prevent protected diagnostic payloads from being cached
+        // or surfaced through any public status composition boundary.
+        'Cache-Control': 'no-store, private',
+        'X-Robots-Tag': 'noindex, nofollow',
+      },
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown server error';
     return NextResponse.json(
       { error: 'execution_failed', reason: message },
       { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const snapshot: OperationalHealthSnapshot = await composeOperationalHealth();
+    return NextResponse.json(snapshot, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-TruthBounty-Health-Source': 'privileged-composition',
+      },
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown server error';
+    return NextResponse.json(
+      {
+        error: 'health_unavailable',
+        reason: message,
+        observations: [],
+        overallStatus: 'unavailable',
+      },
+      { status: 503 }
     );
   }
 }

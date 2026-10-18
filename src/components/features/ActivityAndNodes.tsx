@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ActivityChartSkeleton } from "@/components/skeletons";
+import { useReducedData } from "@/hooks/useReducedData";
 
 interface ActivityDataPoint {
   name: string;
@@ -30,6 +31,11 @@ const ActivityAndNodes = ({
   isLoading = false,
   isUnavailable = false,
 }: ActivityAndNodesProps) => {
+  // UI-FE-082 / V2-FE-071 — never animate the chart when the user prefers
+  // reduced motion or when reduced-data mode is active.
+  const { reduceMotion } = useReducedData();
+  const chartAnimation = !reduceMotion;
+
   if (isLoading) {
     return <ActivityChartSkeleton />;
   }
@@ -101,6 +107,7 @@ const ActivityAndNodes = ({
                   fillOpacity={1}
                   fill="url(#colorVerified)"
                   strokeWidth={2}
+                  isAnimationActive={chartAnimation}
                 />
                 <Area
                   type="monotone"
@@ -109,6 +116,7 @@ const ActivityAndNodes = ({
                   fillOpacity={1}
                   fill="url(#colorDisputed)"
                   strokeWidth={2}
+                  isAnimationActive={chartAnimation}
                 />
                 <Area
                   type="monotone"
@@ -117,6 +125,7 @@ const ActivityAndNodes = ({
                   fillOpacity={1}
                   fill="url(#colorFalse)"
                   strokeWidth={2}
+                  isAnimationActive={chartAnimation}
                 />
               </AreaChart>
             </ResponsiveContainer>

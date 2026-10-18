@@ -1,28 +1,55 @@
 'use client';
 
-/**
- * ClaimVerifications — Verification list, vote counts, and confidence score
- *
- * Displays verifications from canonical projection. Never fabricates vote counts
- * or confidence scores; null values are shown as "Not available".
- */
-
-import { ThumbsUp, ThumbsDown, TrendingUp } from 'lucide-react';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import type { ClaimDetailProjection } from '@/app/types/claim-detail-projection';
+import type { ClaimStatus } from '@/app/types/claim';
+import { ConfidenceMeter } from '@/components/ui/primitives/ConfidenceMeter';
+import { OutcomeBadge } from '@/components/ui/primitives/OutcomeBadge';
+import { StakeWeightDisplay } from '@/components/ui/primitives/StakeWeightDisplay';
 
 export interface ClaimVerificationsProps {
   claim: ClaimDetailProjection;
 }
 
+function mapClaimStatusToOutcome(status: ClaimStatus): 'verified' | 'disputed' | 'rejected' | 'inconclusive' | 'provisional' {
+  switch (status) {
+    case 'VERIFIED':
+      return 'verified';
+    case 'REJECTED':
+      return 'rejected';
+    case 'DISPUTED':
+      return 'disputed';
+    case 'UNDER_REVIEW':
+    case 'OPEN':
+      return 'provisional';
+    default:
+      return 'inconclusive';
+  }
+}
+
 export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
-  const { verifications, voteCounts, confidenceScore } = claim;
+  const { verifications, voteCounts, confidenceScore, settlement, status } = claim;
   const totalVotes = voteCounts.support + voteCounts.reject;
-  const supportPercentage = totalVotes > 0 ? (voteCounts.support / totalVotes) * 100 : 0;
-  const rejectPercentage = totalVotes > 0 ? (voteCounts.reject / totalVotes) * 100 : 0;
+
+  // Use canonical projected status from the projection (authoritative)
+  // instead of deriving from vote counts in the UI
+  const outcomeKind = mapClaimStatusToOutcome(status);
+  const isProvisional = !settlement.isFinalized;
+
+  // Use canonical settlement timestamp for provenance
+  const determinedAt = settlement.settledAt ?? verifications[0]?.timestamp;
 
   return (
     <div className="space-y-4 pt-4 border-t border-[#232329]">
-      {/* Vote Counts */}
+      {/* Outcome Badge */}
+      <OutcomeBadge
+        kind={outcomeKind}
+        provisional={isProvisional}
+        source="Canonical Projection"
+        determinedAt={determinedAt}
+      />
+
+      {/* Vote Counts & Stake Weights */}
       <div>
         <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
           Verification Breakdown
@@ -30,39 +57,26 @@ export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
 
         {totalVotes > 0 ? (
           <>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-green-500 flex items-center gap-1">
-                <ThumbsUp size={14} aria-hidden="true" />
-                Support: {voteCounts.support}
-              </span>
-              <span className="text-red-500 flex items-center gap-1">
-                Reject: {voteCounts.reject}
-                <ThumbsDown size={14} aria-hidden="true" />
-              </span>
-            </div>
+            <StakeWeightDisplay
+              supporting={{
+                label: 'Supporting',
+                value: voteCounts.support.toString(),
+                unit: 'votes',
+                icon: <ThumbsUp size={14} aria-hidden="true" />,
+                tone: 'success',
+              }}
+              opposing={{
+                label: 'Opposing',
+                value: voteCounts.reject.toString(),
+                unit: 'votes',
+                icon: <ThumbsDown size={14} aria-hidden="true" />,
+                tone: 'danger',
+              }}
+              showBars={true}
+              showTable={true}
+            />
 
-            <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-800 mb-2">
-              <div
-                style={{ width: `${supportPercentage}%` }}
-                className="bg-green-500"
-                role="progressbar"
-                aria-label="Support percentage"
-                aria-valuenow={supportPercentage}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              />
-              <div
-                style={{ width: `${rejectPercentage}%` }}
-                className="bg-red-500"
-                role="progressbar"
-                aria-label="Reject percentage"
-                aria-valuenow={rejectPercentage}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              />
-            </div>
-
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mt-2">
               {verifications.length} {verifications.length === 1 ? 'verification' : 'verifications'}
             </p>
           </>
@@ -77,25 +91,15 @@ export function ClaimVerifications({ claim }: ClaimVerificationsProps) {
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
             Confidence Score
           </h2>
-
-          <div className="flex items-center gap-4">
-            <div className="flex-1 h-2.5 rounded-full bg-gray-800 overflow-hidden">
-              <div
-                style={{ width: `${confidenceScore}%` }}
-                className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-400"
-                role="progressbar"
-                aria-label="Confidence score"
-                aria-valuenow={confidenceScore}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              />
-            </div>
-
-            <span className="text-green-500 font-bold text-xl flex items-center gap-1">
-              <TrendingUp size={18} aria-hidden="true" />
-              {confidenceScore}%
-            </span>
-          </div>
+          <ConfidenceMeter
+            value={confidenceScore}
+            label="Confidence Score"
+            source="Canonical Projection"
+            computedAt={verifications[0]?.timestamp}
+            provisional={isProvisional}
+            showValue={true}
+            showBandLabel={true}
+          />
         </div>
       )}
 

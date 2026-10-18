@@ -6,6 +6,8 @@ import React, { memo, useMemo } from 'react';
 import { useApiFreshness } from '@/app/queries/freshness.queries';
 import { formatLag, formatLastUpdate, getFreshnessStatus, FRESHNESS_THRESHOLDS } from '@/app/types/api-freshness';
 import { Wifi, AlertTriangle, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useReducedData } from '@/hooks/useReducedData';
+import { SyncFreshnessBadge } from '@/components/ui/SyncFreshnessBadge';
 
 export interface ApiFreshnessIndicatorProps {
   /** Whether to show detailed breakdown */
@@ -54,6 +56,7 @@ export const ApiFreshnessIndicator = memo(function ApiFreshnessIndicator({
   className = '',
   pollInterval = 30_000,
 }: ApiFreshnessIndicatorProps) {
+  const { isReducedData } = useReducedData();
   const { data, isLoading, error, isDegraded, refetch } = useApiFreshness({
     pollInterval,
   });
@@ -66,7 +69,7 @@ export const ApiFreshnessIndicator = memo(function ApiFreshnessIndicator({
   }, [data, isLoading, error]);
 
   const StatusIcon = status === 'loading' ? Loader2 : statusIcons[status] ?? AlertTriangle;
-  const statusClass = statusStyles[status] ?? statusStyles.critical;
+  const statusClass = statusStyles[status] ?? statusStyles['critical'];
 
   if (compact) {
     return (
@@ -182,6 +185,18 @@ export const ApiFreshnessIndicator = memo(function ApiFreshnessIndicator({
           </span>
         </div>
       </div>
+
+      {/* UI-FE-082 — when auto-refresh is stretched by data-saver mode, make
+          the last-synced time and a manual refresh affordance explicit. */}
+      {isReducedData && (
+        <SyncFreshnessBadge
+          lastSyncedAt={freshness.lastUpdate}
+          isDeferred
+          onRefresh={() => refetch()}
+          isRefreshing={isLoading}
+          label="API freshness"
+        />
+      )}
 
       {showDetails && (
         <>
@@ -331,10 +346,7 @@ function DependencyBadge({ dependency }: DependencyBadgeProps) {
       aria-label={`${dependency.name}: ${dependency.status}`}
     >
       <StatusIcon className="w-3 h-3" aria-hidden="true" />
-      <span className="capitalize">{dependency.name.replace('_', ' ')}</span>
-      {dependency.latencyMs && (
-        <span className="text-[10px] opacity-70 font-mono">{dependency.latencyMs}ms</span>
-      )}
+      <span>{dependency.name}</span>
     </span>
   );
 }

@@ -19,6 +19,7 @@ pinned interfaces again.
 | Deterministic primitives (clock, seed, network) | `src/testing/fixtures/deterministic.ts` |
 | Typed factory library | `src/testing/fixtures/factories/` |
 | Canonical scenario catalogue | `src/testing/fixtures/scenarios.ts` |
+| Route-to-capability authority fixtures (UI-FE-087) | `src/testing/fixtures/authority/` |
 | Barrel entry point | `src/testing/fixtures/index.ts` |
 | Storybook stories | `src/testing/fixtures/scenarios.stories.tsx` |
 | Playwright adapter | `e2e/support/scenarios.ts` |

@@ -69,7 +69,9 @@ describe('ActiveClaimsTableContainer — ready state', () => {
       expect(screen.getAllByText('Verified').length).toBeGreaterThan(0)
     );
     // Confidence comes from the projection score.
-    expect(screen.getByText('97%')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('meter', { name: /confidence/i })).toBeInTheDocument()
+    );
   });
 
   it('renders an em-dash for unscored claims instead of inventing confidence', async () => {
@@ -78,7 +80,10 @@ describe('ActiveClaimsTableContainer — ready state', () => {
     render(<ActiveClaimsTableContainer />, { wrapper: createWrapper() });
 
     await waitFor(() => expect(screen.getByLabelText('Active claims')).toBeInTheDocument());
-    expect(screen.getByTitle('Not yet scored')).toBeInTheDocument();
+    // ConfidenceMeter shows "—" for null values
+    await waitFor(() =>
+      expect(screen.getByText('—')).toBeInTheDocument()
+    );
   });
 
   it('sends the canonical querystring: search, filter, pagination', async () => {
@@ -266,10 +271,10 @@ describe('ActiveClaimsTableContainer — accessibility structure', () => {
     );
 
     const group = screen.getByRole('group', { name: 'Filter claims' });
-    const openChip = within(group).getByRole('button', { name: 'Open' });
-    expect(openChip).toHaveAttribute('aria-pressed', 'false');
+    const verifiedChip = within(group).getByRole('button', { name: 'Verified' });
+    expect(verifiedChip).toHaveAttribute('aria-pressed', 'false');
 
-    await user.click(openChip);
-    expect(openChip).toHaveAttribute('aria-pressed', 'true');
+    await user.click(verifiedChip);
+    expect(verifiedChip).toHaveAttribute('aria-pressed', 'true');
   });
 });

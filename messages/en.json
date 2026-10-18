@@ -1,46 +1,47 @@
 {
-  "common": {
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "close": "Close",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "submit": "Submit",
-    "retry": "Retry",
-    "back": "Back",
-    "next": "Next",
-    "previous": "Previous",
-    "search": "Search",
-    "filter": "Filter",
-    "clear": "Clear",
-    "apply": "Apply",
-    "reset": "Reset",
-    "of": "of",
-    "to": "to",
-    "from": "from",
-    "at": "at",
-    "by": "by",
-    "in": "in",
-    "on": "on",
-    "ago": "ago",
-    "total": "Total",
-    "count": "Count",
-    "amount": "Amount",
-    "items": "{count, plural, =0 {no items} =1 {1 item} other {# items}}",
-    "selected": "{count, plural, =0 {none selected} =1 {1 selected} other {# selected}}",
-    "results": "{count, plural, =0 {no results} =1 {1 result} other {# results}}",
-    "minutes": "{count, plural, =1 {1 minute} other {# minutes}}",
-    "hours": "{count, plural, =1 {1 hour} other {# hours}}",
-    "days": "{count, plural, =1 {1 day} other {# days}}",
-    "weeks": "{count, plural, =1 {1 week} other {# weeks}}",
-    "months": "{count, plural, =1 {1 month} other {# months}}",
-    "years": "{count, plural, =1 {1 year} other {# years}}"
+  "claimDetail": {
+    "common": {
+      "loading": "Loading...",
+      "error": "Error",
+      "success": "Success",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "close": "Close",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "submit": "Submit",
+      "retry": "Retry",
+      "back": "Back",
+      "next": "Next",
+      "previous": "Previous",
+      "search": "Search",
+      "filter": "Filter",
+      "clear": "Clear",
+      "apply": "Apply",
+      "reset": "Reset",
+      "of": "of",
+      "to": "to",
+      "from": "from",
+      "at": "at",
+      "by": "by",
+      "in": "in",
+      "on": "on",
+      "ago": "ago",
+      "total": "Total",
+      "count": "Count",
+      "amount": "Amount",
+      "items": "{count, plural, =0 {no items} =1 {1 item} other {# items}}",
+      "selected": "{count, plural, =0 {none selected} =1 {1 selected} other {# selected}}",
+      "results": "{count, plural, =0 {no results} =1 {1 result} other {# results}}",
+      "minutes": "{count, plural, =1 {1 minute} other {# minutes}}",
+      "hours": "{count, plural, =1 {1 hour} other {# hours}}",
+      "days": "{count, plural, =1 {1 day} other {# days}}",
+      "weeks": "{count, plural, =1 {1 week} other {# weeks}}",
+      "months": "{count, plural, =1 {1 month} other {# months}}",
+      "years": "{count, plural, =1 {1 year} other {# years}}"
+    }
   },
-  
   "wallet": {
     "connect": "Connect Wallet",
     "disconnect": "Disconnect",
@@ -85,7 +86,7 @@
       "safe": "Transaction reached safe finality threshold",
       "indexing": "Transaction finalized, indexing on-chain data",
       "finalized": "Transaction complete and indexed",
-      "dropped": "Transaction dropped from mempool without confirmation",
+      "dropped": "Transaction dropped from mempol without confirmation",
       "replaced": "Transaction replaced by another with higher gas",
       "reverted": "Transaction reverted on-chain",
       "failed": "Transaction failed to complete"
@@ -198,7 +199,7 @@
     "claimId": "Claim ID",
     "claimHash": "Claim Hash",
     "contentDigest": "Content Digest",
-    
+
     "fields": {
       "title": "Title",
       "category": "Category",
@@ -216,7 +217,7 @@
       "deadline": "Deadline",
       "frozenConfig": "Configuration"
     },
-    
+
     "placeholders": {
       "title": "Enter claim title",
       "category": "Select category",
@@ -225,7 +226,7 @@
       "description": "Describe the claim in detail",
       "evidence": "Add supporting evidence"
     },
-    
+
     "validation": {
       "titleRequired": "Title is required",
       "titleMinLength": "Title must be at least {min} characters",
@@ -289,344 +290,137 @@
     
     "status": {
       "idle": "Not started",
-      "validating": "Validating inputs",
-      "approving": "Approving token",
-      "simulating": "Simulating transaction",
-      "submitting": "Submitting to blockchain",
-      "confirming": "Confirming on-chain",
-      "reconciling": "Reconciling with indexer",
-      "success": "Claim created successfully",
-      "error": "Error occurred",
-      "PENDING": "Pending",
-      "ACTIVE": "Active",
-      "DISPUTED": "Disputed",
-      "SETTLED": "Settled",
-      "EXPIRED": "Expired",
-      "REJECTED": "Rejected"
+      "pending": "Pending",
+      "active": "Active",
+      "resolved": "Resolved",
+      "disputed": "Disputed",
+      "finalized": "Finalized"
     },
     
-    "trust": {
-      "lowTrustWarning": "⚠️ Low trust score",
-      "lowTrustBanner": "Your account has a low trust score. Claims may require additional verification.",
-      "tooltipTitle": "Trust Score Factors",
-      "verified": "Verified",
-      "notVerified": "Not verified",
-      "reputation": "Reputation: {score}",
-      "accountAge": "Account age: {days} days",
-      "suspicious": "Suspicious activity detected",
-      "buildTrust": "Build trust by verifying your identity and participating in the community"
-    },
-    
-    "categories": {
-      "politics": "Politics",
-      "science": "Science",
-      "health": "Health",
-      "technology": "Technology",
-      "business": "Business",
-      "entertainment": "Entertainment",
-      "other": "Other"
-    },
-    
-    "impacts": {
-      "low": "Low",
-      "medium": "Medium",
-      "high": "High",
-      "critical": "Critical"
-    }
-  },
-
-  "verification": {
-    "title": "Verification",
-    "verify": "Verify",
-    "reject": "Reject",
-    "verifying": "Verifying...",
-    "rejecting": "Rejecting...",
-    "verified": "Verified",
-    "rejected": "Rejected",
-    "pending": "Pending verification",
-    "stake": "Stake Amount",
-    "stakeRequired": "Stake amount is required and must be greater than 0",
-    "submitVerification": "Submit Verification",
-    "verificationStakePending": "Verification stake pending",
-    "rejectionStakePending": "Rejection stake pending",
-    "waitingWalletConfirmation": "Claim {claimId} is waiting for wallet confirmation.",
-    "myVerifications": "My Verifications",
-    "recentVerifications": "Recent Verifications",
-    "verificationHistory": "Verification History",
-    "decision": "Decision",
-    "confidence": "Confidence",
-    "stakeAmount": "Stake Amount",
-    "verifier": "Verifier",
-    "verifiedAt": "Verified At",
-    
-    "statuses": {
-      "PENDING": "Pending",
-      "VERIFIED": "Verified",
-      "REJECTED": "Rejected",
-      "SETTLED": "Settled",
-      "DISPUTED": "Disputed"
-    },
-    
-    "decisions": {
-      "TRUE": "True",
-      "FALSE": "False",
-      "UNCERTAIN": "Uncertain"
-    },
-    
-    "actions": {
-      "submitStake": "Submit Stake",
-      "increaseStake": "Increase Stake",
-      "withdrawStake": "Withdraw Stake",
-      "viewDetails": "View Verification Details"
-    },
-    
-    "messages": {
-      "stakeSubmitted": "Verification stake submitted successfully",
-      "stakeIncreased": "Stake increased successfully",
-      "stakeWithdrawn": "Stake withdrawn successfully",
-      "preparingStake": "Preparing stake transaction",
-      "confirmingStake": "Confirming stake on-chain",
-      "stakePending": "Your stake transaction is pending",
-      "verificationComplete": "Verification recorded on-chain"
-    },
-    
-    "errors": {
-      "stakeAmountInvalid": "Stake amount is required and must be greater than 0",
-      "submissionFailed": "Verification submission failed",
-      "insufficientBalance": "Insufficient balance for stake",
-      "networkError": "Network error occurred",
-      "claimNotFound": "Claim not found",
-      "alreadyVerified": "You have already verified this claim",
-      "claimExpired": "Claim has expired",
-      "claimSettled": "Claim already settled",
-      "invalidDecision": "Invalid verification decision",
-      "stakeTooLow": "Stake amount below minimum required"
-    },
-    
-    "warnings": {
-      "highRisk": "⚠️ High risk: This claim has conflicting verifications",
-      "lowConfidence": "⚠️ Low confidence: Consider reviewing more evidence",
-      "firstVerification": "You'll be the first to verify this claim",
-      "majorityOpposed": "Most verifiers disagree with this decision"
+    "evidence": {
+      "title": "Evidence",
+      "addEvidence": "Add Evidence",
+      "removeEvidence": "Remove Evidence",
+      "selectFiles": "Select Files",
+      "dropFiles": "Drag and drop files here, or select files",
+      "browseFiles": "Browse Files",
+      "selectedFiles": "{count, plural, =0 {No files selected} =1 {1 file selected} other {# files selected}}",
+      "uploading": "Uploading evidence...",
+      "hashing": "Computing file hash...",
+      "pinning": "Pinning to storage...",
+      "verifyingCid": "Verifying content identifier...",
+      "authorizingClaim": "Authorizing claim attachment...",
+      "uploadComplete": "Evidence uploaded successfully",
+      "uploadFailed": "Evidence upload failed",
+      "retryUpload": "Retry Upload",
+      "cancelUpload": "Cancel Upload",
+      "uploadProgress": "Upload progress: {percent}%",
+      "uploadInterrupted": "Upload interrupted. You can retry without creating a duplicate.",
+      "gatewayTimeout": "Storage gateway timed out. Please retry.",
+      "duplicateSelection": "This file has already been selected",
+      "duplicateEvidence": "This evidence has already been attached",
+      "hashMismatch": "File hash does not match the expected digest",
+      "cidMismatch": "Content identifier verification failed",
+      "notAttachedOnChain": "Upload complete, but not yet attached on-chain",
+      "attachedOnChain": "Evidence attached on-chain",
+      "awaitingAttachment": "Awaiting for on-chain attachment",
+      "preflightFailed": "Evidence validation failed before upload",
+      "fileTooLarge": "File exceeds maximum size of {maxSize}",
+      "tooManyFiles": "Tho many files. Maximum is {maxCount}",
+      "unsupportedType": "Unsupported file type: {mimeType}",
+      "unsupportedExtension": "Unsupported file extension: {extension}",
+      "emptyFile": "File is empty",
+      "policyRejected": "File does not meet the supported evidence policy",
+      "supportedFormats": "Supported formats: {formats}",
+      "maxFileSize": "Maximum file size: {maxSize}",
+      "maxFiles": "Maximum files: {maxCount}",
+      "removeFile": "Remove {fileName}",
+      "fileStatus": "{fileName}: {status}",
+      "status": {
+        "idle": "Ready to upload",
+        "validating": "Validating",
+        "hashing": "Hashing",
+        "uploading": "Uploading",
+        "pinning": "Pinning",
+        "verifying": "Verifying",
+        "authorizing": "Authorizing",
+        "complete": "Complete",
+        "failed": "Failed",
+        "interrupted": "Interrupted",
+        "cancelled": "Cancelled"
+      }
     }
   },
 
   "dispute": {
-    "title": "Dispute",
-    "disputes": "Disputes",
-    "openDispute": "Open Dispute",
-    "disputeOpened": "Dispute opened",
-    "disputePending": "Dispute pending",
-    "disputeResolved": "Dispute resolved",
-    "submitDispute": "Submit Dispute",
-    "reason": "Dispute Reason",
-    "evidence": "Dispute Evidence",
-    "myDisputes": "My Disputes",
-    "activeDisputes": "Active Disputes",
-    "resolvedDisputes": "Resolved Disputes",
+    "title": "Disputes",
+    "register": "Public Dispute Register",
+    "detail": "Dispute Detail",
+    "loading": "Loading disputes...",
+    "loadingDetail": "Loading dispute...",
+    "noDisputes": "No disputes found",
+    "noDisputesDescription": "There are currently no public disputes to display.",
+    "notFound": "Dispute not found",
+    "notFoundDescription": "The dispute with ID {disputeId} could not be found.",
+    "unavailable": "Dispute data unavailable",
+    "unavailableDescription": "Dispute data is currently unavailable. Please try again later.",
+    "stale": "Data may be stale",
+    "staleDescription": "This projection data was last updated {time} ago and may not reflect the latest on-chain state.",
+    "freshness": "Freshness",
+    "lastUpdated": "Last updated {time} ago",
+    "provisional": "Provisional",
+    "provisionalNotice": "This outcome is provisional and not yet final. It may change.",
+    "final": "Final",
+    "finalNotice": "This outcome has been finalized on-chain.",
+    "appealable": "Appealable",
+    "notAppealable": "Not appealable",
+    "appealDeadline": "Appeal deadline",
+    "appealWindowClosed": "Appeal window closed",
+    "bond": "Bond",
+    "bondAmount": "Bond amount",
+    "bondStatus": "Bond status",
+    "bondLocked": "Locked",
+    "bondReleased": "Released",
+    "bondSlashed": "Slashed",
+    "challenger": "Challenger",
+    "challengerEvidence": "Challenger evidence",
+    "noEvidence": "No evidence provided",
+    "evidenceUnavailable": "Evidence unavailable",
+    "evidenceSanitized": "Evidence could not be displayed safely",
+    "claimLink": "Linked claim",
+    "viewClaim": "View claim",
+    "timeline": "Timeline",
+    "resolutionState": "Resolution state",
+    "resolutionPending": "Resolution pending",
+    "resolutionResolved": "Resolved",
+    "resolutionCancelled": "Cancelled",
     "disputeId": "Dispute ID",
-    "claimId": "Claim ID",
-    "disputant": "Disputant",
-    "createdAt": "Created",
-    "resolvedAt": "Resolved",
-    "resolution": "Resolution",
-    
-    "statuses": {
-      "PENDING": "Pending",
-      "ACTIVE": "Active",
-      "RESOLVED": "Resolved",
-      "DISMISSED": "Dismissed",
-      "APPEALED": "Appealed"
-    },
-    
-    "reasons": {
-      "FRAUD": "Fraudulent claim",
-      "INSUFFICIENT_EVIDENCE": "Insufficient evidence",
-      "MISLEADING": "Misleading information",
-      "DUPLICATE": "Duplicate claim",
-      "VIOLATION": "Protocol violation",
-      "OTHER": "Other"
-    },
-    
+    "openedAt": "Opened",
+    "closedAt": "Closed",
+    "deadline": "Deadline",
+    "deadlinePassed": "Deadline passed",
+    "deadlineRemaining": "{time} remaining",
     "actions": {
-      "submit": "Submit Dispute",
-      "respond": "Respond to Dispute",
-      "vote": "Vote on Dispute",
-      "viewDetails": "View Dispute Details",
-      "addEvidence": "Add Evidence"
+      "viewDetail": "View dispute detail",
+      "backToRegister": "Back to register",
+      "appeal": "Appeal",
+      "appealUnavailable": "Appeal unavailable",
+      "appealUnavailableDescription": "Appealing requires a connected wallet and an active appeal window.",
+      "connectToAppeal": "Connect wallet to appeal"
     },
-    
-    "messages": {
-      "disputeSubmitted": "Dispute submitted successfully",
-      "responseSubmitted": "Response submitted",
-      "voteRecorded": "Vote recorded",
-      "disputeResolved": "Dispute has been resolved",
-      "preparingDispute": "Preparing dispute transaction",
-      "confirmingDispute": "Confirming dispute on-chain",
-      "awaitingResolution": "Awaiting community resolution"
+    "states": {
+      "open": "Open",
+      "challenged": "Challenged",
+      "voting": "Voting",
+      "resolved": "Resolved",
+      "finalized": "Finalized",
+      "cancelled": "Cancelled"
     },
-    
     "errors": {
-      "reasonRequired": "Dispute reason is required",
-      "evidenceRequired": "Evidence is required",
-      "submissionFailed": "Dispute submission failed",
-      "alreadyDisputed": "This claim is already disputed",
-      "claimNotFound": "Claim not found",
-      "claimSettled": "Claim already settled",
-      "insufficientStake": "Insufficient stake for dispute",
-      "invalidReason": "Invalid dispute reason"
+      "loadFailed": "Failed to load disputes",
+      "detailLoadFailed": "Failed to load dispute detail",
+      "unknownId": "Unknown dispute ID",
+      "evidenceFailed": "Failed to load evidence"
     }
-  },
-
-  "appeal": {
-    "title": "Appeal",
-    "appeals": "Appeals",
-    "submitAppeal": "Submit Appeal",
-    "appealPending": "Appeal pending",
-    "appealAccepted": "Appeal accepted",
-    "appealRejected": "Appeal rejected",
-    "myAppeals": "My Appeals",
-    "activeAppeals": "Active Appeals",
-    "appealId": "Appeal ID",
-    "appellant": "Appellant",
-    "createdAt": "Created",
-    "resolvedAt": "Resolved",
-    "grounds": "Appeal Grounds",
-    "outcome": "Outcome",
-    
-    "statuses": {
-      "PENDING": "Pending",
-      "UNDER_REVIEW": "Under Review",
-      "ACCEPTED": "Accepted",
-      "REJECTED": "Rejected",
-      "WITHDRAWN": "Withdrawn"
-    },
-    
-    "grounds": {
-      "PROCEDURAL_ERROR": "Procedural error",
-      "NEW_EVIDENCE": "New evidence available",
-      "MISINTERPRETATION": "Misinterpretation of rules",
-      "BIAS": "Bias in decision",
-      "OTHER": "Other"
-    },
-    
-    "actions": {
-      "submit": "Submit Appeal",
-      "withdraw": "Withdraw Appeal",
-      "respond": "Respond to Appeal",
-      "viewDetails": "View Appeal Details"
-    },
-    
-    "messages": {
-      "appealSubmitted": "Appeal submitted successfully",
-      "appealWithdrawn": "Appeal withdrawn",
-      "responseSubmitted": "Response submitted",
-      "appealAccepted": "Your appeal has been accepted",
-      "appealRejected": "Your appeal has been rejected",
-      "preparingAppeal": "Preparing appeal transaction",
-      "confirmingAppeal": "Confirming appeal on-chain"
-    },
-    
-    "errors": {
-      "groundsRequired": "Appeal grounds are required",
-      "descriptionRequired": "Description is required",
-      "submissionFailed": "Appeal submission failed",
-      "alreadyAppealed": "You have already appealed this decision",
-      "disputeNotFound": "Dispute not found",
-      "appealWindowClosed": "Appeal window has closed",
-      "insufficientStake": "Insufficient stake for appeal"
-    }
-  },
-
-  "settlement": {
-    "title": "Settlement",
-    "settlements": "Settlements",
-    "pending": "Settlement pending",
-    "finalized": "Settlement finalized",
-    "distribute": "Distribute Rewards",
-    "distributing": "Distributing rewards...",
-    "distributed": "Rewards distributed",
-    "myRewards": "My Rewards",
-    "totalRewards": "Total Rewards",
-    "claimRewards": "Claim Rewards",
-    "settlementId": "Settlement ID",
-    "settledAt": "Settled At",
-    "totalAmount": "Total Amount",
-    "winners": "Winners",
-    "losers": "Losers",
-    
-    "statuses": {
-      "PENDING": "Pending",
-      "CALCULATING": "Calculating",
-      "READY": "Ready to Finalize",
-      "FINALIZED": "Finalized",
-      "DISTRIBUTED": "Distributed",
-      "FAILED": "Failed"
-    },
-    
-    "types": {
-      "VERIFICATION": "Verification Settlement",
-      "DISPUTE": "Dispute Settlement",
-      "APPEAL": "Appeal Settlement"
-    },
-    
-    "actions": {
-      "finalize": "Finalize Settlement",
-      "claimReward": "Claim Your Reward",
-      "viewBreakdown": "View Reward Breakdown",
-      "viewParticipants": "View Participants"
-    },
-    
-    "messages": {
-      "calculatingRewards": "Calculating reward distribution",
-      "readyToFinalize": "Settlement is ready to be finalized",
-      "finalizing": "Finalizing settlement on-chain",
-      "finalized": "Settlement finalized successfully",
-      "rewardsClaimed": "Rewards claimed successfully",
-      "awaitingFinalization": "Awaiting settlement finalization",
-      "distributionInProgress": "Reward distribution in progress"
-    },
-    
-    "breakdown": {
-      "verifierRewards": "Verifier Rewards",
-      "disputantRewards": "Disputant Rewards",
-      "protocolFee": "Protocol Fee",
-      "yourShare": "Your Share",
-      "correctVerifiers": "Correct Verifiers",
-      "incorrectVerifiers": "Incorrect Verifiers",
-      "totalPool": "Total Pool"
-    },
-    
-    "errors": {
-      "notFinalized": "Settlement not yet finalized",
-      "alreadyClaimed": "You have already claimed your reward",
-      "noReward": "You have no reward to claim",
-      "finalizationFailed": "Settlement finalization failed",
-      "claimFailed": "Reward claim failed",
-      "calculationError": "Error calculating rewards",
-      "insufficientFunds": "Insufficient funds in settlement pool"
-    }
-  },
-
-  "errors": {
-    "generic": "An error occurred",
-    "networkError": "Network error. Please check your connection.",
-    "timeout": "Request timed out",
-    "unauthorized": "Unauthorized access",
-    "forbidden": "Access forbidden",
-    "notFound": "Resource not found",
-    "serverError": "Server error occurred",
-    "validationError": "Validation error",
-    "tryAgain": "Please try again",
-    "contactSupport": "If the problem persists, please contact support"
-  },
-
-  "accessibility": {
-    "skipToContent": "Skip to content",
-    "closeDialog": "Close dialog",
-    "openMenu": "Open menu",
-    "closeMenu": "Close menu",
-    "loading": "Loading content",
-    "noResults": "No results found"
   }
 }

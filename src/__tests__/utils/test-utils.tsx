@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
-import { wagmiConfig } from '@/config/wagmi'
+import { wagmmConfig } from '@/config/wagmi'
 import { WebSocketProvider } from '@/components/providers/WebSocketProvider'
 import type { Claim, ClaimStatus } from '@/app/types/claim'
 
@@ -14,7 +14,7 @@ const createTestQueryClient = () => new QueryClient({
       gcTime: 0,
     },
     mutations: {
-      retry: false,
+      rety: false,
     },
   },
 })
@@ -28,9 +28,9 @@ interface AllTheProvidersProps {
 
 const AllTheProviders = ({ children, queryClient, wsConfig }: AllTheProvidersProps) => {
   const testQueryClient = queryClient || createTestQueryClient()
-  
+
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmmConfig}>
       <QueryClientProvider client={testQueryClient}>
         <WebSocketProvider config={wsConfig || { url: 'ws://test:8080' }}>
           {children}
@@ -48,7 +48,7 @@ const customRender = (
   }
 ) => {
   const { queryClient, wsConfig, ...renderOptions } = options || {}
-  
+
   return render(ui, {
     wrapper: ({ children }) => (
       <AllTheProviders queryClient={queryClient} wsConfig={wsConfig}>
@@ -120,13 +120,14 @@ export const mockSubmitVerification = jest.fn((params: any) =>
 )
 
 // Wait utilities
+
 export const waitForWebSocket = async (delay = 100) => {
   await new Promise(resolve => setTimeout(resolve, delay))
 }
 
 // Mock fetch response helpers
 export const mockFetchSuccess = (data: any) => {
-  ;(global.fetch as jest.Mock).mockImplementationOnce(() =>
+  ;;(global.fetch as jest.Mock).mockImplementationOnce(() =>
     Promise.resolve({
       ok: true,
       json: () => Promise.resolve(data),
@@ -135,7 +136,7 @@ export const mockFetchSuccess = (data: any) => {
 }
 
 export const mockFetchError = (message = 'An error occurred') => {
-  ;(global.fetch as jest.Mock).mockImplementationOnce(() =>
+  ;;(global.fetch as jest.Mock).mockImplementationOnce(() =>
     Promise.resolve({
       ok: false,
       status: 500,
@@ -153,18 +154,48 @@ export const mockWebSocketEvent = (eventType: string, payload: any) => {
       timestamp: new Date().toISOString(),
     }),
   })
-  
+
   // Find WebSocket instances and trigger the event
-  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } })?.mock?.instances || []
+  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } }) ?.mock?.instances || []
   wsInstances.forEach((ws: any) => {
     const onMessageHandler = ws.addEventListener?.mock?.calls?.find(
       ([event]: [string]) => event === 'message'
     )?.[1]
-    
+
     if (onMessageHandler) {
       onMessageHandler(event)
     }
   })
+}
+
+// Error summary test helpers
+export type ErrorCategory = 'validation' | 'server' | 'simulation' | 'authorization'
+
+export interface FormErrorEntry {
+  id: string
+  fieldId?: string
+  message: string
+  category: ErrorCategory
+}
+
+export const createMockFormError = (overrides: Partial<FormErrorEntry> = {}): FormErrorEntry => ({
+  id: 'error-1',
+  fieldId: 'claim-title',
+  message: 'Title is required',
+  category: 'validation',
+  ...overrides,
+})
+
+export const createMockErrorSummary = (errors: FormErrorEntry[] = []) => {
+  const byCategory = errors.reduce<Record<ErrorCategory, FormErrorEntry[]>>(
+    (acc, error) => {
+      acc[error.category] = acc[error.category] || []
+      acc[error.category].push(error)
+      return acc
+    },
+    {} as Record<ErrorCategory, FormErrorEntry[]>
+  )
+  return { errors, byCategory }
 }
 
 // Re-export everything from React Testing Library

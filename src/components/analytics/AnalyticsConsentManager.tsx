@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   ANALYTICS_CONSENT_STORAGE_KEY,
+  clearAnalyticsConsent,
   publishPageView,
+  readAnalyticsConsent,
   saveAnalyticsConsent,
   type AnalyticsConsentChoice,
   type AnalyticsConsentPreference,
@@ -28,18 +30,24 @@ export function AnalyticsConsentManager({ children }: AnalyticsConsentManagerPro
   const focusAfterTransition = useRef<"heading" | "manage" | null>(null);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY);
-      if (stored === "granted" || stored === "denied") {
-        setPreference(stored);
-        setPanelOpen(false);
-      } else {
-        setPreference(null);
-      }
-    } catch {
+    const result = readAnalyticsConsent();
+    if (!result.storageAvailable) {
       setPreference("denied");
       setStorageAvailable(false);
-      setNotice("This browser cannot save privacy choices. Optional analytics remains off.");
+      setNotice(
+        "This browser cannot save privacy choices. Optional analytics remains off.",
+      );
+    } else if (result.corrupted) {
+      setPreference("denied");
+      setStorageAvailable(true);
+      setNotice(
+        "Saved privacy choice was unreadable and has been reset. Optional analytics remains off.",
+      );
+    } else if (result.preference === "granted" || result.preference === "denied") {
+      setPreference(result.preference);
+      setPanelOpen(false);
+    } else {
+      setPreference(null);
     }
     setReady(true);
   }, []);
@@ -68,9 +76,23 @@ export function AnalyticsConsentManager({ children }: AnalyticsConsentManagerPro
   useEffect(() => {
     const syncPreference = (event: StorageEvent) => {
       if (event.key !== ANALYTICS_CONSENT_STORAGE_KEY) return;
-      const next = event.newValue === "granted" || event.newValue === "denied"
-        ? event.newValue
-        : null;
+      const result = readAnalyticsConsent();
+      if (!result.storageAvailable) {
+        setPreference("denied");
+        setStorageAvailable(false);
+        setPanelOpen(true);
+        return;
+      }
+      if (result.corrupted) {
+        setPreference("denied");
+        setStorageAvailable(true);
+        setNotice(
+          "Saved privacy choice was unreadable and has been reset. Optional analytics remains off.",
+        );
+        setPanelOpen(true);
+        return;
+      }
+      const next = result.preference;
       setPreference(next);
       if (next !== null) setStorageAvailable(true);
       if (next === null) setPanelOpen(true);
@@ -103,6 +125,18 @@ export function AnalyticsConsentManager({ children }: AnalyticsConsentManagerPro
     setPanelOpen(false);
   };
 
+  const clearPreference = () => {
+    try {
+      clearAnalyticsConsent(window.localStorage);
+    } catch {
+      // Ignore: clearing is best-effort and never blocks the UI.
+    }
+    setPreference(null);
+    setNotice("Saved privacy choice cleared. Optional analytics remains off.");
+    focusAfterTransition.current = "heading";
+    setPanelOpen(true);
+  };
+
   const preferenceLabel = preference === "granted"
     ? "on"
     : preference === "denied"
@@ -119,8 +153,7 @@ export function AnalyticsConsentManager({ children }: AnalyticsConsentManagerPro
       >
         {!ready ? (
           <p role="status" className="mx-auto w-full max-w-7xl text-sm">
-            Loading privacy preference…
-          </p>
+            Loading privacy preference…</p>
         ) : panelOpen ? (
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-3xl">
@@ -156,6 +189,15 @@ export function AnalyticsConsentManager({ children }: AnalyticsConsentManagerPro
               >
                 Reject optional analytics
               </Button>
+              {preference !== null && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={clearPreference}
+                >
+                  Clear saved choice
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="ghost"

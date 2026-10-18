@@ -10,7 +10,7 @@ import {
 import { ProtocolContractBoundary } from '@/components/protocol/ProtocolContractBoundary';
 import { getReleaseChainId } from '@/lib/contracts/registry';
 import type { ProtocolLifecycleState } from '@/lib/protocol-contract';
-import type { TransactionStatus } from '@/lib/transaction-machine';
+import type { TransactionStatus } from '@/lib/transaction-machine/transaction-machine.types';
 
 function statusToLifecycle(
   status: TransactionStatus,
@@ -24,11 +24,13 @@ function statusToLifecycle(
     case 'indexing':
       return 'pending';
     case 'finalized':
-      return 'confirmed';
+      return 'finalized';
     case 'dropped':
     case 'replaced':
     case 'reverted':
       return 'failed';
+    case 'reorged':
+      return 'reorged';
     default:
       return undefined;
   }
@@ -45,7 +47,6 @@ export function VerificationActions({
   chainId?: number;
 }) {
   const resolvedChainId = chainId ?? getReleaseChainId();
-  
   const { state, send, reset } = useTransactionMachine({
     id: `verification:${claimId}`,
     label: 'Verification stake',
@@ -69,7 +70,7 @@ export function VerificationActions({
         description: `Claim ${claimId} is waiting for wallet confirmation.`,
         txHash: null,
         chainId: resolvedChainId,
-        machineState: state.status,
+        machineState: 'preparing',
       });
 
       send({ type: 'REQUEST_SIGNATURE' });
@@ -83,10 +84,12 @@ export function VerificationActions({
     }
   };
 
-  const isTerminal = state.status === 'finalized' || 
-                     state.status === 'dropped' || 
-                     state.status === 'replaced' || 
-                     state.status === 'reverted';
+  const isTerminal =
+    state.status === 'finalized' ||
+    state.status === 'dropped' ||
+    state.status === 'replaced' ||
+    state.status === 'reverted' ||
+    state.status === 'reorged';
 
   return (
     <ProtocolContractBoundary
