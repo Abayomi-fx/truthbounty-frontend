@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   NONCE_HEADER,
+  SECURITY_HEADER_NAMES,
   buildSecurityHeaders,
   createRequestNonce,
 } from '@/lib/security/headers';
@@ -14,8 +15,10 @@ export function middleware(request: NextRequest) {
   const nonce = createRequestNonce();
   const isDevelopment = process.env.NODE_ENV === 'development';
 
+  const headers = buildSecurityHeaders({ nonce, isDevelopment, reportOnly: false });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(NONCE_HEADER, nonce);
+  requestHeaders.set(SECURITY_HEADER_NAMES.contentSecurityPolicy, headers[SECURITY_HEADER_NAMES.contentSecurityPolicy]);
 
   const response = NextResponse.next({
     request: {
@@ -23,7 +26,6 @@ export function middleware(request: NextRequest) {
     },
   });
 
-  const headers = buildSecurityHeaders({ nonce, isDevelopment, reportOnly: false });
   for (const [name, value] of Object.entries(headers)) {
     response.headers.set(name, value);
   }

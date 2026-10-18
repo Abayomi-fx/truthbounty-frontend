@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Clock, Database } from 'lucide-react';
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Clock, Database, ShieldCheck, ShieldAlert } from 'lucide-react';
 import type { SystemHealthMetric } from '@/app/types/admin';
 
 export interface SystemHealthSummaryProps {
@@ -41,6 +41,9 @@ export function SystemHealthSummary({
       case 'degraded':
       case 'unavailable':
         return <XCircle className="h-4 w-4 text-destructive" aria-hidden="true" />;
+      case 'delayed':
+      case 'stale':
+        return <Clock className="h-4 w-4 text-amber-500" aria-hidden="true" />;
       default:
         return <Activity className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
     }
@@ -55,6 +58,9 @@ export function SystemHealthSummary({
       case 'degraded':
       case 'unavailable':
         return 'border-destructive/30 bg-destructive/10 text-destructive';
+      case 'delayed':
+      case 'stale':
+        return 'border-amber-500/30 bg-amber-500/10 text-amber-500';
       default:
         return 'border-border bg-muted/30 text-muted-foreground';
     }
@@ -72,6 +78,12 @@ export function SystemHealthSummary({
           <span>Live Telemetry</span>
         </span>
       </div>
+
+      <p className="text-[11px] text-muted-foreground/80" data-testid="system-health-disclaimer">
+        Observations reflect TruthBounty API/RPC/indexer/database projections. Third-party
+        dependency status is not a TruthBounty guarantee. Operational status does not change
+        protocol truth.
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="system-health-grid">
         {metrics.map((metric) => (
@@ -115,6 +127,25 @@ export function SystemHealthSummary({
                 <span>Freshness:</span>
                 <span>{new Date(metric.lastUpdated).toLocaleTimeString()}</span>
               </div>
+              {metric.abiVerified !== undefined && (
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground/80">
+                  <span className="flex items-center gap-1">
+                    {metric.abiVerified ? (
+                      <ShieldCheck className="h-3 w-3 text-emerald-500" aria-hidden="true" />
+                    ) : (
+                      <ShieldAlert className="h-3 w-3 text-destructive" aria-hidden="true" />
+                    )}
+                    <span>ABI/manifest</span>
+                  </span>
+                  <span>{metric.abiVerified ? 'verified' : 'unverified'}</span>
+                </div>
+              )}
+              {metric.affectedScope && (
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground/80">
+                  <span>Scope:</span>
+                  <span className="truncate">{metric.affectedScope}</span>
+                </div>
+              )}
             </div>
           </div>
         ))}

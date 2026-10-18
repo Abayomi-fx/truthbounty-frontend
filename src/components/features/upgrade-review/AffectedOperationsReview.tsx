@@ -11,7 +11,7 @@ import type { AffectedOperationReview } from '@/lib/upgrade-review/types';
  * Read-only: nothing here executes an operation.
  */
 export interface AffectedOperationsReviewProps {
-  affectedOperations: AffectedOperationReview[];
+  affectedOperations: readonly AffectedOperationReview[];
   className?: string;
 }
 

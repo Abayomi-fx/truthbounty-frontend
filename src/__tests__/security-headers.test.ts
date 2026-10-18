@@ -26,7 +26,7 @@ describe('V2-FE-131 & UI-FE-092 security headers', () => {
       expect(csp).toContain("object-src 'none'");
       expect(csp).toContain("frame-ancestors 'none'");
       expect(csp).toContain('upgrade-insecure-requests');
-      expect(csp).toContain('https://*.walletconnect.com');
+      expect(csp).toContain('wss://relay.walletconnect.com');
       expect(csp).toContain('https://id.worldcoin.org');
       expect(csp).not.toContain("'unsafe-eval'");
     });

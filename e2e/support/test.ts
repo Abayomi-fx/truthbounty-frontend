@@ -1,6 +1,24 @@
 import { test as base, expect, type Page, type Locator } from '@playwright/test';
 import { seededClaims, seededClaimById } from './claims';
 import type { ClaimListItem, ClaimsListEnvelope } from '../../src/app/types/claim-list';
+import { assertProductionEnv } from '../../src/app/lib/env';
+
+/**
+ * Local structural mirror of the contract-sourced stake review projection.
+ *
+ * Declared inline so the e2e stub does not depend on the component module's
+ * type surface; the UI remains the authority for rendering and validation.
+ */
+export interface StakeEffectiveWeightReview {
+  claimId: string;
+  rawStake: { value: string; unit: string; source: string };
+  adjustmentInputs: Array<{ id: string; label: string; value: string; unit: string; source: string }>;
+  effectiveWeight: { value: string; unit: string; source: string };
+  rewardRange: { min: { value: string; unit: string; source: string }; max: { value: string; unit: string; source: string } };
+  slashingExposure: { value: string; unit: string; source: string };
+  projection: { freshness: string; generatedAt: string };
+  changedBeforeAuthorization: boolean;
+}
 
 const STATUS_QUERY_MAP: Record<string, string> = {
   verified: 'VERIFIED',
@@ -19,7 +37,7 @@ const STATUS_QUERY_MAP: Record<string, string> = {
  * envelope. `highImpact` and `confidenceScore` are derived from the seeded
  * fixture only; they are stub values, not protocol reads.
  */
-function toListItem(claim: (typeof seededClaims)[number]): ClaimListItem {
+export function toListItem(claim: (typeof seededClaims)[number]): ClaimListItem {
   return {
     id: claim.id,
     title: claim.title,
@@ -35,7 +53,7 @@ function toListItem(claim: (typeof seededClaims)[number]): ClaimListItem {
 }
 
 /** Build a validated claims-list envelope for the given query parameters. */
-function claimsListEnvelope(params: URLSearchParams): ClaimsListEnvelope {
+export function claimsListEnvelope(params: URLSearchParams): ClaimsListEnvelope {
   const search = (params.get('search') ?? '').trim().toLowerCase();
   const rawStatus = params.get('status');
   const status = rawStatus
@@ -63,6 +81,35 @@ function claimsListEnvelope(params: URLSearchParams): ClaimsListEnvelope {
   };
 }
 
+/**
+ * Contract-sourced stake / effective-weight review projection.
+ *
+ * These values are stub projections only. They are freshness-labelled and
+ * never grant authority: the UI must treat them as display data and require a
+ * contract read before any authorization. `changedBeforeAuthorization` is
+ * always false here; tests that need the changed state override the route.
+ */
+export const SEEDED_STAKE_REVIEW: StakeEffectiveWeightReview = {
+  claimId: 'claim-1',
+  rawStake: { value: '1500000000000000000', unit: 'wei', source: 'contract' },
+  adjustmentInputs: [
+    { id: 'reputation', label: 'Reputation adjustment', value: '250000000000000000', unit: 'wei', source: 'contract' },
+    { id: 'history', label: 'History adjustment', value: '-100000000000000000', unit: 'wei', source: 'contract' },
+  ],
+  effectiveWeight: { value: '1650000000000000000', unit: 'wei', source: 'contract' },
+  rewardRange: {
+    min: { value: '50000000000000000', unit: 'wei', source: 'contract' },
+    max: { value: '250000000000000000', unit: 'wei', source: 'contract' },
+  },
+  slashingExposure: { value: '1500000000000000000', unit: 'wei', source: 'contract' },
+  projection: { freshness: 'fresh', generatedAt: '2024-01-02T00:00:00.000Z' },
+  changedBeforeAuthorization: false,
+};
+
+export function stakeReviewEnvelope(claimId: string): StakeEffectiveWeightReview {
+  return { ...SEEDED_STAKE_REVIEW, claimId };
+}
+
 function json(body: unknown, status = 200) {
   return {
     status,
@@ -72,6 +119,12 @@ function json(body: unknown, status = 200) {
 }
 
 export async function stubClaimsApi(page: Page) {
+  await page.route('**/api/claims/*/stake-review', async (route) => {
+    const segments = new URL(route.request().url()).pathname.split('/');
+    const claimId = segments[segments.length - 2] ?? '';
+    await route.fulfill(json(stakeReviewEnvelope(claimId)));
+  });
+
   await page.route('**/api/claims/*', async (route) => {
     const id = new URL(route.request().url()).pathname.split('/').pop() ?? '';
     const claim = seededClaimById.get(id);
@@ -80,6 +133,11 @@ export async function stubClaimsApi(page: Page) {
 
   await page.route('**/api/claims*', async (route) => {
     const request = route.request();
+
+    if (request.method() === 'POST' && /\/stake-review\/?$/.test(new URL(request.url()).pathname)) {
+      await route.fulfill(json({ message: 'Contract mutation required' }, 405));
+      return;
+    }
 
     if (request.method() === 'POST') {
       const payload = request.postDataJSON() as { title?: string; description?: string };
@@ -227,7 +285,12 @@ export async function readErrorSummaryEntries(
 export const test = base.extend<{ stubbedApi: void }>({
   stubbedApi: [
     async ({ page }, use) => {
+      // Re-assert the environment contract per test so a production build
+      // cannot silently run against placeholder or wrong-chain configuration.
+      assertProductionEnv(process.env);
+
       await stubClaimsApi(page);
+      await stubSupportApi(page);
       await use();
     },
     { auto: true },

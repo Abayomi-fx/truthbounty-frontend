@@ -87,7 +87,7 @@ export function AnalyticsConsentManager({ children }: AnalyticsConsentManagerPro
         setPreference("denied");
         setStorageAvailable(true);
         setNotice(
-          "Saved privacy choice was unreadable and has been reset. Optional analytics remains off.
+          "Saved privacy choice was unreadable and has been reset. Optional analytics remains off.",
         );
         setPanelOpen(true);
         return;

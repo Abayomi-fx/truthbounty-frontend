@@ -20,7 +20,13 @@ export type QueueItemState =
   | 'confirmed'
   | 'expired'
   | 'already-submitted'
-  | 'unavailable';
+  | 'unavailable'
+  | 'missed-reveal'
+  | 'wrong-salt'
+  | 'replaced'
+  | 'slashed'
+  | 'refunded'
+  | 'tied';
 
 export type Phase = 'commit' | 'reveal' | 'closed';
 
