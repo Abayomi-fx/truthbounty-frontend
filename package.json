@@ -19,6 +19,7 @@
     "test": "jest",
     "test:fixture-determinism": "node --test scripts/__tests__/verify-fixture-determinism.test.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:support-status-legal": "playwright test --config=playwright.support-status-legal.config.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:a11y": "jest --runInBand src/__tests__/accessibility",
