@@ -45,7 +45,7 @@ export interface DisputeDeadline {
   
   // State flags
   isWindowOpen: boolean; // Can still challenge
-  isWindowClosed: boolean; // Too late to challenge
+  isWindowClosed: boolean; // Toolate to challenge
   hasActiveDispute: boolean; // Already challenged
 }
 
@@ -167,7 +167,7 @@ export interface DisputeSimulationResult {
   projectedState?: {
     disputeId?: string;
     bondLocked: string;
-    newStatus: 'DISPUTED';
+    newStatus: 'DISPUTING';
   };
   
   // Transaction data
@@ -175,7 +175,7 @@ export interface DisputeSimulationResult {
     from: string;
     to: string;
     value?: string;
-    calldata: string;
+    callata: string;
   };
 }
 
@@ -285,3 +285,74 @@ export interface TopVerifier {
   staked: string;
   score: number;
 }
+
+/**
+ * Public dispute register entry.
+ *
+ * Projection only. The contract is canonical for all mutations and for
+ * final resolution state. The `outcomeState` field distinguishes a
+ * provisional outcome from a finalized one.
+ */
+export type DisputeOutcomeState = 'provisional' | 'final';
+
+export type DisputeResolutionState =
+  | 'OPEN'
+  | 'VOTING'
+  | 'RESOLVED'
+  | 'FAILED'
+  | 'APPEALED';
+
+export type DisputeRegisterEntry = {
+  id: string;
+  claimId: string;
+  claimTitle: string;
+  claimHref: string;
+  outcomeState: DisputeOutcomeState;
+  resolutionState: DisputeResolutionState;
+  challengerAddress: string;
+  bondAmountWei: string;
+  bondAssetSymbol: string;
+  openedAt: string; // ISO 8601
+  deadlineAt: string; // ISO 8601
+  appealable: boolean;
+  freshnessLabel: string; // human-readable freshness description
+  freshnessAt: string; // ISO 8601 of last projection update
+}
+
+export type DisputeEvidenceItem = {
+  id: string;
+  label: string;
+  url?: string;
+  description?: string;
+  // When the evidence reference fails sanitization the projection returns
+  // a sanitized placeholder instead of the raw URL.
+  sanitized: boolean;
+};
+
+export type DisputeTimelineEntry = {
+  id: string;
+  label: string;
+  at: string; // ISO 8601
+  actor: string;
+  detail?: string;
+};
+
+export type DisputeDetail = {
+  id: string;
+  claimId: string;
+  claimTitle: string;
+  claimHref: string;
+  outcomeState: DisputeOutcomeState;
+  resolutionState: DisputeResolutionState;
+  challengerAddress: string;
+  bondAmountWei: string;
+  bondAssetSymbol: string;
+  openedAt: string;
+  deadlineAt: string;
+  appealable: boolean;
+  appealDeadlineAt?: string;
+  freshnessLabel: string;
+  freshnessAt: string;
+  evidence: DisputeEvidenceItem[];
+  timeline: DisputeTimelineEntry[];
+};

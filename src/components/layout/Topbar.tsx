@@ -6,6 +6,7 @@ import TrustIndicator from '@/components/ui/TrustIndicator';
 import { WebSocketIndicator } from '@/components/ui/WebSocketStatus';
 import { PerformanceBudgetIndicator } from '@/components/features/PerformanceBudgetIndicator';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { DataSaverToggle } from '@/components/ui/DataSaverToggle';
 import { WalletConnection } from '../WalletConnection';
 import { FeatureFlagGate } from '@/components/providers';
 import { NetworkContextSelector } from './NetworkContextSelector';
@@ -54,6 +55,11 @@ const Topbar = () => {
         <FeatureFlagGate flag="PERFORMANCE_BUDGETS">
           <PerformanceBudgetIndicator />
         </FeatureFlagGate>
+
+        {/* Reduced-data / data-saver override (UI-FE-082) */}
+        <span className="hidden sm:inline-flex">
+          <DataSaverToggle />
+        </span>
 
         {/* Theme toggle */}
         <span className="hidden sm:inline-flex">

@@ -10,7 +10,8 @@
  * - Projection freshness (no writes on critical stale data)
  *
  * All actions fail closed: missing wallet, unsupported chain, or stale
- * projection disable the buttons with accessible reasons.
+ * projection disable the buttons with accessible reasons. Action availability
+ * is derived from canonical state only — never from a displayed countdown.
  */
 
 import React from 'react';
@@ -23,7 +24,7 @@ import type { UseClaimDetailFreshnessResult } from '@/hooks/useClaimDetailFreshn
 export interface ClaimActionsProps {
   claim: ClaimDetailProjection;
   freshness: UseClaimDetailFreshnessResult;
-  onVerify?: () => void;
+  onActionVerify?: () => void;
   onDispute?: () => void;
 }
 
@@ -72,7 +73,7 @@ function getActionBlockingReason(
   return null;
 }
 
-export function ClaimActions({ claim, freshness, onVerify, onDispute }: ClaimActionsProps) {
+export function ClaimActions({ claim, freshness, onActionVerify, onDispute }: ClaimActionsProps) {
   const wallet = useCanonicalWallet();
   const writeReadiness = useWriteReadiness({
     enabled: wallet.status === 'ready',

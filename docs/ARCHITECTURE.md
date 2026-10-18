@@ -418,7 +418,7 @@ Authenticated sessions are bound to the connected wallet scope
 ### 2. Performance
 - **Lazy loading**: Load code as needed
 - **Memoization**: Prevent unnecessary re-renders
-- **Optimistic updates**: Improve perceived performance
+- **Optimistic updates**: Restricted to an explicit safe allowlist; see [OPTIMISTIC_UPDATES.md](./OPTIMISTIC_UPDATES.md)
 
 ### 3. Accessibility
 - **Semantic HTML**: Proper element usage
@@ -483,6 +483,8 @@ For the **full, independently reviewable** security model of the frontend, see:
 | Telemetry redaction | `src/lib/security/redaction.ts` |
 | Sensitive path policy | `src/lib/security/sensitive-paths.ts` |
 | Evidence sanitization | `src/lib/security/evidence-sanitizer.ts` |
+| IPFS gateway integrity/failover | `src/lib/evidence-gateway.ts`, `docs/IPFS_GATEWAY_INTEGRITY.md` |
+| RPC health/quorum/failover | `src/lib/rpc-health/`, `docs/RPC_HEALTH_QUORUM.md` |
 | CSP + security headers | `src/lib/security/headers.ts`, `docs/SECURITY_HEADERS.md` |
 | SIWE auth | `src/lib/auth/siwe-client.ts`, `docs/SIWE_AUTH.md` |
 | Transaction lifecycle | `src/hooks/useTransactionMachine.ts`, `useReceiptProjection.ts`, `useFinalizationDetection.ts` |

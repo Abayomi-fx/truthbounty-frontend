@@ -76,7 +76,9 @@ try {
   if (!manifest.compilerVersion || !manifest.abiVersion || !manifest.eventSchemaVersion) {
     throw new Error('Manifest is missing compiler/ABI/event provenance fields');
   }
-
+if (!Number.isInteger(manifest.deploymentBlock) || manifest.deploymentBlock <= 0) {
+    throw new Error(`Manifest deploymentBlock must be a positive integer: ${manifest.deploymentBlock}`);
+}
   const addresses = readJson(join(releaseDir, `addresses/${manifest.chainId}.json`));
   if (addresses.chainId !== manifest.chainId) {
     throw new Error('Address map chainId mismatch');

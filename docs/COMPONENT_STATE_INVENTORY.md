@@ -1,15 +1,19 @@
 # Component States and Storybook Coverage Inventory
 
 > **Document ID:** STAB-DOC-FE-003  
+> **Issue:** [UI-FE-002](https://github.com/DigiNodes/truthbounty-protocol/issues/UI-FE-002) — Complete the Storybook Primitive Catalogue  
+> **Visual Authority:** [Component primitives](https://github.com/DigiNodes/truthbounty-protocol/blob/main/designs/frontend-v2/foundation/boards/04-component-primitives.svg)  
 > **Linked Issue:** [#434](https://github.com/DigiNodes/truthbounty-frontend/issues/434)  
 > **Status:** Implementation Baseline / Normative Inventory  
 > **Authority:** Frontend / UX Maintainers  
 > **Companion Documents:**
+> - [Responsive and Accessibility Acceptance Matrix (`docs/RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/RESPONSIVE_ACCESSIBILITY_ACCEPTANCE_MATRIX.md) (STAB-DOC-FE-002)
 > - [UI State Model (`docs/UI_STATE_MODEL.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/UI_STATE_MODEL.md)
 > - [V2 Design System (`docs/ux/DESIGN_SYSTEM.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/ux/DESIGN_SYSTEM.md)
 > - [Transaction State Model (`docs/ux/TRANSACTION_STATE_MODEL.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/ux/TRANSACTION_STATE_MODEL.md)
 > - [Information Architecture (`docs/ux/INFORMATION_ARCHITECTURE.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/ux/INFORMATION_ARCHITECTURE.md)
 > - [Threat Model (`docs/THREAT_MODEL.md`)](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/docs/THREAT_MODEL.md)
+> - [Frontend Implementation Matrix](https://github.com/DigiNodes/truthbounty-protocol/blob/main/docs/ux-authority/FRONTEND_IMPLEMENTATION_MATRIX.md)
 
 ---
 
@@ -21,6 +25,7 @@ The purpose of this inventory is to establish a rigorous, exhaustive record of a
 3. **Storybook & Test Coverage Audit:** Explicit verification of existing Storybook stories and Jest unit/integration tests, highlighting reproducible gaps.
 4. **Duplicate & Orphan Identification:** Cataloging duplicated and orphaned components without refactoring them in this issue, preserving strict contribution boundaries.
 5. **Actionable Implementation Proposals:** Structured roadmap dividing necessary remediation into dedicated future issues.
+6. **Primitive Catalogue Completion (UI-FE-002):** Normative mapping of every approved primitive to its typed Storybook story, documented usage, and required interaction/accessibility/fixture-isolation test coverage.
 
 ---
 
@@ -39,6 +44,8 @@ Per [`docs/UI_STATE_MODEL.md`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/tru
 | **`confirmed`** | Included in block, receipt observed, block confirmations accumulating | `role="status"`, confirmation count (never claim finality prematurely) | `useReceiptProjection`, `useFinalizationDetection` |
 | **`finalized`** | Finality threshold met per canonical chain parameters | `role="status"`, durable settled outcome | `useFinalizationDetection` state `finalized` |
 | **`reorged`** | Previously confirmed block removed by chain reorganization | `role="alert"`, amber banner, auto-reconciliation | `useReorgReconciliation`, `useStateReconciliation` |
+
+> **Authority note (UI-FE-002):** Optimism/EVM only. UI context, wallet connection, API data, and Storybook fixtures never establish protocol authority. Contract state is canonical for mutations; API data is a freshness-labelled projection. Storybook fixtures remain isolated from production adapters; unpinned actions render unavailable.
 
 ---
 
@@ -59,11 +66,15 @@ Below is the mapping of all approved application screens to their entrypoints, r
 | **Claim Detail Redirect** | `/claim-detail` | [`src/app/(dashboard)/claim-detail/page.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/app/(dashboard)/claim-detail/page.tsx) | [`MotionSafeStatus`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/MotionSafeStatus.tsx) |
 | **Global Frame** | All Routes | [`src/app/layout.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/app/layout.tsx) | [`Providers`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/app/providers.tsx), [`Sidebar`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/layout/Sidebar.tsx), [`Topbar`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/layout/Topbar.tsx), [`TrustWarningBanner`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/TrustWarningBanner.tsx), [`OfflineBanner`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/OfflineBanner.tsx) |
 
+> **Storybook isolation (UI-FE-002):** All stories in this catalogue must render against isolated fixtures only. Stories must never import production adapters, live RPC clients, wallet connectors, or API clients. Any action whose authority cannot be pinned to a fixture must render as `unavailable` (disabled, `aria-disabled="true"`, with explanatory copy) rather than as an enabled control.
+
 ---
 
 ## 4. Comprehensive Component State & Coverage Matrix
 
 ### 4.1 Design System Primitives & Shared Controls
+
+> **UI-FE-002 scope:** The rows below marked **Approved Primitive** are in scope for the UI-FE-002 primitive catalogue. Each must ship a typed `*.stories.tsx` file, documented usage (JSDoc or MDX), and interaction/accessibility/fixture-isolation tests. Rows marked **Out of scope (UI-FE-002)** remain tracked under their own follow-up issues.
 
 | Component Path | Consuming Screens | Supported States | Missing States | Storybook Story | Unit / Integration Test | Notes / Gaps |
 |---|---|---|---|---|---|---|
@@ -85,6 +96,39 @@ Below is the mapping of all approved application screens to their entrypoints, r
 | [`src/components/ui/TrustWarningBanner.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/TrustWarningBanner.tsx) | Global (`MainLayout`) | `permission denied`, `error` | None | ❌ **Missing** | [`TrustWarningBanner.test.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/__tests__/TrustWarningBanner.test.tsx) | Warns users with unverified/low-trust accounts. |
 | [`src/components/ui/WebSocketStatus.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/WebSocketStatus.tsx) | Topbar | `loading`, `error`, `stale`, `confirmed` | None | ❌ **Missing** | [`WebSocketStatus.test.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/__tests__/WebSocketStatus.test.tsx) | Realtime sync state indicator. Needs Storybook story. |
 | [`src/components/ui/skeleton.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/skeleton.tsx) | All Skeletons | `loading` | None | ❌ **Missing** | None (tested via components) | Base pulse placeholder. Needs story for pulse / reduced-motion. |
+
+---
+
+### 4.1.1 UI-FE-002 Approved Primitive Catalogue (Normative)
+
+The following table is the normative UI-FE-002 deliverable. Every row is an **Approved Primitive** and must be satisfied before the issue can close. "Story file" is the required co-located path. "States covered" enumerates the minimum Storybook stories. "Interaction test" enumerates the required `play` function assertions. "A11y checks" enumerates the required automated checks. "Fixture isolation" enumerates the required isolation guarantees.
+
+| # | Approved Primitive | Story file (required) | States covered (minimum) | Interaction test (play fn) | A11y checks | Fixture isolation |
+|---|---|---|---|---|---|---|
+| 1 | **Buttons** — [`src/components/ui/button.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/button.tsx) | `src/components/ui/button.stories.tsx` (extend) | default, hover, focus-visible, active, disabled, loading, error, destructive | click → `onClick` spy; keyboard `Enter`/`Space`; loading blocks re-entry; disabled blocks click | accessible name, focus ring contrast, reduced-motion, 200% zoom | no wallet/RPC imports; `onClick` is a spy |
+| 2 | **Links** — [`src/components/security/SafeExternalLink.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/security/SafeExternalLink.tsx) | `src/components/security/SafeExternalLink.stories.tsx` | default, hover, focus-visible, active, disabled, error (invalid URL) | click → `onClick` spy; keyboard activation; invalid URL renders error state | accessible name, `rel="noopener noreferrer"`, focus ring contrast | URL fixtures only; no live navigation |
+| 3 | **Fields** — [`src/components/ui/primitives/Field.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/primitives/Field.tsx) | `src/components/ui/primitives/Field.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | type → `onChange` spy; blur → `onBlur`; error announced via `aria-describedby` | label association, error `role="alert"`, contrast, 200% zoom | controlled fixture state only |
+| 4 | **Text areas** — [`src/components/ui/primitives/TextArea.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/primitives/TextArea.tsx) | `src/components/ui/primitives/TextArea.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | type → `onChange` spy; resize handle keyboard; max-length counter | label association, error announcement, contrast | controlled fixture state only |
+| 5 | **Selectors** — [`src/components/ui/primitives/Selector.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/primitives/Selector.tsx) | `src/components/ui/primitives/Selector.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | open → option list; arrow keys move focus; `Enter` selects; `Escape` closes | `role="listbox"`/`option`, accessible name, focus trap | static option fixtures only |
+| 6 | **Uploads** — [`src/features/evidence-upload/EvidenceUploader.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/features/evidence-upload/EvidenceUploader.tsx) | `src/features/evidence-upload/EvidenceUploader.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | drop file → `onFiles` spy; keyboard file picker; reject oversize | accessible name, `role="status"` for progress, contrast | in-memory `File` fixtures; no network |
+| 7 | **Cards** — [`src/components/ui/primitives/Card.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/primitives/Card.tsx) | `src/components/ui/primitives/Card.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | click → `onClick` spy when interactive; non-interactive has no handler | landmark/heading semantics, contrast | presentational fixtures only |
+| 8 | **Tables/Cards** — [`src/components/features/ActiveClaimsTable.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/features/ActiveClaimsTable.tsx) | `src/components/features/ActiveClaimsTable.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | row focus, sort toggle, row action spy | `role="table"`, header association, contrast | static row fixtures only |
+| 9 | **Filters** — [`src/components/features/ActiveClaimsTable.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/features/ActiveClaimsTable.tsx) (filter bar) | `src/components/features/ActiveClaimsTable.stories.tsx` (FilterBar story) | default, hover, focus-visible, active, disabled, loading, error, read-only | toggle filter → `onFilterChange` spy; clear filters; keyboard nav | group label, `aria-pressed`, contrast | static filter fixtures only |
+| 10 | **Tabs** — [`src/components/ui/primitives/Tabs.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/primitives/Tabs.tsx) | `src/components/ui/primitives/Tabs.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | arrow keys move tab; `Enter`/`Space` activates; `Home`/`End` jump | `role="tablist"`/`tab`/`tabpanel`, `aria-selected`, contrast | static panel fixtures only |
+| 11 | **Badges** — [`src/components/ui/primitives/StatusBadge.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/primitives/StatusBadge.tsx) | `src/components/ui/primitives/StatusBadge.stories.tsx` (extend) | default, hover, focus-visible, active, disabled, loading, error, read-only | none (non-interactive); assert `aria-disabled` when disabled | accessible name, contrast, reduced-motion | static status fixtures only |
+| 12 | **Notices** — [`src/components/ui/TrustWarningBanner.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/TrustWarningBanner.tsx) | `src/components/ui/TrustWarningBanner.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | dismiss → `onDismiss` spy; action → `onAction` spy | `role="status"`/`alert`, contrast, reduced-motion | static copy fixtures only |
+| 13 | **Timelines** — [`src/components/features/claim-lifecycle/ClaimLifecycleTimeline.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/features/claim-lifecycle/ClaimLifecycleTimeline.tsx) | `src/components/features/claim-lifecycle/ClaimLifecycleTimeline.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | focus each event; expand/collapse; assert `aria-current` on active step | ordered list semantics, `aria-current`, contrast | static 21-event fixture only |
+| 14 | **Drawers** — [`src/components/layout/Sidebar.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/layout/Sidebar.tsx) (mobile drawer) | `src/components/layout/Sidebar.stories.tsx` (Drawer story) | default, hover, focus-visible, active, disabled, loading, error, read-only | open/close via trigger; `Escape` closes; focus trap; restore focus | `role="dialog"`, `aria-modal`, focus trap, contrast | static nav fixtures only |
+| 15 | **Dialogs** — [`src/components/ui/TrustExplanationModal.tsx`](file:///c:/Users/hp/OneDrive/Desktop/GrantFox/truthbounty-frontend/src/components/ui/TrustExplanationModal.tsx) | `src/components/ui/TrustExplanationModal.stories.tsx` | default, hover, focus-visible, active, disabled, loading, error, read-only | open/close; `Escape` closes; focus trap; confirm/cancel spies | `role="dialog"`, `aria-modal`, labelled title, contrast | static copy fixtures only |
+
+#### 4.1.2 Destructive & Privileged Control Boundaries (UI-FE-002)
+
+Every destructive or privileged control surfaced by the approved primitives above must satisfy the following before its story is considered complete:
+
+- **Explicit impact copy** stating the irreversible or authority-bearing effect (e.g. "Withdraws treasury funds to the recipient. This cannot be undone.").
+- **Confirmation boundary** — a two-step confirm (typed confirmation for treasury withdrawals; explicit confirm dialog for destructive actions) with the confirm action disabled until the boundary is satisfied.
+- **Unavailable rendering** — when the action's authority cannot be pinned to a fixture, the control renders `disabled` with `aria-disabled="true"` and explanatory copy; it must not silently no-op.
+- **Story coverage** — dedicated `Destructive*` and `Unavailable*` stories exist for each such control, with `play` assertions that the confirm boundary blocks the action until satisfied.
 
 ---
 
@@ -278,6 +322,8 @@ graph TD
 
 ## 6. Storybook and Test Coverage Gap Analysis
 
+> **UI-FE-002 closure condition:** Section 4.1.1 rows 1–15 must all be satisfied. The quantitative summary below reflects the pre-UI-FE-002 baseline and is superseded for the approved primitives by the catalogue in Section 4.1.1.
+
 ### 6.1 Quantitative Summary
 
 - **Total Production Components Cataloged:** 74
@@ -323,6 +369,8 @@ The lack of Storybook coverage creates significant visual regression risks for u
 
 ## 7. Recommended Implementation Work (Proposed Follow-up Issues)
 
+> **UI-FE-002 note:** Issue B below is the direct implementation vehicle for the Section 4.1.1 catalogue. Issues A, C, and D remain separate follow-ups and are not bundled into UI-FE-002.
+
 In strict adherence to the acceptance criteria, the following tasks are formally structured as separate GitHub issues to be scheduled in subsequent waves:
 
 ### Issue A: Consolidate Duplicate UI & Orphan Feature Components
@@ -356,6 +404,8 @@ In strict adherence to the acceptance criteria, the following tasks are formally
 ---
 
 ## 8. Verification and Quality Evidence
+
+> **UI-FE-002 required evidence:** lint, typecheck, unit/component tests, Storybook interaction tests, Storybook build, and production build must all pass. Accessibility evidence must include keyboard, focus, accessible-name, contrast, reduced-motion, and 200% zoom checks. Visual regression must cover approved desktop, tablet, and mobile widths. Fixture isolation must be demonstrated by a test that fails if any story imports a production adapter, live RPC client, wallet connector, or API client.
 
 - **Repository Integrity:** All 74 components verified against physical filesystem paths.
 - **Zero Production Mutation:** This documentation change is 100% additive; no production bundle code, components, styles, or dependencies were altered or weakened.

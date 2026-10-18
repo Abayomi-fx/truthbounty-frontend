@@ -17,6 +17,20 @@ permissions:
   contents: read
 
 jobs:
+  providers:
+    name: CSP and provider drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - run: corepack enable pnpm && pnpm install --frozen-lockfile
+      - run: pnpm verify:providers
+      - run: pnpm test:providers
+      # Credentialed production coverage runs separately in csp-rehearsal.yml.
+      # A green fork gate proves static obligations, not live provider usage.
+
   artifacts:
     name: Artifacts
     runs-on: ubuntu-latest
@@ -29,6 +43,12 @@ jobs:
           node-version: 24
       - name: Verify contract release artifacts (drift fails here)
         run: node scripts/verify-artifacts.mjs
+      - name: Scan source and release inputs for public-boundary leaks
+        run: node scripts/secret-scan.mjs src release next.config.ts
+      - name: Verify fixture determinism (nondeterministic clocks/random ids fail here)
+        run: |
+          node scripts/verify-fixture-determinism.mjs
+          node --test scripts/__tests__/verify-fixture-determinism.test.mjs
 
   lint:
     name: Lint & Style
@@ -70,6 +90,27 @@ jobs:
           fi
       - name: Run linter
         run: npm run lint
+
+  token-drift:
+    name: Design-Token Drift Gate (UI-FE-091)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Run token-drift static check
+        run: node scripts/check-token-drift.mjs --report-file reports/token-drift-report.json
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: token-drift-report
+          path: reports/token-drift-report.json
+          retention-days: 30
 
   test:
     name: Unit & Integration Tests
@@ -177,7 +218,7 @@ jobs:
   e2e:
     name: E2E
     runs-on: ubuntu-latest
-    needs: [test, a11y]
+    needs: [test, a11y, token-drift]
     steps:
       - name: Preflight — require a real WalletConnect project id
         env:
@@ -236,3 +277,65 @@ jobs:
         run: npm run type-check
       - name: Build production app
         run: npm run build
+      - name: Scan browser bundles, source maps, HTML, and RSC payloads
+        run: node scripts/secret-scan.mjs .next
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E tests (including deployment-preview verification)
+        env:
+          NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
+          E2E_HARNESS: "1"
+        run: npm run test:e2e
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  preview-verification:
+    name: Deployment Preview Verification
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Detect package manager
+        id: pkg
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f yarn.lock ]; then
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+          else
+            echo "manager=npm" >> $GITHUB_OUTPUT
+          fi
+      - name: Cache dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            node_modules
+            ~/.pnpm-store
+          key: ${{ runner.os }}-${{ steps.pkg.outputs.manager }}-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ steps.pkg.outputs.manager }}-
+      - name: Install dependencies
+        run: |
+          if [ "${{ steps.pkg.outputs.manager }}" = "pnpm" ]; then
+            corepack enable pnpm && pnpm install --frozen-lockfile
+          elif [ "${{ steps.pkg.outputs.manager }}" = "yarn" ]; then
+            corepack enable yarn && yarn install --frozen-lockfile
+          else
+            npm ci
+          fi
+      - name: Run deployment-preview unit tests (V2-FE-064)
+        run: npx jest --runInBand src/lib/deployment src/components/preview
+      - name: Verify no hardcoded secret values in deployment preview modules
+        # Scans for actual high-entropy secret VALUES (64-hex private keys, sk_live_ tokens)
+        # NOT for the word "secret" in comments or variable names — those are legitimate.
+        run: node scripts/verify-production-boundaries.mjs source --root .
