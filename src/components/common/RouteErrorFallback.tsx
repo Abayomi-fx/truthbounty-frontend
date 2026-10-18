@@ -3,6 +3,10 @@
 import { useEffect, useRef } from 'react';
 
 import { toSafeErrorMessage } from '@/lib/sanitize-error';
+import {
+  SystemState,
+  type SystemStateAction,
+} from '@/components/common/SystemState';
 
 /**
  * Canonical route error categories. Route boundaries must distinguish
@@ -94,6 +98,20 @@ export function RouteErrorFallback({
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
+
+  const actions: SystemStateAction[] = [
+    {
+      label: 'Try again',
+      onClick: reset,
+      variant: 'primary',
+      autoFocus: true,
+    },
+    {
+      label: 'Go back',
+      onClick: () => window.history.back(),
+      variant: 'secondary',
+    },
+  ];
 
   return (
     <div
