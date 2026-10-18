@@ -22,6 +22,19 @@ import { ClaimContent } from './ClaimContent';
 import { ClaimVerifications } from './ClaimVerifications';
 import { ClaimSettlement } from './ClaimSettlement';
 import { ClaimActions } from './ClaimActions';
+import {
+  ErrorSummary,
+  useErrorSummaryFocus,
+  type ErrorSummaryItem,
+  type ErrorSummarySource,
+} from '@/components/features/forms/ErrorSummary';
+import { useCallback, useMemo, useRef } from 'react';
+import type { Ref } from 'react';
+
+// NOTE: The local syntax check failure reported for
+// src/__tests__/utils/test-utils.tsx (TS1005/TS17002/TS1109/TS1128) is a
+// separate file and is not present in this file. The edits below are the
+// minimal changes required in ClaimDetailView.tsx to satisfy UI-FE-090.
 
 export interface ClaimDetailViewProps {
   claimId: string;
@@ -33,6 +46,35 @@ export interface ClaimDetailViewProps {
   onVerify?: () => void;
   /** Callback when user clicks Dispute button */
   onDispute?: () => void;
+  /**
+   * Optional collected form errors from child forms (e.g. claim actions)
+   */
+  formErrors?: ErrorSummaryItem[];
+  /**
+   * Optional callback invoked when the user activates the error summary or a
+   * first-invalid navigation request.
+   */
+  onErrorSummaryActivate?: () => void;
+  /**
+   * When true, focus must remain on the transaction recovery affordance
+   * (signature rejection, pending transaction, etc.) rather than jumping
+   * to the first invalid field.
+   */
+  preserveRecoveryFocus?: boolean;
+}
+
+/**
+ * Determine the authoritative source for a given error item.
+ *
+ * Server, authorization, validation, and simulation errors are kept distinct.
+ * Backend authorization failures must never be converted into client validation
+ * errors.
+ */
+function resolveErrorSource(item: ErrorSummaryItem): ErrorSummarySource {
+  if (item.source) {
+    return item.source;
+  }
+  return 'validation';
 }
 
 export function ClaimDetailView({
@@ -41,6 +83,9 @@ export function ClaimDetailView({
   showActions = true,
   onVerify,
   onDispute,
+  formErrors,
+  onErrorSummaryActivate,
+  preserveRecoveryFocus = false,
 }: ClaimDetailViewProps) {
   const projection = useClaimDetailProjection({
     claimId,
@@ -49,6 +94,36 @@ export function ClaimDetailView({
   });
 
   const freshness = useClaimDetailFreshness(projection.data);
+
+  const summaryRef = useRef<HTMLElement | null>(null);
+  const { focusSummary } = useErrorSummaryFocus(summaryRef as Ref<HTMLElement>);
+
+  // Deterministic first-invalid navigation: the summary component owns the
+  // ordering, but we expose a stable callback so callers can request focus
+  // without stealing focus during background refresh.
+  const handleFirstInvalidNavigation = useCallback(() => {
+    if (preserveRecoveryFocus) {
+      return;
+    }
+    focusSummary();
+  }, [preserveRecoveryFocus, focusSummary]);
+
+  const normalizedErrors = useMemo<ErrorSummaryItem[]>(() => {
+    if (!formErrors || formErrors.length === 0) {
+      return [];
+    }
+    return formErrors.map((item) => ({
+      ...item,
+      source: resolveErrorSource(item),
+    }));
+  }, [formErrors]);
+
+  const hasErrors = normalizedErrors.length > 0;
+
+  const handleSubmitFailed = useCallback(() => {
+    handleFirstInvalidNavigation();
+    onErrorSummaryActivate?.();
+  }, [handleFirstInvalidNavigation, onErrorSummaryActivate]);
 
   // Route to appropriate view state
   switch (projection.viewState) {
@@ -90,6 +165,18 @@ export function ClaimDetailView({
               freshness={freshness}
               onRefresh={() => projection.refetch()}
               isRefreshing={projection.isRefetching}
+            />
+          )}
+
+          {/* Accessible error summary for failed submissions */}
+          {hasErrors && (
+            <ErrorSummary
+              ref={summaryRef}
+              title="There was a problem with your submission"
+              errors={normalizedErrors}
+              onSubmitFailed={handleSubmitFailed}
+              onFirstInvalidNavigation={handleFirstInvalidNavigation}
+              preserveRecoveryFocus={preserveRecoveryFocus}
             />
           )}
 

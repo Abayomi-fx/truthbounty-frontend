@@ -69,7 +69,8 @@ describe('Issue #436 V2-FE-151 — Role-Aware Application Shell & Canonical Navi
       expect(APP_ROUTES.NEW_CLAIM).toBe('/claims/new');
       expect(APP_ROUTES.HOW_IT_WORKS).toBe('/how-it-works');
       expect(APP_ROUTES.IDENTITY).toBe('/identity');
-      expect(APP_ROUTES.REWARDS).toBe('/rewards');
+      expect(APP_ROUTES.REWARDS).toBe('/dashboard/rewards');
+      expect(APP_ROUTES.TRANSACTIONS).toBe('/dashboard/transactions');
       expect(APP_ROUTES.VERIFIER).toBe('/verifier');
       expect(APP_ROUTES.DISPUTES).toBe('/disputes');
       expect(APP_ROUTES.ADMIN).toBe('/admin');
@@ -386,4 +387,11 @@ describe('Issue #436 V2-FE-151 — Role-Aware Application Shell & Canonical Navi
       expect(screen.getByTestId('page-child')).toBeInTheDocument();
     });
   });
+});
+
+it.each(['/dashboard/rewards', '/dashboard/transactions', '/rewards'])('protects the personal route %s without inferring protocol authority', path => {
+  const roles = { isVerifier: false, isAdmin: false, isClaimant: true, isGuest: false };
+  expect(isRouteAllowed(path, false, true, roles).denialReason).toBe('wallet_disconnected');
+  expect(isRouteAllowed(path, true, false, roles).denialReason).toBe('wrong_chain');
+  expect(isRouteAllowed(path, true, true, roles).isAllowed).toBe(true);
 });
