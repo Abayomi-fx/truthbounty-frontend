@@ -1,0 +1,47 @@
+{
+  "_comment": "Token-drift allowlist (UI-FE-091 / #665). Each entry documents a legitimate exception to the forbidden raw-value rules defined in docs/design-system/COMPONENT_DEPRECATION_POLICY.md. The 'baseline' count must equal the number of entries in 'exceptions'. CI fails if the live count grows above 'approved' without a corresponding update.",
+  "baseline": 5,
+  "approved": 5,
+  "exceptions": [
+    {
+      "id": "recharts-chart-colors",
+      "file": "src/components/**/*Chart*.tsx",
+      "pattern": "raw-oklch-in-classname|raw-hex-color",
+      "reason": "recharts data-visualisation library requires raw colour values for CartesianGrid, Line and Bar fills. The CSS-variable tokens are not reachable inside SVG paint attributes in all target browsers. Consumers must still label series with accessible text; colour alone does not carry meaning.",
+      "reviewer": "maintainer-placeholder",
+      "expiresAt": "2027-04-17"
+    },
+    {
+      "id": "third-party-widget-wrapper",
+      "file": "src/components/ui/ConnectButton.tsx",
+      "pattern": "raw-hex-color",
+      "reason": "RainbowKit ConnectButton overrides require matching the external library's internal colour scheme. The wrapper class is intentionally isolated and has no semantic-token equivalent. Reviewed against upstream RainbowKit theming API.",
+      "reviewer": "maintainer-placeholder",
+      "expiresAt": "2027-04-17"
+    },
+    {
+      "id": "legacy-skeletons-hex",
+      "file": "src/components/skeletons/**",
+      "pattern": "raw-hex-color",
+      "reason": "Pre-existing skeleton components introduced before the V2 token contract (UI-FE-091 baseline). These files use raw hex from the legacy dark palette. Migration to semantic tokens is tracked as a follow-up. Do NOT add new skeleton files to this exemption — use token utilities from day one.",
+      "reviewer": "maintainer-placeholder",
+      "expiresAt": "2027-04-17"
+    },
+    {
+      "id": "legacy-features-hex",
+      "file": "src/components/features/**",
+      "pattern": "raw-hex-color|inline-px-margin|inline-px-padding",
+      "reason": "Pre-existing feature components introduced before the V2 token contract (UI-FE-091 baseline). These files contain raw hex, inline margins, and inline padding from the pre-token era. Migration is tracked as a follow-up. Do NOT add new feature files to this exemption — use token utilities from day one.",
+      "reviewer": "maintainer-placeholder",
+      "expiresAt": "2027-04-17"
+    },
+    {
+      "id": "legacy-ui-components-hex",
+      "file": "src/components/ui/Trust*.tsx",
+      "pattern": "raw-hex-color",
+      "reason": "Pre-existing Trust* UI components introduced before the V2 token contract (UI-FE-091 baseline). Migration to semantic tokens is tracked as a follow-up. Do NOT add new Trust* components to this exemption without review.",
+      "reviewer": "maintainer-placeholder",
+      "expiresAt": "2027-04-17"
+    }
+  ]
+}
