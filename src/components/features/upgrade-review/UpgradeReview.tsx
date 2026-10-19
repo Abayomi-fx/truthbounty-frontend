@@ -49,14 +49,11 @@ export function UpgradeReview({
   authorized = true,
   unauthorizedReason = null,
 }: UpgradeReviewProps) {
-  const resolved = snapshot;
-  const candidate: UpgradeCandidateDescriptor | null =
-    resolved?.candidate ?? null;
-  const currentRelease: CurrentReleaseReview | null =
-    resolved?.currentRelease ?? null;
+  const resolved = snapshot ?? null;
 
-  const candidateBlockedReasons =
-    candidate !== null ? resolveCandidateVerification(candidate) : [];
+  const candidateBlockedReasons = resolved
+    ? resolveCandidateVerification(resolved.candidate)
+    : [];
   const candidateExecutionBlocked =
     (resolved?.blockedReasons.length ?? 0) > 0;
 
@@ -85,8 +82,8 @@ export function UpgradeReview({
         />
       ) : resolved !== null ? (
         <UpgradeReviewContent
-          currentRelease={currentRelease}
-          candidate={candidate}
+          currentRelease={resolved.currentRelease}
+          candidate={resolved.candidate}
           candidateBlockedReasons={candidateBlockedReasons}
           candidateExecutionBlocked={candidateExecutionBlocked}
           lifecycleState={resolved.currentLifecycle.state}

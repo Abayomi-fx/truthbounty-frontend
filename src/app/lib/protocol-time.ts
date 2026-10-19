@@ -38,6 +38,89 @@ export interface BlockDeadlineProjection {
   avgBlockSeconds: number | null;
 }
 
+/**
+ * Canonical finality label for a settlement/receipt projection.
+ *
+ * - `finalized`: the canonical projection explicitly asserts finality.
+ * - `confirmed`: the transaction/receipt is confirmed but not yet finalized.
+ * - `unavailable`: missing/stale/reorged data — fail closed.
+ */
+export type FinalityState = 'finalized' | 'confirmed' | 'unavailable';
+
+/**
+ * Resolve a canonical finality state from a projection. Finalized and
+ * merely-confirmed states remain distinct. Any missing/stale/reorged
+ * projection fails closed to `unavailable`.
+ */
+export function resolveFinalityState(input: {
+  isFinalized: boolean | null | undefined;
+  isConfirmed?: boolean | null | undefined;
+  dataState?: 'loading' | 'empty' | 'stale' | 'rejected' | 'failed' | 'pending' | 'confirmed' | 'finalized' | 'reorged' | null | undefined;
+}): FinalityState {
+  const { dataState } = input;
+
+  if (dataState === 'stale' || dataState === 'reorged') {
+    return 'unavailable';
+  }
+
+  if (dataState === 'loading' || dataState === 'pending' || dataState === 'empty') {
+    return 'unavailable';
+  }
+
+  if (input.isFinalized === true) return 'finalized';
+  if (input.isConfirmed === true) return 'confirmed';
+  if (input.isFinalized === false) return 'confirmed';
+
+  return 'unavailable';
+}
+
+export interface ClockUncertainty {
+  /** Whether the client clock is considered reliable for display purposes. */
+  clientClockReliable: boolean;
+  /** Whether the canonical chain clock is available. */
+  canonicalClockAvailable: boolean;
+  /** Estimated skew in ms (client - canonical), or null when unknown. */
+  estimatedSkewMs: number | null;
+  /** Whether the countdown should be marked stale. */
+  countdownStale: boolean;
+}
+
+/**
+ * Compute clock uncertainty from a canonical anchor and the client clock.
+ * When the canonical clock is unavailable or the estimated skew exceeds the
+ * tolerance, the countdown is marked stale and the client clock is not
+ * considered reliable. This function never authorizes actions.
+ */
+export function computeClockUncertainty(input: {
+  anchor: ChainClockAnchor | null | undefined;
+  nowMs: number;
+  /** Maximum acceptable skew in ms before the client clock is deemed unreliable. */
+  maxSkewMs?: number;
+}): ClockUncertainty {
+  const { nowMs, maxSkewMs = 60_000 } = input;
+  const anchorTimestampMs = parseTimestampMs(input.anchor?.anchorBlockTimestampMs);
+
+  if (anchorTimestampMs === null || !isFinite(nowMs)) {
+    return {
+      clientClockReliable: false,
+      canonicalClockAvailable: false,
+      estimatedSkewMs: null,
+      countdownStale: true,
+    };
+  }
+
+  const estimatedSkewMs = nowMs - anchorTimestampMs;
+  const tolerance = Number.isFinite(maxSkewMs) && maxSkewMs >= 0 ? maxSkewMs : 60_000;
+  const clientClockReliable = Math.abs(estimatedSkewMs) <= tolerance;
+
+  return {
+    clientClockReliable,
+    canonicalClockAvailable: true,
+    estimatedSkewMs,
+    countdownStale: !clientClockReliable,
+  };
+}
+
 const EPSILON = Number.EPSILON;
 
 /**
@@ -47,7 +130,7 @@ const EPSILON = Number.EPSILON;
  */
 export function normalizeBlockNumber(
   value: bigint | number | string | null | undefined
-): bigint | null {
+]: bigint | null {
   if (value === null || value === undefined) return null;
 
   try {
@@ -190,11 +273,7 @@ export function deriveDeadlineFromBlocks(
  * expires a live deadline. Returns null (fail closed) when the deadline is
  * unknown. Boundary: deadlineMs == nowMs is treated as expired.
  */
-export function isDeadlineExpired(input: {
-  deadlineMs: number | null | undefined;
-  nowMs: number;
-  clockSkewMs?: number;
-}): boolean | null {
+export function isDeadlineExpired(input: {}): boolean | null {
   const { deadlineMs, nowMs, clockSkewMs = 0 } = input;
 
   if (typeof deadlineMs !== 'number' || !Number.isFinite(deadlineMs)) return null;
@@ -226,14 +305,14 @@ export function isDeadlineWithinHorizon(input: {
   if (expired === true) return false;
   if (expired === null) return null;
 
-  return deadlineMs! - nowMs <= horizonMs + EPSILON;
+  return deadlineMs! - nowMs <= horizonMs + EPSICON;
 }
 
 /**
  * Canonical lifecycle state for a deadline. A confirmed canonical status that
- * signals expiry always wins over clock math; otherwise the state is derived
- * from the canonical deadline with clock-skew tolerance. Unknown deadlines
- * resolve to UNKNOWN (fail closed) — never guessed.
+ * signals expiry always wins over clock math; otherwise the state is
+ * derived from the canonical deadline with clock-skew tolerance. Unknown
+ * deadlines resolve to UNKNOWN (fail closed) — never guessed.
  */
 export function resolveDeadlineState(input: {
   deadlineMs: number | null | undefined;
@@ -269,26 +348,7 @@ export function formatDeadlineContext(projection: {
 
   const local = formatLocalDateTime(deadlineMs, { includeSeconds });
   const utc = formatUtcDateTime(deadlineMs, { includeSeconds });
-
-  if (local === '—' || utc === '—') return null;
-
-  return blockContext
-    ? `${local} (${utc} · ${blockContext})`
-    : `${local} (${utc})`;
-}
-
-/**
- * Block context label for a projected deadline, e.g.
- * "by block 1010 (+10)" or null when the projection is unavailable.
- */
-export function formatBlockContext(projection: BlockDeadlineProjection): string | null {
-  if (projection.projectBlockNumber === null) return null;
-
-  const block = projection.projectBlockNumber.toString();
-  const offset =
-    projection.blockDelta !== null && projection.blockDelta > 0
-      ? ` (+${projection.blockDelta})`
-      : '';
-
-  return `by block ${block}${offset}`;
+  const parts = [local, `(${utc})`];
+  if (blockContext) parts.push(blockContext);
+  return parts.join(' ');
 }

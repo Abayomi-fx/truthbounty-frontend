@@ -113,10 +113,9 @@
     "integrations": {
       "walletConnect": {
         "requiredConnectHosts": [
-          "https://*.walletconnect.com",
-          "https://*.walletconnect.org",
-          "wss://*.walletconnect.com",
-          "wss://*.walletconnect.org",
+          "https://relay.walletconnect.com",
+          "wss://relay.walletconnect.com",
+          "https://rpc.walletconnect.com",
           "https://verify.walletconnect.com",
           "https://verify.walletconnect.org",
           "https://explorer-api.walletconnect.com"
@@ -130,8 +129,7 @@
       },
       "worldcoin": {
         "requiredConnectHosts": [
-          "https://id.worldcoin.org",
-          "https://*.worldcoin.org"
+          "https://id.worldcoin.org"
         ],
         "requiredFrameHosts": [
           "https://id.worldcoin.org"
@@ -140,12 +138,10 @@
       },
       "rpc": {
         "optimismMainnet": [
-          "https://mainnet.optimism.io",
-          "https://*.optimism.io"
+          "https://mainnet.optimism.io"
         ],
         "optimismSepolia": [
-          "https://sepolia.optimism.io",
-          "https://*.optimism.io"
+          "https://sepolia.optimism.io"
         ]
       }
     }

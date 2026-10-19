@@ -1,3 +1,5 @@
+import { providerSources, assertReviewedEndpoint } from './provider-policy.mjs';
+
 /**
  * V2-FE-131 & UI-FE-092 (#663) — Content Security Policy and browser security headers.
  *
@@ -72,38 +74,6 @@ export interface BuildCspOptions {
   environment?: DeploymentEnvironment;
 }
 
-/** Origins required for RainbowKit / WalletConnect / Optimism RPC / IDKit. */
-export const WALLET_CONNECT_HOSTS = [
-  'https://*.walletconnect.com',
-  'https://*.walletconnect.org',
-  'wss://*.walletconnect.com',
-  'wss://*.walletconnect.org',
-  'https://verify.walletconnect.com',
-  'https://verify.walletconnect.org',
-  'https://explorer-api.walletconnect.com',
-] as const;
-
-export const WORLDCOIN_HOSTS = [
-  'https://id.worldcoin.org',
-  'https://*.worldcoin.org',
-] as const;
-
-export const OPTIMISM_SEPOLIA_RPC = [
-  'https://sepolia.optimism.io',
-  'https://*.optimism.io',
-] as const;
-
-export const OPTIMISM_MAINNET_RPC = [
-  'https://mainnet.optimism.io',
-  'https://*.optimism.io',
-] as const;
-
-export const OPTIMISM_RPC_FALLBACKS = [
-  'https://mainnet.optimism.io',
-  'https://sepolia.optimism.io',
-  'https://*.optimism.io',
-] as const;
-
 /**
  * Build a production-oriented CSP string.
  * Scripts rely on nonce + strict-dynamic; inline theme bootstrap uses the same nonce.
@@ -113,13 +83,11 @@ export function buildContentSecurityPolicy({
   isDevelopment = false,
   environment,
 }: BuildCspOptions): string {
-  if (!nonce || typeof nonce !== 'string') {
+  if (typeof nonce !== 'string' || !/^[A-Za-z0-9+/_-]+={0,2}$/.test(nonce)) {
     throw new Error('CSP nonce is required; refusing to emit an open script-src policy');
   }
 
   const isDev = isDevelopment || environment === 'local';
-  const isTestnet = environment === 'testnet';
-  const isProduction = environment === 'production';
 
   const scriptSrc = [
     "'self'",
@@ -134,21 +102,21 @@ export function buildContentSecurityPolicy({
     scriptSrc.push("'unsafe-eval'");
   }
 
-  // Network targets scoped per environment
-  const rpcHosts = isTestnet
-    ? OPTIMISM_SEPOLIA_RPC
-    : isProduction
-      ? OPTIMISM_MAINNET_RPC
-      : OPTIMISM_RPC_FALLBACKS;
-
-  const connectSrc = [
-    "'self'",
-    'https:',
-    'wss:',
-    ...WALLET_CONNECT_HOSTS,
-    ...WORLDCOIN_HOSTS,
-    ...rpcHosts,
+  // Explicit property access also works with Next's build-time public env inlining.
+  const endpoints = [
+    process.env.NEXT_PUBLIC_API_URL,
+    process.env.NEXT_PUBLIC_WS_URL,
+    process.env.NEXT_PUBLIC_OPTIMISM_RPC_URL,
+    process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL,
   ];
+  for (const endpoint of endpoints) assertReviewedEndpoint(endpoint, 'connect-src', isDev);
+  // Narrow the reviewed RPC set for explicit deployments without adding origins.
+  const connectSources = providerSources('connect-src').filter((origin) => {
+    if (environment === 'testnet') return origin !== 'https://mainnet.optimism.io' && origin !== 'https://opt-mainnet.g.alchemy.com';
+    if (environment === 'production') return origin !== 'https://sepolia.optimism.io';
+    return true;
+  });
+  const connectSrc = ["'self'", ...connectSources];
 
   if (isDev) {
     connectSrc.push('http://localhost:*', 'ws://localhost:*', 'http://127.0.0.1:*', 'ws://127.0.0.1:*');
@@ -162,16 +130,12 @@ export function buildContentSecurityPolicy({
     'form-action': ["'self'"],
     'script-src': scriptSrc,
     // Tailwind + Radix use inline styles; keep style-src pragmatic but scoped
-    'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-    'img-src': ["'self'", 'data:', 'blob:', 'https:'],
-    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
+    'style-src': ["'self'", "'unsafe-inline'", ...providerSources('style-src')],
+    'img-src': ["'self'", 'data:', 'blob:', ...providerSources('img-src')],
+    'font-src': ["'self'", 'data:', ...providerSources('font-src')],
     'connect-src': connectSrc,
-    'frame-src': [
-      "'self'",
-      ...WALLET_CONNECT_HOSTS.filter((h) => h.startsWith('https://')),
-      ...WORLDCOIN_HOSTS,
-    ],
-    'worker-src': ["'self'", 'blob:'],
+    'frame-src': ["'self'", ...providerSources('frame-src')],
+    'worker-src': ["'self'", 'blob:', ...providerSources('worker-src')],
     'manifest-src': ["'self'"],
     'media-src': ["'self'", 'blob:'],
     'report-to': ['csp-endpoint'],

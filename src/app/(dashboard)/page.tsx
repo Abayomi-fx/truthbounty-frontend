@@ -32,6 +32,40 @@ export default function PublicLandingPage() {
             </div>
             <p className="mt-5 text-xs text-[#9AA7BD]">Public claim data is an indexer projection. Confirm protocol outcomes against canonical contract state.</p>
           </div>
+          <Link
+            href="/treasury"
+            className="text-sm font-semibold text-[#5b5bf6] underline underline-offset-2"
+          >
+            Open treasury UX
+          </Link>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-[#232329] bg-[#18181b] px-6 py-4">
+          <div>
+            <p className="text-sm font-medium text-white">Public Dispute Register</p>
+            <p className="text-xs text-[#a1a1aa]">
+              Provisional and final dispute outcomes with bonds, deadlines, and freshness labels.
+            </p>
+          </div>
+          <Link
+            href="/disputes"
+            className="text-sm font-semibold text-[#5b5bf6] underline underline-offset-2"
+          >
+            Open dispute register
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-2">
+            <ActivityAndNodes isLoading={claimsLoading && !hasData} />
+          </div>
+          <div className="xl:col-span-1">
+            <VerificationNodes isLoading={claimsLoading && !hasData} />
+          </div>
+        </div>
+        <ActiveClaimsTableContainer />
+      </div>
+    </MainLayout>
+  );
+};
 
           <section aria-labelledby="activity-heading" className="rounded-2xl border border-[#273149] bg-[#101522] p-5 shadow-2xl sm:p-7">
             <div className="flex items-center justify-between gap-3 border-b border-[#273149] pb-4">

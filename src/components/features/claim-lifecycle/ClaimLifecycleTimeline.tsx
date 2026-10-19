@@ -18,6 +18,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useClaimLifecycleTimeline } from '@/hooks/useClaimLifecycleTimeline';
 import type { TimelineEntry, TimelinePhase } from '@/app/types/lifecycle';
+import { getPhaseConfig, formatPhase } from '@/lib/phase-config';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -553,43 +554,6 @@ function TimelineSkeleton({ compact }: { compact: boolean }) {
       ))}
     </div>
   );
-}
-
-/**
- * Helper: Get phase configuration
- */
-function getPhaseConfig(phase: TimelinePhase): {
-  icon: string;
-  className: string;
-} {
-  const configs: Record<TimelinePhase, { icon: string; className: string }> = {
-    CREATED: { icon: '✨', className: 'bg-info/10 text-info' },
-    INDEXING: { icon: '⏳', className: 'bg-info/10 text-info' },
-    VERIFICATION_OPEN: { icon: '🔓', className: 'bg-success/10 text-success' },
-    VERIFICATION_CLOSED: { icon: '🔒', className: 'bg-muted text-muted-foreground' },
-    DISPUTED: { icon: '⚠️', className: 'bg-warning/10 text-warning' },
-    APPEAL_OPEN: { icon: '⚖️', className: 'bg-warning/10 text-warning' },
-    PENDING_SETTLEMENT: { icon: '⏱️', className: 'bg-info/10 text-info' },
-    SETTLED: { icon: '✅', className: 'bg-success/10 text-success' },
-    PENDING_APPEAL_SETTLEMENT: { icon: '⏱️', className: 'bg-info/10 text-info' },
-    APPEAL_SETTLED: { icon: '⚖️', className: 'bg-success/10 text-success' },
-    PENDING_FINALIZATION: { icon: '⏱️', className: 'bg-info/10 text-info' },
-    FINALIZED: { icon: '🎯', className: 'bg-success/20 text-success' },
-    STALE: { icon: '⚠️', className: 'bg-warning/10 text-warning' },
-    ERROR: { icon: '❌', className: 'bg-destructive/10 text-destructive' },
-  };
-
-  return configs[phase] || { icon: '•', className: 'bg-muted text-muted-foreground' };
-}
-
-/**
- * Helper: Format phase name
- */
-function formatPhase(phase: TimelinePhase): string {
-  return phase
-    .split('_')
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(' ');
 }
 
 /**

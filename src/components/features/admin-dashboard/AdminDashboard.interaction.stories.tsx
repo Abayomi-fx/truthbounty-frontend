@@ -1,21 +1,47 @@
 /**
- * UI-FE-033 — Admin Dashboard Interaction Tests
+ * UI-FE-025 — Operational Health and Release Status Interaction Tests
  *
- * Storybook interaction tests with play functions for privileged operations context.
- * Tests disconnect, account/chain change, stale API, and authority verification.
+ * Storybook interaction tests with play functions for privileged operational
+ * health composition: degraded, delayed, stale, unavailable, and healthy
+ * observations, plus ABI/manifest verification and affected scope.
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect } from '@storybook/jest';
 import { within, userEvent, waitFor } from '@storybook/testing-library';
+import { fn } from '@storybook/test';
 import { AdminDashboard } from './AdminDashboard';
 import type { UseAdminDashboardDataReturn } from '@/hooks/useAdminDashboardData';
 
 const meta: Meta<typeof AdminDashboard> = {
-  title: 'Features/AdminDashboard/Interactions',
+  title: 'Features/AdminDashboard/OperationalHealthInteractions',
   component: AdminDashboard,
   parameters: {
     layout: 'fullscreen',
+    docs: {
+      description: {
+        component:
+          'Admin dashboard for privileged operations. All mutations require explicit impact copy and confirmation boundaries. Fixtures are isolated from production adapters; unpinned actions render unavailable.',
+      },
+    },
+  },
+  argTypes: {
+    data: {
+      control: false,
+      description: 'Freshness-labelled projection of admin dashboard state. Never establishes protocol authority.',
+    },
+    onExecuteOperation: {
+      action: 'executeOperation',
+      description: 'Bounded privileged operation. Requires confirmation boundary.',
+    },
+    onRefresh: {
+      action: 'refresh',
+      description: 'Refresh API projection. Does not mutate contract state.',
+    },
+  },
+  args: {
+    onExecuteOperation: fn(),
+    onRefresh: fn(),
   },
 };
 
@@ -71,6 +97,7 @@ const authorizedBaseData: UseAdminDashboardDataReturn = {
 // ── 1. Operations Context Interaction Tests ──────────────────────────────────
 
 export const AuthorizedOperationExecution: Story = {
+  name: 'Authorized — Operation Execution (default)',
   args: {
     data: authorizedBaseData,
   },
@@ -121,6 +148,7 @@ export const AuthorizedOperationExecution: Story = {
 };
 
 export const UnauthorizedWalletDenial: Story = {
+  name: 'Unauthorized — Wallet Denial (error)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -154,6 +182,7 @@ export const UnauthorizedWalletDenial: Story = {
 };
 
 export const DisconnectedWalletGate: Story = {
+  name: 'Disconnected — Wallet Gate (disabled)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -183,6 +212,7 @@ export const DisconnectedWalletGate: Story = {
 };
 
 export const AccountChangeRecoveryFlow: Story = {
+  name: 'Account Change — Recovery Flow (active)',
   args: {
     data: authorizedBaseData,
   },
@@ -229,6 +259,7 @@ export const AccountChangeRecoveryFlow: Story = {
 };
 
 export const ChainChangeUnsupportedNetwork: Story = {
+  name: 'Chain Change — Unsupported Network (error)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -257,6 +288,7 @@ export const ChainChangeUnsupportedNetwork: Story = {
 };
 
 export const StaleApiDataWarning: Story = {
+  name: 'Stale API — Warning (loading)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -299,6 +331,7 @@ export const StaleApiDataWarning: Story = {
 };
 
 export const CriticallyStaleApiBlocks: Story = {
+  name: 'Critically Stale — Writes Blocked (disabled)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -330,6 +363,7 @@ export const CriticallyStaleApiBlocks: Story = {
 };
 
 export const OfflineNetworkFailure: Story = {
+  name: 'Offline — Network Failure (error)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -362,6 +396,7 @@ export const OfflineNetworkFailure: Story = {
 };
 
 export const DirectUrlAccessWithoutAuth: Story = {
+  name: 'Direct URL — Without Auth (disabled)',
   args: {
     data: {
       ...authorizedBaseData,
@@ -392,6 +427,7 @@ export const DirectUrlAccessWithoutAuth: Story = {
 // ── 2. Bounded Operations Invariant Tests ────────────────────────────────────
 
 export const BoundedOperationsOnly: Story = {
+  name: 'Bounded Operations — Read-only Invariant',
   args: {
     data: authorizedBaseData,
   },
@@ -610,5 +646,330 @@ export const ReducedMotionSupport: Story = {
     await waitFor(() => {
       expect(canvas.getByRole('dialog')).toBeInTheDocument();
     });
+  },
+};
+
+// ── 5. Operational Health Composition (UI-FE-025) ────────────────────────────
+
+const healthObservationBase = {
+  ...authorizedBaseData,
+  healthObservations: [
+    {
+      id: 'obs-api',
+      scope: 'api',
+      label: 'API Projection',
+      state: 'healthy' as const,
+      freshness: { observedAt: new Date().toISOString(), ageSeconds: 4 },
+      finalizedBlock: 118_402_311,
+      detail: 'Projection within freshness window',
+      source: 'TruthBounty API',
+    },
+    {
+      id: 'obs-rpc',
+      scope: 'rpc',
+      label: 'Optimism RPC',
+      state: 'degraded' as const,
+      freshness: { observedAt: new Date().toISOString(), ageSeconds: 12 },
+      finalizedBlock: 118_402_309,
+      detail: 'Fallback provider active',
+      source: 'RPC Circuit',
+    },
+    {
+      id: 'obs-indexer',
+      scope: 'indexer',
+      label: 'Indexer',
+      state: 'delayed' as const,
+      freshness: { observedAt: new Date().toISOString(), ageSeconds: 45 },
+      finalizedBlock: 118_402_250,
+      detail: 'Ingestion lag 61 blocks',
+      source: 'Graph Node',
+    },
+    {
+      id: 'obs-db',
+      scope: 'database',
+      label: 'Database',
+      state: 'stale' as const,
+      freshness: { observedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString(), ageSeconds: 360 },
+      finalizedBlock: 118_401_900,
+      detail: 'Replica lag exceeds threshold',
+      source: 'Postgres Replica',
+    },
+    {
+      id: 'obs-release',
+      scope: 'release',
+      label: 'Release Manifest',
+      state: 'unavailable' as const,
+      freshness: null,
+      finalizedBlock: null,
+      detail: 'Manifest not pinned for this environment',
+      source: 'Release Registry',
+    },
+  ],
+  abiManifestVerification: {
+    state: 'verified' as const,
+    abiHash: '0xabc123',
+    manifestHash: '0xdef456',
+    verifiedAt: new Date().toISOString(),
+    affectedScope: ['api', 'indexer'],
+    detail: 'ABI and manifest hashes match pinned release',
+  },
+};
+
+export const HealthCompositionRendersAllStates: Story = {
+  args: {
+    data: healthObservationBase as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/system health/i)).toBeInTheDocument();
+    });
+
+    // All five distinct observation states must render distinctly.
+    await waitFor(() => {
+      expect(canvas.getByText(/healthy/i)).toBeInTheDocument();
+      expect(canvas.getByText(/degraded/i)).toBeInTheDocument();
+      expect(canvas.getByText(/delayed/i)).toBeInTheDocument();
+      expect(canvas.getByText(/stale/i)).toBeInTheDocument();
+      expect(canvas.getByText(/unavailable/i)).toBeInTheDocument();
+    });
+
+    // Freshness and finalized-block context surfaced.
+    await waitFor(() => {
+      expect(canvas.getByText(/finalized/i)).toBeInTheDocument();
+    });
+  },
+};
+
+export const StaleObservationNeverRendersHealthy: Story = {
+  args: {
+    data: {
+      ...healthObservationBase,
+      healthObservations: [
+        {
+          id: 'obs-db',
+          scope: 'database',
+          label: 'Database',
+          state: 'stale' as const,
+          freshness: { observedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), ageSeconds: 600 },
+          finalizedBlock: 118_401_000,
+          detail: 'Replica lag exceeds threshold',
+          source: 'Postgres Replica',
+        },
+      ],
+    } as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/stale/i)).toBeInTheDocument();
+    });
+
+    // Acceptance: stale observation must never render as healthy.
+    const healthyNodes = canvas.queryAllByText(/^healthy$/i);
+    expect(healthyNodes).toHaveLength(0);
+  },
+};
+
+export const MissingObservationRendersUnavailable: Story = {
+  args: {
+    data: {
+      ...healthObservationBase,
+      healthObservations: [
+        {
+          id: 'obs-release',
+          scope: 'release',
+          label: 'Release Manifest',
+          state: 'unavailable' as const,
+          freshness: null,
+          finalizedBlock: null,
+          detail: 'Manifest not pinned for this environment',
+          source: 'Release Registry',
+        },
+      ],
+    } as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/unavailable/i)).toBeInTheDocument();
+    });
+
+    // Missing observation must not be presented as healthy.
+    expect(canvas.queryAllByText(/^healthy$/i)).toHaveLength(0);
+  },
+};
+
+export const AbiManifestVerificationAndAffectedScope: Story = {
+  args: {
+    data: healthObservationBase as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/abi/i)).toBeInTheDocument();
+      expect(canvas.getByText(/manifest/i)).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(canvas.getByText(/verified/i)).toBeInTheDocument();
+    });
+
+    // Affected scope must be surfaced.
+    await waitFor(() => {
+      expect(canvas.getByText(/affected scope/i)).toBeInTheDocument();
+    });
+  },
+};
+
+export const AbiManifestVerificationFailure: Story = {
+  args: {
+    data: {
+      ...healthObservationBase,
+      abiManifestVerification: {
+        state: 'mismatch' as const,
+        abiHash: '0xabc123',
+        manifestHash: '0xdef456',
+        verifiedAt: null,
+        affectedScope: ['api', 'indexer', 'release'],
+        detail: 'ABI hash does not match pinned manifest',
+      },
+    } as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/mismatch/i)).toBeInTheDocument();
+    });
+
+    // Verification failure must not render as verified.
+    expect(canvas.queryAllByText(/^verified$/i)).toHaveLength(0);
+  },
+};
+
+export const ThirdPartyDependencyNotGuaranteed: Story = {
+  args: {
+    data: {
+      ...healthObservationBase,
+      healthObservations: [
+        {
+          id: 'obs-third-party',
+          scope: 'third-party' as never,
+          label: 'Third-Party RPC Provider',
+          state: 'degraded' as const,
+          freshness: { observedAt: new Date().toISOString(), ageSeconds: 30 },
+          finalizedBlock: 118_402_000,
+          detail: 'Provider reported elevated latency',
+          source: 'External Provider',
+          thirdParty: true,
+        },
+      ],
+    } as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/third-party/i)).toBeInTheDocument();
+    });
+
+    // Acceptance: third-party status is not a TruthBounty guarantee.
+    await waitFor(() => {
+      expect(canvas.getByText(/not a truthbounty guarantee/i)).toBeInTheDocument();
+    });
+  },
+};
+
+export const OperationalStatusDoesNotChangeProtocolTruth: Story = {
+  args: {
+    data: {
+      ...healthObservationBase,
+      healthObservations: [
+        {
+          id: 'obs-api',
+          scope: 'api',
+          label: 'API Projection',
+          state: 'stale' as const,
+          freshness: { observedAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(), ageSeconds: 480 },
+          finalizedBlock: 118_401_500,
+          detail: 'Projection lagging',
+          source: 'TruthBounty API',
+        },
+      ],
+    } as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/stale/i)).toBeInTheDocument();
+    });
+
+    // Acceptance: operational status must not mutate protocol truth.
+    expect(canvas.queryByText(/override.*verdict/i)).not.toBeInTheDocument();
+    expect(canvas.queryByText(/modify.*claim/i)).not.toBeInTheDocument();
+    expect(canvas.queryByText(/change.*outcome/i)).not.toBeInTheDocument();
+  },
+};
+
+export const HealthCompositionKeyboardNavigation: Story = {
+  args: {
+    data: healthObservationBase as unknown as UseAdminDashboardDataReturn,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => {
+      expect(canvas.getByText(/system health/i)).toBeInTheDocument();
+    });
+
+    // Keyboard traversal reaches observation rows.
+    await userEvent.tab();
+    await userEvent.tab();
+
+    const observationRegion = canvas.getByRole('region', { name: /system health/i });
+    expect(observationRegion).toBeInTheDocument();
+  },
+};
+
+export const HealthCompositionReducedMotion: Story = {
+  args: {
+    data: healthObservationBase as unknown as UseAdminDashboardDataReturn,
+  },
+  parameters: {
+    a11y: {
+      config: {
+        rules: [
+          {
+            id: 'motion',
+            enabled: true,
+          },
+        ],
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    Object.defineProperty(mediaQuery, 'matches', {
+      writable: true,
+      value: true,
+    });
+
+    await waitFor(() => {
+      expect(canvas.getByText(/system health/i)).toBeInTheDocument();
+    });
+
+    // All observation states still readable under reduced motion.
+    expect(canvas.getByText(/degraded/i)).toBeInTheDocument();
+    expect(canvas.getByText(/delayed/i)).toBeInTheDocument();
+    expect(canvas.getByText(/stale/i)).toBeInTheDocument();
+    expect(canvas.getByText(/unavailable/i)).toBeInTheDocument();
   },
 };

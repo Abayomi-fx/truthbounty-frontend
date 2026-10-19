@@ -368,3 +368,21 @@ export const finalityKeys = {
 	  all: ['leaderboard'] as const,
 	  byScope: (scope: string) => ['leaderboard', scope] as const,
 	} as const;
+
+export const queryKeys = {
+  chain: chainKeys,
+  wallet: walletKeys,
+  claims: claimKeys,
+  claim: claimKeys,
+  evidence: evidenceKeys,
+  rounds: roundsKeys,
+  disputes: disputesKeys,
+  verifications: verificationsKeys,
+  rewards: rewardsKeys,
+  reputation: reputationKeys,
+  projectionWatermark: projectionWatermarkKeys,
+  filters: filterKeys,
+  finality: finalityKeys,
+  leaderboard: leaderboardKeys.all,
+  user: userKeys,
+} as const;

@@ -22,7 +22,8 @@ export type Owner =
   | 'network'
   | 'auth'
   | 'wallet'
-  | 'claims';
+  | 'claims'
+  | 'query';
 
 export interface PersistedEntry<T> {
   /** Schema version of the persisted payload. */

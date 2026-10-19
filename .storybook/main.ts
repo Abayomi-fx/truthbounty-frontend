@@ -31,10 +31,7 @@ const config: StorybookConfig = {
   // Exclude docs from the production bundle for faster Chromatic builds.
   docs: {
     autodocs: false,
-  "framework": "@storybook/nextjs-vite",
-  "staticDirs": [
-    "../public"
-  ],
+  },
   viteFinal: async (viteConfig) => {
     viteConfig.resolve = {
       ...viteConfig.resolve,

@@ -11,6 +11,7 @@ export * from './claims';
 export * from './disputes';
 export * from './evidence';
 export * from './freshness';
+export * from './governed-change';
 export * from './incidents';
 export * from './legal-content';
 export * from './releases';

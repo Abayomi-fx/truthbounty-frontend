@@ -19,6 +19,7 @@
 
 import type { Preview } from '@storybook/nextjs-vite';
 import React from 'react';
+import '../src/app/globals.css';
 import { StorybookFixtureProvider } from './StorybookFixtureProvider';
 
 const preview: Preview = {
@@ -55,6 +56,14 @@ const preview: Preview = {
         },
       },
       defaultViewport: 'desktop',
+    },
+
+    backgrounds: {
+      default: 'light',
+      values: [
+        { name: 'light', value: '#ffffff' },
+        { name: 'dark', value: '#0b0b0b' },
+      ],
     },
 
     // ─── Chromatic visual regression ────────────────────────────────────────
@@ -94,7 +103,8 @@ const preview: Preview = {
             minWidth: '320px',
             maxWidth: '100%',
             padding: '24px',
-            background: '#ffffff',
+            background: 'var(--color-canvas, #ffffff)',
+            color: 'var(--color-ink, #0a0a0a)',
             borderRadius: '8px',
           },
         },

@@ -7,6 +7,13 @@ export { ThemeProvider, useTheme } from './ThemeProvider';
 export { Web3Provider, RainbowKitThemedProvider } from './Web3Provider';
 export { WalletStateGuard } from './WalletStateGuard';
 
+// Cross-tab wallet & session context synchronization — UI-FE-059
+export {
+  CrossTabSyncProvider,
+  useCrossTabSyncContext,
+} from './CrossTabSyncProvider';
+export type { CrossTabSyncProviderProps } from './CrossTabSyncProvider';
+
 // Feature Flags
 export { 
   FeatureFlagProvider, 

@@ -8,6 +8,15 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    // Provide the React version explicitly so eslint-plugin-react does not
+    // attempt to detect it via getFilename (removed in ESLint 10 flat config).
+    settings: {
+      react: {
+        version: "19",
+      },
+    },
+  },
+  {
     rules: jsxA11y.flatConfigs.recommended.rules,
   },
   // Override default ignores of eslint-config-next.
