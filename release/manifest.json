@@ -4,7 +4,7 @@
   "gitCommit": "5333c0acb9ccfb8a6a37ae76b3397d06781f0119",
   "compilerVersion": "foundry-0.2.0",
   "chainId": 11155420,
-  "deploymentBlock": 0,
+  "deploymentBlock": 1,
   "abiVersion": "2.0.0",
   "eventSchemaVersion": "2.0.0",
   "parameterSetVersion": "2.0.0",
