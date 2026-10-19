@@ -1,6 +1,22 @@
 /**
  * V2 Transaction State Selectors & Utilities
  *
+ * @deprecated This implementation is superseded by transaction-machine.
+ * 
+ * Migration path:
+ * - Replace with @/lib/transaction-machine/transaction-machine.types
+ * - Use TransactionStatusBadge component for UI rendering
+ * - Use useTransactionMachine hook for state management
+ * 
+ * This file remains for backward compatibility with existing hooks.
+ * New code should use transaction-machine types and components.
+ * 
+ * Key differences:
+ * - transaction-machine has 11 explicit states vs this file's 6 states
+ * - transaction-machine distinguishes dropped/replaced/reverted failures
+ * - transaction-machine includes preparing/signature-requested states
+ * - transaction-machine has separate indexing state before finalized
+ * 
  * Type-safe selectors for transaction states.
  * Prevents premature success messages or actionable stale state.
  * All selectors validate state transitions and prevent invalid operations.
@@ -20,7 +36,6 @@ import type {
   StalenessConfig,
 } from '@/app/types/transaction';
 import type { ChainFinality } from '@/config/chains';
-import { getChainConfig } from '@/config/chains';
 
 /**
  * Type guards for each transaction state
@@ -140,7 +155,7 @@ export function getStateName(state: TransactionStateName): string {
 export function canTransitionToState(
   currentTx: Transaction,
   nextState: Transaction['state'],
-  config: ChainFinality
+  _config?: ChainFinality
 ): boolean {
   if (!('state' in currentTx)) return false;
 
@@ -206,6 +221,14 @@ export function shouldWaitForFinality(
   // 4. On L2, finality is not sufficient for projection-backed UI.
   // Wait until the canonical indexer has observed the finalized transaction.
   if (config.isL2 && (isFinalized(tx) || isIndexing(tx))) {
+    return true;
+  }
+
+  // 5. Replaced txs must not surface as durable success until the
+  // replacement hash itself reaches finality.
+  // (Machine "replaced" is outside the domain Transaction union — check loosely.)
+  const looseState = (tx as { state?: string }).state;
+  if (looseState === 'replaced') {
     return true;
   }
 

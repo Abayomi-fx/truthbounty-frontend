@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports -- test doubles and dynamic module access */
 /**
  * Unit tests for useDisputeReconciliation hook
  * Tests transaction confirmation, bond lock tracking, and dispute ID extraction

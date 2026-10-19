@@ -6,9 +6,9 @@ import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWebSocketContext } from '@/components/providers/WebSocketProvider';
 import { queryKeys } from '@/app/queries/queryKeys';
-import type {
-  ClaimStatus,
-} from '@/app/types/claim';
+import type { Claim, ClaimStatus } from '@/app/types/claim';
+import { useOptimisticUpdate } from '@/hooks/useOptimisticUpdate';
+import { OptimisticUpdateError } from '@/lib/optimistic-updates';
 
 /**
  * Hook for real-time claim updates
@@ -22,7 +22,7 @@ export function useRealtimeClaim(claimId: string) {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribe = subscribe('CLAIM_STATUS_CHANGED', (payload) => {
+    const unsubscribe = subscribe("CLAIM_STATUS_CHANGED", (payload) => {
       if (payload.claimId === claimId) {
         // Invalidate the claim query to trigger a refetch
         queryClient.invalidateQueries({
@@ -38,7 +38,7 @@ export function useRealtimeClaim(claimId: string) {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribe = subscribe('VERIFICATION_ADDED', (payload) => {
+    const unsubscribe = subscribe("VERIFICATION_ADDED", (payload) => {
       if (payload.claimId === claimId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.verifications.byClaim(claimId),
@@ -56,15 +56,15 @@ export function useRealtimeClaim(claimId: string) {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribeStatus = subscribe('CLAIM_STATUS_CHANGED', (payload) => {
-      if (payload.claimId === claimId && payload.newStatus === 'DISPUTED') {
+    const unsubscribeStatus = subscribe("CLAIM_STATUS_CHANGED", (payload) => {
+      if (payload.claimId === claimId && payload.newStatus === "DISPUTED") {
         queryClient.invalidateQueries({
           queryKey: queryKeys.disputes.byClaim(claimId),
         });
       }
     });
 
-    const unsubscribeDispute = subscribe('DISPUTE_RESOLVED', (payload) => {
+    const unsubscribeDispute = subscribe("DISPUTE_RESOLVED", (payload) => {
       if (payload.claimId === claimId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.claims.detail(claimId),
@@ -84,7 +84,7 @@ export function useRealtimeClaim(claimId: string) {
   // Function to manually request updates
   const requestUpdate = useCallback(() => {
     send({
-      type: 'REQUEST_CLAIM_UPDATE',
+      type: "REQUEST_CLAIM_UPDATE",
       payload: { claimId },
     });
   }, [send, claimId]);
@@ -105,10 +105,10 @@ export function useRealtimeClaimsList() {
   useEffect(() => {
     if (!isConnected) return;
 
-    const unsubscribe = subscribe('CLAIM_CREATED', () => {
+    const unsubscribe = subscribe("CLAIM_CREATED", () => {
       // New claim created - invalidate list
       queryClient.invalidateQueries({
-        queryKey: queryKeys.claims.all,
+        queryKey: queryKeys.claims.lists(),
       });
     });
 
@@ -119,31 +119,46 @@ export function useRealtimeClaimsList() {
 }
 
 /**
- * Hook to get optimistic updates for claim status changes
- * This can be used to show immediate feedback while waiting for server confirmation
+ * Hook to get optimistic updates for claim status changes.
+ *
+ * UI-FE-086: only the allowlisted `claim.status.under_review` operation is
+ * permitted. Final, economic, permission, and dispute outcomes must never be
+ * anticipated; they wait for canonical receipts/projections.
  */
 export function useOptimisticClaimUpdate(claimId: string) {
-  const queryClient = useQueryClient();
+  const {
+    begin,
+    rollback: rollbackOptimisticUpdate,
+    isPending,
+    handleTransactionStatus,
+  } = useOptimisticUpdate<Claim>({
+    operationId: 'claim.status.under_review',
+    queryKey: queryKeys.claims.detail(claimId),
+  });
 
   const optimisticUpdate = useCallback(
     (newStatus: ClaimStatus) => {
-      // Optimistically update the claim status in cache
-      queryClient.setQueryData(queryKeys.claims.detail(claimId), (old: unknown) => {
-        if (old && typeof old === 'object') {
-          return { ...old, status: newStatus };
-        }
-        return old;
-      });
+      if (newStatus !== 'UNDER_REVIEW') {
+        throw new OptimisticUpdateError(
+          'PROHIBITED_OUTCOME',
+          `claim status "${newStatus}" cannot be optimistic; only UNDER_REVIEW is allowlisted`,
+        );
+      }
+      return begin({ status: newStatus });
     },
-    [queryClient, claimId]
+    [begin],
   );
 
-  const rollback = useCallback(() => {
-    // Invalidate to get actual data
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.claims.detail(claimId),
-    });
-  }, [queryClient, claimId]);
+  const rollback = useCallback(
+    (reason: Parameters<typeof rollbackOptimisticUpdate>[0] = 'rejected') =>
+      rollbackOptimisticUpdate(reason),
+    [rollbackOptimisticUpdate],
+  );
 
-  return { optimisticUpdate, rollback };
+  return {
+    optimisticUpdate,
+    rollback,
+    isPending,
+    handleTransactionStatus,
+  };
 }

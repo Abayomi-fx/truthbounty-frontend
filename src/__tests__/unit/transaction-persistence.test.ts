@@ -1,15 +1,19 @@
 /**
- * V2-FE-009 — Unit tests for transaction persistence helpers.
+ * V2-FE-009 -- Unit tests for transaction persistence helpers.
  *
  * Coverage:
  *  - Persist and hydrate round-trip (valid data)
  *  - Invalid stored shape returns null
  *  - Schema version mismatch returns null
+ *  - Bounded migration from supported older schema versions
  *  - Missing fields return null
  *  - Corrupt JSON returns null (never throws)
+ *  - Oversized, expired, partially written, and unsupported-newer state fail closed
  *  - Cleared state not returned on hydrate
  *  - listPersistedTxIds enumerates valid entries only
+ *  - listPersistedTxIds excludes stale/invalid entries
  *  - updateTxContext bumps updatedAt
+ *  - Logout / account switch deletion
  */
 
 import {
@@ -19,23 +23,26 @@ import {
   listPersistedTxIds,
   createTxContext,
   updateTxContext,
+  TX_PERSISTENCE_SCHEMA_VERSION,
 } from '@/lib/transaction-machine/transaction-persistence';
 import {
   createIdleState,
   type TransactionContext,
 } from '@/lib/transaction-machine/transaction-machine.types';
 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Helpers
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 function makeCtx(id = 'test-tx', label = 'Test transaction'): TransactionContext {
   return createTxContext(id, label);
 }
 
-// ---------------------------------------------------------------------------
+const STORAGE_KEY_PREFIX = 'tb-tx-v2:';
+
+// ----------------------------------------------------------------------------
 // Round-trip
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 describe('persistTxState / hydrateTxState round-trip', () => {
   beforeEach(() => {
@@ -53,7 +60,7 @@ describe('persistTxState / hydrateTxState round-trip', () => {
     expect(hydrated).not.toBeNull();
     expect(hydrated!.id).toBe('round-trip-1');
     expect(hydrated!.state.status).toBe('idle');
-    expect(hydrated!.schemaVersion).toBe(2);
+    expect(hydrated!.schemaVersion).toBe(TX_PERSISTENCE_SCHEMA_VERSION);
   });
 
   it('hydrates with the updated state after an updateTxContext call', () => {
@@ -76,16 +83,16 @@ describe('persistTxState / hydrateTxState round-trip', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Schema version guard
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 describe('Schema version mismatch', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('returns null when schemaVersion is 1 (old format)', () => {
+  it('migrates a supported schemaVersion 1 entry to the current version', () => {
     const staleEntry = {
       id: 'stale-1',
       schemaVersion: 1,
@@ -95,7 +102,11 @@ describe('Schema version mismatch', () => {
       updatedAt: Date.now(),
     };
     localStorage.setItem('tb-tx-v2:stale-1', JSON.stringify(staleEntry));
-    expect(hydrateTxState('stale-1')).toBeNull();
+    const hydrated = hydrateTxState('stale-1');
+    expect(hydrated).not.toBeNull();
+    expect(hydrated!.id).toBe('stale-1');
+    expect(hydrated!.schemaVersion).toBe(TX_PERSISTENCE_SCHEMA_VERSION);
+    expect(hydrated!.state.status).toBe('idle');
   });
 
   it('returns null when schemaVersion is missing', () => {
@@ -109,11 +120,39 @@ describe('Schema version mismatch', () => {
     localStorage.setItem('tb-tx-v2:no-version', JSON.stringify(noVersion));
     expect(hydrateTxState('no-version')).toBeNull();
   });
+
+  it('returns null for an unsupported newer schemaVersion', () => {
+    const futureEntry = {
+      id: 'future-1',
+      schemaVersion: TX_PERSISTENCE_SCHEMA_VERSION + 1,
+      state: { status: 'idle' },
+      label: 'Future entry',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    localStorage.setItem('tb-tx-v2:future-1', JSON.stringify(futureEntry));
+    expect(hydrateTxState('future-1')).toBeNull();
+  });
+
+  it('migrates deterministically across repeated hydrations', () => {
+    const staleEntry = {
+      id: 'stale-deterministic',
+      schemaVersion: 1,
+      state: { status: 'idle' },
+      label: 'Old entry',
+      createdAt: 1000,
+      updatedAt: 2000,
+    };
+    localStorage.setItem('tb-tx-v2:stale-deterministic', JSON.stringify(staleEntry));
+    const first = hydrateTxState('stale-deterministic');
+    const second = hydrateTxState('stale-deterministic');
+    expect(first).toEqual(second);
+  });
 });
 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Corrupt / invalid data
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 describe('Corrupt / invalid stored data', () => {
   beforeEach(() => {
@@ -131,7 +170,7 @@ describe('Corrupt / invalid stored data', () => {
     expect(hydrateTxState('null-val')).toBeNull();
   });
 
-  it('returns null when state.status is an unknown value', () => {
+  it('returns null when status.status is an unknown value', () => {
     const badStatus = {
       id: 'bad-status',
       schemaVersion: 2,
@@ -168,11 +207,44 @@ describe('Corrupt / invalid stored data', () => {
     localStorage.setItem('tb-tx-v2:no-id', JSON.stringify(noId));
     expect(hydrateTxState('no-id')).toBeNull();
   });
+
+  it('returns null for oversized stored payloads', () => {
+    const huge = 'x'.repeat(1024 * 1024);
+    const oversized = {
+      id: 'oversized',
+      schemaVersion: TX_PERSISTENCE_SCHEMA_VERSION,
+      state: { status: 'idle', txHash: null },
+      label: huge,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    localStorage.setItem('tb-tx-v2:oversized', JSON.stringify(oversized));
+    expect(hydrateTxState('oversized')).toBeNull();
+  });
+
+  it('returns null for expired entries', () => {
+    const expired = {
+      id: 'expired',
+      schemaVersion: TX_PERSISTENCE_SCHEMA_VERSION,
+      state: { status: 'idle', txHash: null },
+      label: 'Expired',
+      createdAt: Date.now() - 1000 * 60 * 60 * 24 * 365,
+      updatedAt: Date.now() - 1000 * 60 * 60 * 24 * 365,
+    };
+    localStorage.setItem('tb-tx-v2:expired', JSON.stringify(expired));
+    expect(hydrateTxState('expired')).toBeNull();
+  });
+
+  it('returns null for partially written entries', () => {
+    localStorage.setItem('tb-tx-v2:partial', '{"id":"partial","schemaVersion":2,');
+    expect(() => hydrateTxState('partial')).not.toThrow();
+    expect(hydrateTxState('partial')).toBeNull();
+  });
 });
 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // clearTxState
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 describe('clearTxState', () => {
   beforeEach(() => {
@@ -193,9 +265,9 @@ describe('clearTxState', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // listPersistedTxIds
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 describe('listPersistedTxIds', () => {
   beforeEach(() => {
@@ -216,16 +288,36 @@ describe('listPersistedTxIds', () => {
 
   it('excludes stale/invalid entries', () => {
     localStorage.setItem('tb-tx-v2:stale-list', JSON.stringify({ schemaVersion: 1 }));
-    persistTxState(makeCtx('tx-valid'));
+    persistTxState(makeCtx('txvalid'));
     const ids = listPersistedTxIds();
     expect(ids).not.toContain('stale-list');
-    expect(ids).toContain('tx-valid');
+    expect(ids).toContain('txvalid');
+  });
+
+  it('excludes corrupt, oversized, and expired entries', () => {
+    localStorage.setItem('tb-tx-v2:corrupt-list', 'not-jsony{{');
+    localStorage.setItem(
+      'tb-tx-v2:expired-list',
+      JSON.stringify({
+        id: 'expired-list',
+        schemaVersion: TX_PERSISTENCE_SCHEMA_VERSION,
+        state: { status: 'idle', txHash: null },
+        label: 'Expired',
+        createdAt: 0,
+        updatedAt: 0,
+      }),
+    );
+    persistTxState(makeCtx('tx-valid-2'));
+    const ids = listPersistedTxIds();
+    expect(ids).not.toContain('corrupt-list');
+    expect(ids).not.toContain('expired-list');
+    expect(ids).toContain('tx-valid-2');
   });
 });
 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // updateTxContext
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 describe('updateTxContext', () => {
   it('returns a new context with the updated state', () => {
@@ -252,5 +344,33 @@ describe('updateTxContext', () => {
     const originalState = ctx.state.status;
     updateTxContext(ctx, { ...createIdleState(), status: 'preparing', chainId: 10 });
     expect(ctx.state.status).toBe(originalState);
+  });
+});
+
+// ----------------------------------------------------------------------------
+// Logout / account switch deletion
+// ----------------------------------------------------------------------------
+
+describe('logout / account switch deletion', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('removes all persisted transaction entries on logout', () => {
+    persistTxState(makeCtx('logout-a'));
+    persistTxState(makeCtx('logout-b'));
+    expect(listPersistedTxIds().length).toBeGreaterThanOrEqual(2);
+
+    for (const id of listPersistedTxIds()) {
+      clearTxState(id);
+    }
+    expect(listPersistedTxIds()).toEqual([]);
+  });
+
+  it('does not leak entries across account switches', () => {
+    persistTxState(makeCtx('account-a-tx'));
+    clearTxState('account-a-tx');
+    expect(hydrateTxState('account-a-tx')).toBeNull();
+    expect(listPersistedTxIds()).not.toContain('account-a-tx');
   });
 });

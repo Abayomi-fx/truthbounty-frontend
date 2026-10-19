@@ -1,13 +1,17 @@
 /**
- * Hook for encoding and submitting dispute opening transactions
- * Handles challenge submission with bond lock, validation, and simulation
+ * Hook for encoding and submitting dispute opening transactions.
+ *
+ * The pinned `TruthBountyWeighted` ABI is the only authority for the calldata
+ * layout. When it does not declare a dispute-opening entrypoint this hook
+ * reports the flow as unsupported and refuses to build a call, rather than
+ * guessing a selector or hand-rolling an ABI encoding.
  */
 
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useAccount, useChainId } from 'wagmi';
-import { encodeFunctionData } from 'viem';
+import { useCallback, useMemo, useState } from 'react';
+import { useAccount, useChainId, usePublicClient, useWriteContract } from 'wagmi';
+import { encodeFunctionData, type Abi } from 'viem';
 import {
   DisputeContext,
   DisputeSubmissionPayload,
@@ -20,7 +24,9 @@ import {
   getContractAbi,
   getContractAddress,
   getProtocolVersion,
+  getReleaseChainId,
 } from '@/lib/contracts/registry';
+import { evaluateWriteTarget } from '@/lib/contracts/write-gate';
 
 interface UseDisputeSubmissionConfig {
   contractAddress?: string;
@@ -50,14 +56,19 @@ interface DisputeSubmissionResult {
   error: string | null;
   lastTransaction: DisputeTransaction | null;
   artifactVersion: string;
+  /** True when the pinned ABI declares a dispute-opening entrypoint. */
+  isDisputeSupported: boolean;
 }
 
 const OPTIMISM_MAINNET_CHAIN_ID = 10;
 const OPTIMISM_SEPOLIA_CHAIN_ID = 11155420;
-const EXPECTED_ARTIFACT_VERSION = 'v2.1.0';
+const EXPECTED_ARTIFACT_VERSION = '2.0.0';
 
-// Function selector for openDispute(bytes32 claimId, string reason, uint256 bond)
-const OPEN_DISPUTE_SELECTOR = '0x9a8a0592';
+/**
+ * Dispute-opening entrypoint, discovered from the pinned ABI rather than
+ * assumed. No hardcoded selector exists in this module.
+ */
+const DISPUTE_FUNCTIONS = ['openDispute', 'createDispute', 'dispute'] as const;
 
 /**
  * Hook for encoding and submitting dispute opening transactions
@@ -68,11 +79,13 @@ export function useDisputeSubmission(
   const contractAddress =
     config.contractAddress ?? getContractAddress('TruthBountyWeighted');
   const abi = config.abi ?? getContractAbi('TruthBountyWeighted');
-  const expectedChainId = config.expectedChainId ?? OPTIMISM_MAINNET_CHAIN_ID;
+  const expectedChainId = config.expectedChainId ?? getReleaseChainId();
   const artifactVersion = config.artifactVersion ?? getProtocolVersion();
 
   const { address: userAddress, isConnected } = useAccount();
   const currentChainId = useChainId();
+  const publicClient = usePublicClient();
+  const { writeContractAsync } = useWriteContract() ?? {};
 
   const [isSimulating, setIsSimulating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,41 +95,62 @@ export function useDisputeSubmission(
   );
 
   /**
-   * Encode dispute opening call data
+   * True only when the pinned ABI genuinely declares a dispute-opening
+   * function. Never assumed.
    */
-  const encodeDisputeCall = useCallback(
-    (claimId: string, reason: string, bondAmount: string): string => {
-      // In production, this would use Viem to encode:
-      // const data = encodeFunctionData({
-      //   abi: contractAbi,
-      //   functionName: 'openDispute',
-      //   args: [claimId, reason, BigInt(bondAmount)]
-      // })
-
-      // Mock encoding for now
-      const selector = OPEN_DISPUTE_SELECTOR;
-
-      // Encode: claimId (bytes32) + reason (string) + bondAmount (uint256)
-      const encodedClaimId = claimId.replace(/[^0-9a-fA-F]/g, '').padStart(64, '0');
-      const encodedReason = Buffer.from(reason).toString('hex').padEnd(64, '0');
-      const encodedBond = BigInt(bondAmount).toString(16).padStart(64, '0');
-
-      return selector + encodedClaimId + encodedReason + encodedBond;
-    },
-    []
+  const abiSupportsDispute = useMemo(
+    () =>
+      DISPUTE_FUNCTIONS.some((name) =>
+        (abi as readonly { type?: string; name?: string }[]).some(
+          (entry) => entry?.type === 'function' && entry.name === name,
+        ),
+      ),
+    [abi],
   );
 
   /**
-   * Check if contract is paused (in production)
+   * Name of the declared dispute-opening function, or `null` when absent.
    */
-  const checkContractPaused = useCallback(async (): Promise<boolean> => {
-    // In production, this would:
-    // const isPaused = await contract.paused()
-    // return isPaused
+  const disputeFunctionName = useMemo((): string | null => {
+    for (const candidate of DISPUTE_FUNCTIONS) {
+      const declared = (abi as readonly { type?: string; name?: string }[]).some(
+        (entry) => entry?.type === 'function' && entry.name === candidate,
+      );
+      if (declared) return candidate;
+    }
+    return null;
+  }, [abi]);
 
-    // Mock implementation
-    return false;
-  }, []);
+  /**
+   * Encode the dispute call from the pinned ABI.
+   *
+   * Returns `null` when the ABI declares no dispute entrypoint or the claim id
+   * is not a canonical 32-byte value, so callers fail closed instead of
+   * emitting malformed calldata.
+   */
+  const encodeDisputeCall = useCallback(
+    (
+      claimId: string,
+      reason: string,
+      bondAmount: string,
+    ): `0x${string}` | null => {
+      if (!disputeFunctionName) return null;
+
+      const trimmedClaimId = claimId.trim();
+      if (!/^0x[a-fA-F0-9]{64}$/.test(trimmedClaimId)) return null;
+
+      try {
+        return encodeFunctionData({
+          abi: abi as unknown as Abi,
+          functionName: disputeFunctionName,
+          args: [trimmedClaimId as `0x${string}`, reason, BigInt(bondAmount)],
+        }) as `0x${string}`;
+      } catch {
+        return null;
+      }
+    },
+    [abi, disputeFunctionName],
+  );
 
   /**
    * Validate dispute submission
@@ -155,6 +189,16 @@ export function useDisputeSubmission(
         );
       }
 
+      // Fail closed through the single validated release manifest before any signing path.
+      const writeTarget = evaluateWriteTarget({
+        activeChainId: currentChainId,
+        contractAddress,
+        expectedProtocolVersion: artifactVersion,
+      });
+      if (!writeTarget.ok) {
+        errors.push(...writeTarget.errors);
+      }
+
       // Check contract address valid
       const contractAddressValid =
         contractAddress.match(/^0x[a-fA-F0-9]{40}$/) !== null;
@@ -163,8 +207,8 @@ export function useDisputeSubmission(
       }
 
       // Check artifact version (in production, query from contract)
-      const artifactVersionValid = true; // In production: contract.version() === artifactVersion
-      if (!artifactVersionValid) {
+      const artifactVersionValid = writeTarget.ok;
+      if (!artifactVersionValid && writeTarget.errors.length === 0) {
         errors.push(`Contract version mismatch. Expected ${artifactVersion}`);
       }
 
@@ -269,42 +313,88 @@ export function useDisputeSubmission(
           };
         }
 
-        // Check if contract is paused
-        const isPaused = await checkContractPaused();
-        if (isPaused) {
+        // The pinned ABI is the authority: no declared entrypoint means the
+        // dispute flow is unavailable. Never guess a selector.
+        if (!disputeFunctionName) {
           return {
             success: false,
-            error: 'Contract is paused. Disputes cannot be opened at this time.',
+            error:
+              'The canonical ABI declares no dispute-opening function; dispute submission is unavailable.',
           };
         }
 
-        // Encode call data
         const calldata = encodeDisputeCall(
           payload.claimId,
           payload.reason,
-          payload.bondAmount
+          payload.bondAmount,
         );
+        if (!calldata) {
+          return {
+            success: false,
+            error:
+              'Could not encode the dispute call from the canonical ABI; fail closed.',
+          };
+        }
 
-        // In production, this would:
-        // 1. Use Viem's simulateContract to test the transaction
-        // 2. Estimate gas with proper buffer (dispute opening is ~200k gas)
-        // 3. Validate the dispute will be accepted
-        // 4. Return projected dispute ID
+        // Real eth_call simulation. This also reverts when the contract is
+        // paused, so no separate (unverifiable) pause check is invented.
+        if (!publicClient?.simulateContract) {
+          return {
+            success: false,
+            error: 'Public client is unavailable for dispute simulation.',
+          };
+        }
 
-        // Mock simulation
-        const gasEstimate = '200000'; // Estimated gas for dispute opening
+        let gasEstimate: string;
+        try {
+          const gas = await publicClient.estimateGas({
+            account: userAddress as unknown as `0x${string}`,
+            to: contractAddress as `0x${string}`,
+            data: calldata,
+            value: BigInt(payload.bondAmount),
+          });
+          gasEstimate = gas.toString();
+        } catch (err) {
+          return {
+            success: false,
+            error:
+              err instanceof Error
+                ? err.message
+                : 'Gas estimation failed — fail closed',
+          };
+        }
 
-        // Generate predicted dispute ID (in production, from contract event)
-        const predictedDisputeId = `dispute-${payload.claimId}-${Date.now()}`;
+        try {
+          await publicClient.simulateContract({
+            account: userAddress as unknown as `0x${string}`,
+            address: contractAddress as `0x${string}`,
+            abi: abi as unknown as Abi,
+            functionName: disputeFunctionName,
+            args: [
+              payload.claimId.trim() as `0x${string}`,
+              payload.reason,
+              BigInt(payload.bondAmount),
+            ],
+            value: BigInt(payload.bondAmount),
+          });
+        } catch (err) {
+          return {
+            success: false,
+            error: `Simulation reverted: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          };
+        }
 
+        // No dispute id is projected: it is assigned on-chain by the
+        // contract, and inventing one here would fabricate protocol state.
         return {
           success: true,
           gasEstimate,
           projectedState: {
-            disputeId: predictedDisputeId,
             bondLocked: payload.bondAmount,
             newStatus: 'DISPUTED',
-          },
+          } as DisputeSimulationResult['projectedState'],
           data: {
             from: userAddress as string,
             to: contractAddress,
@@ -326,10 +416,12 @@ export function useDisputeSubmission(
     },
     [
       validateDispute,
-      checkContractPaused,
+      disputeFunctionName,
       encodeDisputeCall,
       userAddress,
       contractAddress,
+      abi,
+      publicClient,
     ]
   );
 
@@ -357,25 +449,45 @@ export function useDisputeSubmission(
           throw new Error(simulation.error || 'Simulation failed');
         }
 
-        // In production, this would:
-        // 1. Call writeContract via Wagmi
-        // 2. Return transaction hash immediately
-        // 3. Transaction will be mined asynchronously
-        // 4. Bond will be locked on confirmation
-        //
-        // const hash = await writeContract({
-        //   address: contractAddress,
-        //   abi: contractAbi,
-        //   functionName: 'openDispute',
-        //   args: [payload.claimId, payload.reason, BigInt(payload.bondAmount)],
-        //   value: BigInt(payload.bondAmount),
-        //   chainId: expectedChainId,
-        // })
+        if (!disputeFunctionName) {
+          throw new Error(
+            'The canonical ABI declares no dispute-opening function; dispute submission is unavailable.'
+          );
+        }
+        if (!writeContractAsync) {
+          throw new Error(
+            'Wallet write path unavailable: the connected wallet cannot submit transactions.'
+          );
+        }
 
-        // Submission requires a wallet writeContract call; do not fabricate hashes.
-        throw new Error(
-          'Dispute submission requires wallet writeContract integration; no synthetic transaction hash is emitted.'
-        );
+        const transactionHash = await writeContractAsync({
+          address: contractAddress,
+          abi: abi as unknown as Abi,
+          functionName: disputeFunctionName,
+          args: [
+            payload.claimId.trim() as `0x${string}`,
+            payload.reason,
+            BigInt(payload.bondAmount),
+          ],
+          value: BigInt(payload.bondAmount),
+          chainId: expectedChainId,
+        } as never);
+
+        // The bond lock and dispute id are only known from a mined receipt,
+        // so they are left unasserted here rather than predicted.
+        const transaction: DisputeTransaction = {
+          transactionHash,
+          from: userAddress as string,
+          to: contractAddress,
+          status: 'PENDING',
+          claimId: payload.claimId,
+          bondAmount: payload.bondAmount,
+          reason: payload.reason,
+          timestamp: new Date().toISOString(),
+          bondLocked: false,
+        };
+        setLastTransaction(transaction);
+        return transaction;
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : 'Submission failed';
@@ -385,7 +497,16 @@ export function useDisputeSubmission(
         setIsSubmitting(false);
       }
     },
-    [validateDispute, simulateDispute]
+    [
+      validateDispute,
+      simulateDispute,
+      disputeFunctionName,
+      writeContractAsync,
+      contractAddress,
+      abi,
+      expectedChainId,
+      userAddress,
+    ]
   );
 
   return {
@@ -397,6 +518,7 @@ export function useDisputeSubmission(
     error,
     lastTransaction,
     artifactVersion,
+    isDisputeSupported: abiSupportsDispute,
   };
 }
 
@@ -417,13 +539,7 @@ export function getPrimaryError(validation: DisputeValidation): string | null {
 
 /**
  * Utility: Calculate bond in ETH (for display)
+ * Canonical implementation in @/lib/format
  */
-export function formatBondAmount(bondWei: string): string {
-  try {
-    const bondBigInt = BigInt(bondWei);
-    const ethValue = Number(bondBigInt) / 1e18;
-    return ethValue.toFixed(4);
-  } catch {
-    return '0.0000';
-  }
-}
+export { formatBondAmount } from '@/lib/format';
+

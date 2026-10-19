@@ -1,11 +1,12 @@
 /**
- * Hook for detecting when provisional and appeal settlement is permissionlessly callable
- * Validates chain, address, contract version, and settlement state
+ * Hook for detecting when provisional and final settlement states are reachable.
+ * Validates chain, address, contract version, and settlement state.
+ * Relies on canonical receipts/projections, not timers or client guesses.
  */
 
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import {
   SettlementAction,
@@ -103,18 +104,7 @@ export function useSettlementDetection(
         // 2. Query indexer for settlement/appeal status
         // 3. Check voting/appeal/finalization periods
         
-        const mockContext: SettlementContext = {
-          claimId: context.claimId,
-          currentState: context.currentState || 'PENDING_SETTLEMENT',
-          contractAddress,
-          chainId: currentChainId,
-          userAddress: userAddress || '0x',
-          votingPeriodEnded: context.votingPeriodEnded ?? true,
-          appealPeriodEnded: context.appealPeriodEnded ?? false,
-          finalizationPeriodEnded: context.finalizationPeriodEnded ?? false,
-        };
-
-        return mockContext;
+        throw new Error('Not implemented');
       } catch (err) {
         throw new Error(`Failed to fetch settlement state: ${err instanceof Error ? err.message : String(err)}`);
       }

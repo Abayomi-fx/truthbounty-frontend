@@ -1,34 +1,98 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports -- test doubles and dynamic module access */
 /**
  * Unit tests for useDisputeSubmission hook
  * Tests validation, simulation, and encoding for dispute opening transactions
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
-import { useAccount, useChainId } from 'wagmi';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import {
+  useAccount,
+  useChainId,
+  usePublicClient,
+  useWriteContract,
+} from 'wagmi';
 import {
   useDisputeSubmission,
   canSubmitDispute,
   getPrimaryError,
   formatBondAmount,
 } from '../useDisputeSubmission';
+import { toFunctionSelector } from 'viem';
 import type {
   DisputeContext,
   DisputeSubmissionPayload,
   DisputeValidation,
 } from '@/app/types/dispute';
 
+const mockEstimateGas = jest.fn(async () => 213_456n);
+const mockSimulateContract = jest.fn(async () => ({ request: {} }));
+const mockWriteContractAsync = jest.fn(
+  async () => `0x${'ab'.repeat(32)}` as `0x${string}`,
+);
+
 // Mock Wagmi hooks
 jest.mock('wagmi', () => ({
   useAccount: jest.fn(),
   useChainId: jest.fn(),
+  usePublicClient: jest.fn(),
+  useWriteContract: jest.fn(),
 }));
 
 // Mock contract registry
 jest.mock('@/lib/contracts/registry', () => ({
-  getContractAddress: jest.fn(() => '0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E'),
-  getContractAbi: jest.fn(() => []),
-  getProtocolVersion: jest.fn(() => 'v2.1.0'),
+  getContractAddress: jest.fn(() => '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'),
+  // Declares a dispute-opening entrypoint. The literal lives inside the
+  // hoisted factory because outer consts are not initialised yet when the
+  // module registry first evaluates this module.
+  getContractAbi: jest.fn(() => [
+    {
+      type: 'function',
+      name: 'openDispute',
+      stateMutability: 'payable',
+      inputs: [
+        { name: 'claimId', type: 'bytes32' },
+        { name: 'reason', type: 'string' },
+        { name: 'bondAmount', type: 'uint256' },
+      ],
+      outputs: [],
+    },
+  ]),
+  getProtocolVersion: jest.fn(() => '2.0.0'),
+  getReleaseChainId: jest.fn(() => 11155420),
+  getProtocolRelease: jest.fn(() => ({
+    manifest: {
+      protocolVersion: '2.0.0',
+      releaseId: 'v2.0.0-sepolia',
+      gitCommit: '5333c0acb9ccfb8a6a37ae76b3397d06781f0119',
+      compilerVersion: 'foundry-0.2.0',
+      chainId: 11155420,
+      deploymentBlock: 0,
+      abiVersion: '2.0.0',
+      eventSchemaVersion: '2.0.0',
+      parameterSetVersion: '2.0.0',
+      contracts: {
+        TruthBountyWeighted: {
+          proxy: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+          implementation: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        },
+      },
+    },
+    addresses: {
+      chainId: 11155420,
+      TruthBountyWeighted: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    },
+    abis: { TruthBountyWeighted: [] },
+    events: { version: '2.0.0', events: [] },
+    parameters: {},
+    roles: {},
+    checksums: { version: '1', files: {} },
+  })),
 }));
+
+const CLAIM_ID_BYTES32 = `0x${'1a'.repeat(32)}`;
+const OPEN_DISPUTE_SELECTOR = toFunctionSelector(
+  'openDispute(bytes32,string,uint256)',
+);
 
 const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
 const mockUseChainId = useChainId as jest.MockedFunction<typeof useChainId>;
@@ -94,7 +158,18 @@ describe('useDisputeSubmission', () => {
       isConnected: true,
     } as any);
 
-    mockUseChainId.mockReturnValue(10); // Optimism mainnet
+    mockUseChainId.mockReturnValue(11155420); // Reviewed release chain
+
+    mockEstimateGas.mockResolvedValue(213_456n);
+    mockSimulateContract.mockResolvedValue({ request: {} });
+    mockWriteContractAsync.mockResolvedValue(`0x${'ab'.repeat(32)}`);
+    (usePublicClient as jest.Mock).mockReturnValue({
+      estimateGas: mockEstimateGas,
+      simulateContract: mockSimulateContract,
+    });
+    (useWriteContract as jest.Mock).mockReturnValue({
+      writeContractAsync: mockWriteContractAsync,
+    });
   });
 
   describe('Validation', () => {
@@ -279,18 +354,34 @@ describe('useDisputeSubmission', () => {
     it('should simulate dispute successfully', async () => {
       const { result } = renderHook(() => useDisputeSubmission());
 
-      const simulation = await result.current.simulateDispute(mockContext, mockPayload);
+      const simulation = await result.current.simulateDispute(
+        mockContext,
+        { ...mockPayload, claimId: CLAIM_ID_BYTES32 },
+      );
 
       expect(simulation.success).toBe(true);
-      expect(simulation.gasEstimate).toBe('200000');
-      expect(simulation.projectedState).toBeDefined();
-      expect(simulation.projectedState?.disputeId).toBeDefined();
+      // Gas comes from the RPC estimate, never a hard-coded constant.
+      expect(simulation.gasEstimate).toBe('213456');
+      expect(mockEstimateGas).toHaveBeenCalled();
+      expect(mockSimulateContract).toHaveBeenCalled();
       expect(simulation.projectedState?.bondLocked).toBe('1000000000000000000');
       expect(simulation.projectedState?.newStatus).toBe('DISPUTED');
       expect(simulation.data).toBeDefined();
       expect(simulation.data?.from).toBe('0x1234567890123456789012345678901234567890');
-      expect(simulation.data?.to).toBe('0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E');
+      expect(simulation.data?.to).toBe('0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
       expect(simulation.data?.value).toBe('1000000000000000000');
+    });
+
+    it('never projects a dispute id before the contract assigns one', async () => {
+      const { result } = renderHook(() => useDisputeSubmission());
+
+      const simulation = await result.current.simulateDispute(
+        mockContext,
+        { ...mockPayload, claimId: CLAIM_ID_BYTES32 },
+      );
+
+      expect(simulation.success).toBe(true);
+      expect(simulation.projectedState?.disputeId).toBeUndefined();
     });
 
     it('should fail simulation with validation errors', async () => {
@@ -328,32 +419,82 @@ describe('useDisputeSubmission', () => {
       expect(result.current.isSimulating).toBe(false);
     });
 
-    it('should generate predicted dispute ID', async () => {
+    it('encodes calldata from the pinned ABI selector', async () => {
       const { result } = renderHook(() => useDisputeSubmission());
 
-      const simulation = await result.current.simulateDispute(mockContext, mockPayload);
+      const simulation = await result.current.simulateDispute(
+        mockContext,
+        { ...mockPayload, claimId: CLAIM_ID_BYTES32 },
+      );
 
-      expect(simulation.projectedState?.disputeId).toMatch(/^dispute-/);
-      expect(simulation.projectedState?.disputeId).toContain('claim-123');
+      // Selector comes from the ABI entry, not a hard-coded constant.
+      expect(simulation.data?.calldata).toBeDefined();
+      expect(simulation.data?.calldata).toMatch(
+        new RegExp(`^${OPEN_DISPUTE_SELECTOR}`),
+      );
     });
 
-    it('should encode calldata', async () => {
+    it('refuses to encode a claim id that is not canonical 32-byte hex', async () => {
       const { result } = renderHook(() => useDisputeSubmission());
 
-      const simulation = await result.current.simulateDispute(mockContext, mockPayload);
+      const simulation = await result.current.simulateDispute(
+        mockContext,
+        { ...mockPayload, claimId: 'claim-123' },
+      );
 
-      expect(simulation.data?.calldata).toBeDefined();
-      expect(simulation.data?.calldata).toMatch(/^0x9a8a0592/); // OPEN_DISPUTE_SELECTOR
+      expect(simulation.success).toBe(false);
+      expect(simulation.error).toMatch(/encode/i);
+      expect(mockSimulateContract).not.toHaveBeenCalled();
     });
   });
 
   describe('Submission', () => {
-    it('should throw error requiring wallet integration', async () => {
+    it('submits through the wallet and returns the real transaction hash', async () => {
+      const { result } = renderHook(() => useDisputeSubmission());
+
+      const transaction = await act(() =>
+        result.current.submitDispute(mockContext, {
+          ...mockPayload,
+          claimId: CLAIM_ID_BYTES32,
+        }),
+      );
+
+      expect(mockWriteContractAsync).toHaveBeenCalledTimes(1);
+      expect(transaction.transactionHash).toBe(`0x${'ab'.repeat(32)}`);
+      expect(transaction.status).toBe('PENDING');
+      // The bond lock and dispute id are only known from a mined receipt.
+      expect(transaction.bondLocked).toBe(false);
+      expect(transaction.disputeId).toBeUndefined();
+      expect(result.current.lastTransaction?.transactionHash).toBe(
+        `0x${'ab'.repeat(32)}`,
+      );
+    });
+
+    it('fails closed when the wallet write path is unavailable', async () => {
+      (useWriteContract as jest.Mock).mockReturnValue(undefined);
       const { result } = renderHook(() => useDisputeSubmission());
 
       await expect(
-        result.current.submitDispute(mockContext, mockPayload)
-      ).rejects.toThrow('Dispute submission requires wallet writeContract integration');
+        result.current.submitDispute(mockContext, {
+          ...mockPayload,
+          claimId: CLAIM_ID_BYTES32,
+        })
+      ).rejects.toThrow(/write path unavailable/i);
+      expect(mockWriteContractAsync).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when the pinned ABI declares no dispute entrypoint', async () => {
+      const { result } = renderHook(() => useDisputeSubmission({ abi: [] }));
+
+      expect(result.current.isDisputeSupported).toBe(false);
+
+      await expect(
+        result.current.submitDispute(mockContext, {
+          ...mockPayload,
+          claimId: CLAIM_ID_BYTES32,
+        })
+      ).rejects.toThrow(/declares no dispute-opening function/i);
+      expect(mockWriteContractAsync).not.toHaveBeenCalled();
     });
 
     it('should validate before submission', async () => {
@@ -410,7 +551,7 @@ describe('useDisputeSubmission', () => {
     it('should expose artifact version', () => {
       const { result } = renderHook(() => useDisputeSubmission());
 
-      expect(result.current.artifactVersion).toBe('v2.1.0');
+      expect(result.current.artifactVersion).toBe('2.0.0');
     });
   });
 

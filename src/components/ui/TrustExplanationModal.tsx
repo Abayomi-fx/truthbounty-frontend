@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useRef } from "react";
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 
 interface Props {
   onClose: () => void;
@@ -6,61 +7,22 @@ interface Props {
 
 export default function TrustExplanationModal({ onClose }: Props) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    previousActiveElement.current = document.activeElement as HTMLElement;
-    const closeButton = modalRef.current?.querySelector('button');
-    closeButton?.focus();
-
-    return () => {
-      previousActiveElement.current?.focus();
-    };
-  }, []);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-    }
-  }, [onClose]);
-
-  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== "Tab") return;
-
-    const focusableElements = modalRef.current?.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-
-    if (!focusableElements || focusableElements.length === 0) return;
-
-    const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-    if (e.shiftKey) {
-      if (document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      }
-    } else if (document.activeElement === lastElement) {
-      e.preventDefault();
-      firstElement.focus();
-    }
-  }, []);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  useDialogFocus(true, modalRef, closeButtonRef, onClose);
 
   return (
     <div
       className="fixed inset-0 z-50 modal-shell bg-black/60"
       role="presentation"
-      onKeyDown={handleFocusTrap}
     >
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape/focus-trap keydown handling on the dialog container */}
       <div
         ref={modalRef}
         className="modal-panel bg-[#18181b] border border-[#232329]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="trust-modal-title"
-        onKeyDown={handleKeyDown}
+        tabIndex={-1}
       >
         <h2 id="trust-modal-title" className="text-2xl font-bold mb-4">How trust and reputation work</h2>
         <p className="mb-2">
@@ -92,6 +54,7 @@ export default function TrustExplanationModal({ onClose }: Props) {
         </ul>
         <div className="mt-6 text-right">
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             className="bg-[#5b5bf6] text-white px-4 py-2 rounded hover:bg-[#6c6cf7]"
             aria-label="Close trust explanation"

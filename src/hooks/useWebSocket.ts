@@ -14,12 +14,12 @@ import type {
 } from '@/app/types/websocket';
 
 const DEFAULT_RECONNECT_ATTEMPTS = 10;
-const DEFAULT_INITIAL_RECONNECT_INTERVAL = 1000; // 1 second initial delay
-const DEFAULT_MAX_RECONNECT_INTERVAL = 30000; // 30 seconds max delay
+const DEFAULT_INITIAL_RECONNECT_INTERVAL = 3000; // 3 seconds initial delay
+const DEFAULT_MAX_RECONNECT_INTERVAL = 60000; // 60 seconds max delay
 const DEFAULT_HEARTBEAT_INTERVAL = 30000;
 const DEFAULT_BACKOFF_MULTIPLIER = 2; // Exponential backoff multiplier
 const DEFAULT_MESSAGE_CACHE_SIZE = 1000; // Max number of messages to keep for deduplication
-const DEFAULT_CURSOR_STORAGE_KEY = 'truthbounty:ws:cursor';
+export const DEFAULT_CURSOR_STORAGE_KEY = 'truthbounty:ws:cursor';
 const DEFAULT_HTTP_CATCHUP_URL = '/api/claims/catchup';
 
 type TimeoutId = ReturnType<typeof setTimeout>;
@@ -53,6 +53,7 @@ export function useWebSocket(config?: WebSocketConfig) {
   const [lastMessage, setLastMessage] = useState<WebSocketEvent | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [reconnectCount, setReconnectCount] = useState(0);
+  const [permanentlyDisconnected, setPermanentlyDisconnected] = useState(false);
   const [lastCursor, setLastCursor] = useState<string | null>(null);
 
   const {
@@ -109,12 +110,10 @@ export function useWebSocket(config?: WebSocketConfig) {
 
   // Calculate exponential backoff delay
   const getBackoffDelay = useCallback((attempt: number) => {
-    const delay = Math.min(
+    return Math.min(
       initialReconnectInterval * Math.pow(backoffMultiplier, attempt),
       maxReconnectInterval
     );
-    // Add jitter to prevent thundering herd
-    return delay + Math.random() * 1000;
   }, [initialReconnectInterval, maxReconnectInterval, backoffMultiplier]);
 
   // Clear all timers and intervals
@@ -183,6 +182,20 @@ export function useWebSocket(config?: WebSocketConfig) {
     }
   }, [httpCatchupUrl, messageCacheSize, onMessage]);
 
+  // Dispatch an event payload to typed subscribers registered via `subscribe()`
+  const dispatchToListeners = useCallback(
+    (data: WebSocketEvent) => {
+      const listeners = listenersRef.current.get(data.type);
+      if (!listeners) return;
+      listeners.forEach((handler) => {
+        if (isMountedRef.current) {
+          handler(data.payload as never);
+        }
+      });
+    },
+    [],
+  );
+
   // Process incoming message with deduplication and cursor tracking
   const processMessage = useCallback((data: WebSocketEvent) => {
     const messageId = generateMessageId(data);
@@ -211,14 +224,24 @@ export function useWebSocket(config?: WebSocketConfig) {
     }
 
     // Handle rollback events for chain reorgs
+    // The event is delivered both to the config callback and to typed
+    // subscribers (via `subscribe('ROLLBACK', …)`) so projection-aware
+    // consumers can reconcile without bypassing the pub/sub registry.
     if (data.type === 'ROLLBACK') {
       onRollback?.(data.payload as RollbackEvent);
+      dispatchToListeners(data);
+      setLastMessage(data);
+      onMessage?.(data);
       return;
     }
 
-    // Handle replacement events for chain updates
+    // Handle replacement events for transaction replacements. Same dual
+    // delivery contract as ROLLBACK (callback + typed subscribers).
     if (data.type === 'REPLACEMENT') {
       onReplacement?.(data.payload as ReplacementEvent);
+      dispatchToListeners(data);
+      setLastMessage(data);
+      onMessage?.(data);
       return;
     }
 
@@ -234,7 +257,7 @@ export function useWebSocket(config?: WebSocketConfig) {
 
     setLastMessage(data);
     onMessage?.(data);
-  }, [messageCacheSize, onMessage, onRollback, onReplacement]);
+  }, [messageCacheSize, onMessage, onRollback, onReplacement, dispatchToListeners]);
 
   // Connect to WebSocket server
   const connect = useCallback(() => {
@@ -263,6 +286,7 @@ export function useWebSocket(config?: WebSocketConfig) {
         if (!isMountedRef.current) return;
         
         setConnectionState('connected');
+        setPermanentlyDisconnected(false);
         reconnectAttemptsRef.current = 0;
         setReconnectCount(0);
         onConnect?.();
@@ -326,6 +350,7 @@ export function useWebSocket(config?: WebSocketConfig) {
         } else if (reconnectAttemptsRef.current >= reconnectAttempts) {
           console.error('Max WebSocket reconnection attempts reached. Giving up.');
           setConnectionState('error');
+          setPermanentlyDisconnected(true);
         }
       };
 
@@ -428,6 +453,7 @@ export function useWebSocket(config?: WebSocketConfig) {
       lastCursor,
       error,
       reconnectAttempts: reconnectCount,
+      permanentlyDisconnected,
       connect,
       disconnect,
       subscribe,
@@ -440,6 +466,7 @@ export function useWebSocket(config?: WebSocketConfig) {
       lastCursor,
       error,
       reconnectCount,
+      permanentlyDisconnected,
       connect,
       disconnect,
       subscribe,
