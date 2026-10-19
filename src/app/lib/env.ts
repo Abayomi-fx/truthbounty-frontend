@@ -1,4 +1,4 @@
-import { chains as wagmiChains } from "wagmi";
+import * as wagmiChains from "wagmi/chains";
 
 /**
  * Canonical environment contract for the STAB frontend.
@@ -20,6 +20,14 @@ export const NEXT_PUBLIC_VARS = [
 ] as const;
 
 export type PublicEnvVar = (typeof NEXT_PUBLIC_VARS)[number];
+
+// Identifier aliases so the strings above can be used as typed keys throughout
+// this module without magic string repetition.
+const NEXT_PUBLIC_CHAIN_ID = "NEXT_PUBLIC_CHAIN_ID" as const;
+const NEXT_PUBLIC_RPC_URL = "NEXT_PUBLIC_RPC_URL" as const;
+const NEXT_PUBLIC_API_BASE_URL = "NEXT_PUBLIC_API_BASE_URL" as const;
+const NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID = "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID" as const;
+const NEXT_PUBLIC_EXPLORER_BASE_URL = "NEXT_PUBLIC_EXPLORER_BASE_URL" as const;
 
 export interface Env {
   readonly target: AppTarget;
@@ -191,3 +199,17 @@ export function loadEnv(): Env {
 }
 
 export const env: Env = loadEnv();
+
+/**
+ * Called at build time (next.config.ts) to fail the production build when
+ * required environment variables are missing or invalid.
+ * In non-production environments this is a no-op so local/test builds
+ * are not blocked by missing production secrets.
+ */
+export function assertProductionEnv(
+  source: Record<string, string | undefined> = process.env as Record<string, string | undefined>,
+): void {
+  const target = resolveTarget(source);
+  if (target !== 'production') return;
+  validateEnv(source);
+}
