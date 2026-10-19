@@ -127,7 +127,7 @@ export const waitForWebSocket = async (delay = 100) => {
 
 // Mock fetch response helpers
 export const mockFetchSuccess = (data: any) => {
-  ;(window.fetch as jest.Mock).mockImplementationOnce(() =>
+  ;;(global.fetch as jest.Mock).mockImplementationOnce(() =>
     Promise.resolve({
       ok: true,
       json: () => Promise.resolve(data),
@@ -136,7 +136,7 @@ export const mockFetchSuccess = (data: any) => {
 }
 
 export const mockFetchError = (message = 'An error occurred') => {
-  ;(window.fetch as jest.Mock).mockImplementationOnce(() =>
+  ;;(global.fetch as jest.Mock).mockImplementationOnce(() =>
     Promise.resolve({
       ok: false,
       status: 500,
@@ -156,7 +156,7 @@ export const mockWebSocketEvent = (eventType: string, payload: any) => {
   })
 
   // Find WebSocket instances and trigger the event
-  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } }).mock?.instances || []
+  const wsInstances = (global.WebSocket as unknown as { mock?: { instances?: any[] } }) ?.mock?.instances || []
   wsInstances.forEach((ws: any) => {
     const onMessageHandler = ws.addEventListener?.mock?.calls?.find(
       ([event]: [string]) => event === 'message'

@@ -70,7 +70,8 @@ export function DisputeEligibilityNotice({
 
         {eligibility.status === 'eligible' && (
           <p className="mt-1 text-xs text-green-400/90">
-            Dispute window ends {eligibility.windowEnd} · observed at block{' '}
+            Required bond {eligibility.requiredBond} wei · dispute window ends{' '}
+            {eligibility.windowEnd} · observed at block{' '}
             {eligibility.observedAtBlock}
           </p>
         )}
