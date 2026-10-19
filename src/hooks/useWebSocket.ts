@@ -14,8 +14,8 @@ import type {
 } from '@/app/types/websocket';
 
 const DEFAULT_RECONNECT_ATTEMPTS = 10;
-const DEFAULT_INITIAL_RECONNECT_INTERVAL = 1000; // 1 second initial delay
-const DEFAULT_MAX_RECONNECT_INTERVAL = 30000; // 30 seconds max delay
+const DEFAULT_INITIAL_RECONNECT_INTERVAL = 3000; // 3 seconds initial delay
+const DEFAULT_MAX_RECONNECT_INTERVAL = 60000; // 60 seconds max delay
 const DEFAULT_HEARTBEAT_INTERVAL = 30000;
 const DEFAULT_BACKOFF_MULTIPLIER = 2; // Exponential backoff multiplier
 const DEFAULT_MESSAGE_CACHE_SIZE = 1000; // Max number of messages to keep for deduplication
@@ -53,6 +53,7 @@ export function useWebSocket(config?: WebSocketConfig) {
   const [lastMessage, setLastMessage] = useState<WebSocketEvent | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [reconnectCount, setReconnectCount] = useState(0);
+  const [permanentlyDisconnected, setPermanentlyDisconnected] = useState(false);
   const [lastCursor, setLastCursor] = useState<string | null>(null);
 
   const {
@@ -285,6 +286,7 @@ export function useWebSocket(config?: WebSocketConfig) {
         if (!isMountedRef.current) return;
         
         setConnectionState('connected');
+        setPermanentlyDisconnected(false);
         reconnectAttemptsRef.current = 0;
         setReconnectCount(0);
         onConnect?.();
@@ -348,6 +350,7 @@ export function useWebSocket(config?: WebSocketConfig) {
         } else if (reconnectAttemptsRef.current >= reconnectAttempts) {
           console.error('Max WebSocket reconnection attempts reached. Giving up.');
           setConnectionState('error');
+          setPermanentlyDisconnected(true);
         }
       };
 
@@ -450,6 +453,7 @@ export function useWebSocket(config?: WebSocketConfig) {
       lastCursor,
       error,
       reconnectAttempts: reconnectCount,
+      permanentlyDisconnected,
       connect,
       disconnect,
       subscribe,
@@ -462,6 +466,7 @@ export function useWebSocket(config?: WebSocketConfig) {
       lastCursor,
       error,
       reconnectCount,
+      permanentlyDisconnected,
       connect,
       disconnect,
       subscribe,
