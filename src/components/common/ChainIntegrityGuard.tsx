@@ -1,4 +1,3 @@
-
 'use client';
 
 /**
@@ -66,7 +65,7 @@ export function ChainIntegrityGuard({
 
   const supported = isSupportedChain(chainId);
 
-  let integrityStatus: IntegrityStatus = 'valid';
+  let integrityStatus: 'valid' | 'blocked' | 'error' | 'degraded' = 'valid';
   let statusReason: string | null = null;
 
   if (!address) {
