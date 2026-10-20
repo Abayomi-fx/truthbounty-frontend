@@ -6,7 +6,8 @@ import { Shield, Clock, AlertTriangle, CheckCircle, ArrowRight, Zap } from 'luci
 import type { OperationalQueueItem } from '@/app/types/admin';
 
 export interface OperationalQueueTableProps {
-  queue: OperationalQueueItem[];
+  queue?: OperationalQueueItem[];
+  items?: OperationalQueueItem[];
   isLoading?: boolean;
   onSelectOperation: (item: OperationalQueueItem) => void;
   className?: string;
@@ -33,10 +34,12 @@ function retryUnavailableReason(item: OperationalQueueItem): string {
 
 export function OperationalQueueTable({
   queue,
+  items,
   isLoading = false,
   onSelectOperation,
   className = '',
 }: OperationalQueueTableProps) {
+  const queueList = queue ?? items ?? [];
   if (isLoading) {
     return (
       <div className={`rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse ${className}`}>
@@ -69,7 +72,7 @@ export function OperationalQueueTable({
             <Zap className="h-4 w-4 text-amber-500" aria-hidden="true" />
             <span>Bounded Operational Queues</span>
             <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
-              {queue.length} pending
+              {queueList.length} pending
             </span>
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -78,7 +81,7 @@ export function OperationalQueueTable({
         </div>
       </div>
 
-      {queue.length === 0 ? (
+      {queueList.length === 0 ? (
         // Reassuring Empty / No-Action State
         <div
           role="status"
@@ -112,7 +115,7 @@ export function OperationalQueueTable({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {queue.map((item) => (
+                  {queueList.map((item) => (
                     <tr key={item.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3.5">
                         <div className="font-semibold text-foreground text-sm">{item.title}</div>
@@ -168,7 +171,7 @@ export function OperationalQueueTable({
 
           {/* Approved Mobile Card Alternative (Visible only on mobile < md) */}
           <div className="md:hidden space-y-3" data-testid="operational-queue-mobile-cards">
-            {queue.map((item) => (
+            {queueList.map((item) => (
               <div
                 key={item.id}
                 className="rounded-xl border border-border bg-card p-4 space-y-3 shadow-xs"

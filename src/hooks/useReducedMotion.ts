@@ -51,6 +51,8 @@ export function usePrefersReducedMotion(): boolean {
   );
 }
 
+export const useReducedMotion = usePrefersReducedMotion;
+
 /**
  * Utility for consumers that need a plain snapshot outside React
  * (e.g. imperative focus management before starting a countdown).
@@ -58,3 +60,4 @@ export function usePrefersReducedMotion(): boolean {
 export function prefersReducedMotion(): boolean {
   return getReducedMotionSnapshot();
 }
+

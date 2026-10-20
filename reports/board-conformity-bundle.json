@@ -1,0 +1,3908 @@
+{
+  "schemaVersion": "1.0.0",
+  "generator": "verify-board-conformity.mjs (UI-FE-093)",
+  "timestamp": "2026-10-19T12:00:00.000Z",
+  "frontendRevision": "9efbc5ec545b1dc3dd065e92fb750805b41350ee",
+  "protocolAuthorityRevision": "60c66b78cf797d8f821089c99ae1bc461009fecc",
+  "protocolRepository": "DigiNodes/truthbounty-protocol",
+  "totalApprovedBoards": 58,
+  "implementedScreensCount": 31,
+  "plannedScreensCount": 27,
+  "batches": [
+    {
+      "batchId": "foundation",
+      "batchNumber": 1,
+      "title": "Foundation Architecture, Tokens & System Shells",
+      "totalBoards": 8,
+      "implementedCount": 8,
+      "plannedCount": 0
+    },
+    {
+      "batchId": "public-claimant",
+      "batchNumber": 2,
+      "title": "Public Discovery & Claimant Lifecycle",
+      "totalBoards": 11,
+      "implementedCount": 8,
+      "plannedCount": 3
+    },
+    {
+      "batchId": "verifier",
+      "batchNumber": 3,
+      "title": "Verifier Eligibility, Queue & Workspace",
+      "totalBoards": 7,
+      "implementedCount": 0,
+      "plannedCount": 7
+    },
+    {
+      "batchId": "dispute",
+      "batchNumber": 4,
+      "title": "Public Dispute Register & Appeal Resolution",
+      "totalBoards": 6,
+      "implementedCount": 1,
+      "plannedCount": 5
+    },
+    {
+      "batchId": "privileged",
+      "batchNumber": 5,
+      "title": "Privileged Operations, Emergency & Governance Timelock",
+      "totalBoards": 13,
+      "implementedCount": 12,
+      "plannedCount": 1
+    },
+    {
+      "batchId": "support-legal",
+      "batchNumber": 6,
+      "title": "Support, Incident Status, Security & Legal Compliance",
+      "totalBoards": 13,
+      "implementedCount": 2,
+      "plannedCount": 11
+    }
+  ],
+  "entries": [
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/01-design-tokens.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Design Tokens & Foundations",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready"
+      ],
+      "stableRegions": [
+        ":root",
+        "body"
+      ],
+      "maskedRegions": [],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-01-TOKENS-RASTER",
+          "category": "subpixel-rendering",
+          "description": "Design tokens define HSL and CSS custom property primitives; browser rasterization exhibits natural subpixel variance against SVG vector shapes.",
+          "justification": "CSS custom property variables enforce exact semantic color codes; display pixel differences are non-semantic antialiasing.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.4.1",
+          "1.4.3",
+          "1.4.11"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/01-design-tokens-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "3c29393cc6a3c6614609c68f7bfff5195fc53f2267d47471dec66eec79bff3a4",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/01-design-tokens-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "16e674664af496fbcc7a20c03047481c201643a30cb8d5652e0997145e46c11d",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/01-design-tokens-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "33c286389ecbeb0d348a18d584ff8169cdc159a07737d553399682605e89a341",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/01-design-tokens-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "107266038381f468bfed3a7c9f781c73d023b1fc3b3de39e12553dcea471094d",
+          "status": "captured"
+        }
+      },
+      "digest": "d9c11efbb07ffc33ccf380117807ac7a46e6802ed70567eb6886d6cc7fa696a7"
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/02-application-shells.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Application Shells & Responsive Layouts",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "header[role='banner']",
+        "nav[role='navigation']",
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-02-SHELL-DRAWER",
+          "category": "responsive-behavior",
+          "description": "Mobile screen (<640px) uses accessible collapsible modal drawer triggered by fixed hamburger button rather than horizontal shrink.",
+          "justification": "Required by WCAG 2.5.8 touch target ergonomics and responsive layout specifications.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.10",
+          "2.1.1",
+          "2.4.1",
+          "2.5.8"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/02-application-shells-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "4ded9a972d9a0aa0b3d8bcbf2c8517ffc759669d556a8de4e3ff83fcde822352",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/02-application-shells-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "70fb29b555077915309eb194862c6e9a4c1ad41d845f9c348f6873c833fd009a",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/02-application-shells-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "77f54e8184258a9da109e67d7968a70d9c51cf423c6e1257b3686ad12f6ece53",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/02-application-shells-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "0069f97f5539bc0ed3f13bb564a6658592601a7a28fde06f32052d340e30085c",
+          "status": "captured"
+        }
+      },
+      "digest": "407b7301e880a22b35fbeb034bb01e3524c112b9610a49737e6981fb6151c1c2"
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/03-navigation.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Navigation Structures & Route Transitions",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready"
+      ],
+      "stableRegions": [
+        "header[role='banner']",
+        "nav"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.4.4",
+          "2.4.7",
+          "3.2.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/03-navigation-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "9714d7a5613496408b13237c4d7647876681a061a4394f23c359931991888662",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/03-navigation-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "ad327ab88ab1c6349a4477f0fb73b0a2aa4597cd67bfb2267ff899c25c40926d",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/03-navigation-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "f82726d64fdf5bc9eb46f41e9b5d7bdf15b466d93e78a7bf5f2b975039ad79eb",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/03-navigation-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "6e8dd07622a90ff2a78414dd3a31994737b6466833b963f6998605dc1e585311",
+          "status": "captured"
+        }
+      },
+      "digest": "b43cc511385978ade7affff8611adca7783345c3b4848561d172f6b3613a4e5a"
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/04-component-primitives.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Component Primitives Catalogue",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        ".tb-primitive-container",
+        "[data-slot]"
+      ],
+      "maskedRegions": [],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.4.3",
+          "2.1.1",
+          "2.5.8",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/04-component-primitives-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "4a9ec678465927b760e436de476fac065d151b61534e12a967ae50ada361903e",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/04-component-primitives-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "372935879f312c41c4b9ffd4e3adde0e9fa921486cb6b3ad365e58c5c648e071",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/04-component-primitives-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "df04700df27feff3a6a5828a2bd2cb449d971a372b28906c72e5fc7dce0491bf",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/04-component-primitives-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "747ce22cf2d5b4346cfd012314c237349793299a6ff2247005cc8545c5ef62fb",
+          "status": "captured"
+        }
+      },
+      "digest": "694329181f29e601ae71f3e3b10dbe623ff81ec9c4697b81dd4a88ef55b18ef8"
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/05-wallet-network-identity.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Wallet Connection, Network Selector & Identity Entry",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "denied"
+      ],
+      "stableRegions": [
+        "[data-testid='wallet-modal']",
+        "header[role='banner']"
+      ],
+      "maskedRegions": [
+        "[data-testid*='address']",
+        "[data-mask='dynamic-data']",
+        ".wallet-dynamic-balance"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-05-WALLET-MOCK",
+          "category": "mock-isolation",
+          "description": "Mocked test wallet renders deterministic checksum address 0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E instead of live injected signer.",
+          "justification": "Ensures reproducible clean CI execution without relying on browser wallet extensions or live keyrings.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.2",
+          "2.4.3",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/05-wallet-network-identity-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "45d1dd2f159feeefed519918614b1d027bde08e85bb9161272ace75a5bda6a08",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/05-wallet-network-identity-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "9519eb70204357cd2a9f2c11bc28a6c6fa4f04fce00ac81ec6d90d724eb7cbf3",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/05-wallet-network-identity-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "3d20171f7c85ac37ef88b5756844315521b02fed7cb36927d8b6f71c0e8495f6",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/05-wallet-network-identity-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "8a79ce4d56c1f674a27ad6e7640f6642627206be49ea3415b9d03c8fd1657f71",
+          "status": "captured"
+        }
+      },
+      "digest": "e5e84eb9b3bc437fa29b82c8cc60e0d100f409bfe19ecdc8c81be6ce76c40ece"
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/06-transaction-states.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Transaction Lifecycle States",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "[data-testid='transaction-status-badge']",
+        ".tb-transaction-container"
+      ],
+      "maskedRegions": [
+        "[data-testid*='hash']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.4.1",
+          "2.2.1",
+          "2.3.3",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/06-transaction-states-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "77d228ccb4fc3d7ab83987807c867a9ffc7e01c1fc3cf0cbbd994e80a571f051",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/06-transaction-states-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "6ec2ef57f655b09fecf600ee9cc164610cf43b5b782796204efaa5032ac06f03",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/06-transaction-states-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "4e02b6c229d310c3f5096ea9a8b03e2a69c93abe8014228d0d22b920d23ffb96",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/06-transaction-states-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "4fdc5fd2c47b135b37fc98c0af6b3f55d126eb1f91b7b78e34977527ea7b6fc5",
+          "status": "captured"
+        }
+      },
+      "digest": "8eea2ceac2e688c268ee83487141277945249e5f405a7883044ccde73985f517"
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/07-system-states.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Canonical System States",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "error",
+        "stale",
+        "denied"
+      ],
+      "stableRegions": [
+        "[data-testid='system-state-card']",
+        "[role='status']",
+        "[role='alert']"
+      ],
+      "maskedRegions": [
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.1",
+          "1.4.3",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/07-system-states-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "4c522c37c9e4f22e1bb56d41129606a6cb045c98157e2de8965718d82baa72c2",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/07-system-states-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "b0a40b4bee3aabdb4632cdbc662dc827ce46e66c421800c4a4a1969eac328559",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/07-system-states-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "7c51fe41e74b1fe4b46670b2af78e60863b8d176d26fbb09dc25921bc83e4353",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/07-system-states-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "3277a00a15442af20079e905e065b8bac922c4434a6a5e68f0ba787b279c858e",
+          "status": "captured"
+        }
+      },
+      "digest": "22434b0f66e3d8dcdb979b03d5c49324c5e4396f46a73b2145174a452d24a02b"
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/08-responsive-accessibility.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Responsive Breakpoints & Accessibility Norms",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready"
+      ],
+      "stableRegions": [
+        "a.skip-link",
+        "main#main-content"
+      ],
+      "maskedRegions": [],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.4.4",
+          "1.4.10",
+          "2.3.3",
+          "2.4.1",
+          "2.5.8"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/08-responsive-accessibility-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "53b5530d4e087b0378aa398f71998ebebf1bd6271795ffd8ab59184121c7c461",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/08-responsive-accessibility-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "48568edb33f93c771d08ff9fe3b8d712f27b392c664797a960b9cde8fe21492b",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/08-responsive-accessibility-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "aa77d227de8356c9e9e69ceb9f6a916aede50c08df478905ae109d9fc5f27ab0",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/08-responsive-accessibility-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "d2a5f5d6eeff72485b318f876fd7e9bb5f396f7de0c172fee7281294c47a921b",
+          "status": "captured"
+        }
+      },
+      "digest": "77cd0e5628a606912b586595e14262cfc279c2830fba62a97ce1ffe98ba8cf42"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/01-product-landing.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Product Landing Page",
+      "canonicalRoute": "/",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "header[role='banner']",
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-01-LANDING-ANTIALIAS",
+          "category": "typography-rendering",
+          "description": "SVG vector typography in approved design authority renders with subpixel differences compared to browser webfont glyph rasterization at 1440px.",
+          "justification": "Approved browser typography uses Inter with font-smoothing; vector SVG rasterizer antialiasing varies by subpixel renderer.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "1.4.10",
+          "2.1.1",
+          "2.4.1",
+          "2.5.8"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/01-product-landing-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "7e1847fd6ae264314d54c6bd92b0e7ee7cfef693067406ad092dd73d2fcd39bf",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/01-product-landing-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "86daba1f90aef30dbb238bec1451c62b9c6337b66cc307d9574f903912f68a4a",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/01-product-landing-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "7491283efb8b5df2ee11489ff9e7125156f87ba6020ec12b969ef04ce08d235b",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/01-product-landing-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "9482a03a26811df39a84981fd210b90a75c332363b4c2ee1088513ea8c849458",
+          "status": "captured"
+        }
+      },
+      "digest": "e1f760d72d077cf5e92e6e8af388349eb106250f2965d305cb53443d4876ae41"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/02-explore-claims.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Explore Public Claims Feed",
+      "canonicalRoute": "/claims",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "table[role='table']",
+        "main#main-content",
+        "input#claim-search"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.10",
+          "2.1.1",
+          "2.5.8",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/02-explore-claims-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "573b157a970d21afa04adb24fac485310681bd2cd551c28513aa5e8a400c581d",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/02-explore-claims-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "4d0dd8b4840a6752e946314001c4dba83589af8969fd38b80dc8d3c4f0c4bf99",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/02-explore-claims-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "f67765697e7fa6bfeaa18ff6619b5c43493da0804124bf9a8d6cabc8aaca69ef",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/02-explore-claims-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "ca69d4c5e0fc5be096c1f1a5c7f6c8d96157bf19c8dbfb3bade92303f6ca5d53",
+          "status": "captured"
+        }
+      },
+      "digest": "b20ff0362326953e1c871bef66db57c8bdac594af8e818a48a452b87f7619425"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/03-claim-detail.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Claim Detail, Evidence & Timeline",
+      "canonicalRoute": "/claims/:claimId",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "article[role='article']",
+        "h1#claim-heading",
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']",
+        "[data-testid*='timestamp']",
+        "time",
+        ".stake-balance"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.1.1",
+          "1.3.1",
+          "1.4.10",
+          "2.4.4",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/03-claim-detail-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "07a8f7a65e8b383e2161bc3a0cc6f3d5f519cb46756660d5e8c2cbefdf451a7d",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/03-claim-detail-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "65cecf3691a5aeb65531c88f52f8e9915c983eaf7059a244c2348b7a1e34dce3",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/03-claim-detail-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "239b3137be848dd2cf977d698baad747f89b073b8dc588c34d5292a2f9e2c838",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/03-claim-detail-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "9bf66b38d1f4242b060b7beb6160f3b033f35c037181bb6ad3d4a2d27fd22a85",
+          "status": "captured"
+        }
+      },
+      "digest": "af82114cad31c38e63b01fc7a220d986fb54e71f139a382818fc781d1c3a8af6"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/04-wallet-entry-and-eligibility.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Wallet Entry & Eligibility Verification",
+      "canonicalRoute": "/settings/identity",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Identity and humanity verification journey in staging review under UI-FE-082; planned for Wave 10",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "denied"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "ee635ff134577b0380e968aa0eb32c6382d0f979acadd7cbb555d9270bb77578"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/05-claimant-dashboard.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Claimant Personal Dashboard",
+      "canonicalRoute": "/dashboard",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Personal claimant dashboard view scheduled for Wave 10 under UI-FE-075",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "denied"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "181df177a6d991e8e44b0d60ddc9487ef81c4afdec27be30480048f17a018be7"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/06-submit-claim-statement.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 1: Statement",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "form",
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.2",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/06-submit-claim-statement-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "0197f448d441a33e02375d0489fa18a7134a3af1668a913ed4f1e1ce867bdeeb",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/06-submit-claim-statement-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "0e6fc43f2cd5ba1ffc9c9cb5b4dd4089751ddf21ec0f7db7f9f38074f0cab4d9",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/06-submit-claim-statement-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "cc5fad441f4481e6ade77c334cbe971a6709d63a3ce8fe0485cc2a59bd7bcad7",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/06-submit-claim-statement-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "fdc5b1139c5c22028f5e7e2a12d203fc5aa744b77cd82ddd97ac65dc508cbd2d",
+          "status": "captured"
+        }
+      },
+      "digest": "cbf0d8ffaa3b06124f60f3f90a419a85661cf501a2cc90fc51e8c32dbf0de7f4"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/07-submit-evidence.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 2: Evidence Attachment",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "form",
+        "main#main-content",
+        ".evidence-dropzone"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='cid']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.1",
+          "3.3.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/07-submit-evidence-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "e56be0325b4b42e46a9ef20862177ca67a719ca4480e91e0ec33f937dca2bbf9",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/07-submit-evidence-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "97baed8ac4d36583c4b885d55e4f3d85ebd0c143c2d662c0a6fd58a714de8369",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/07-submit-evidence-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "902a512e88d0a7b67c0a9b73459b8812f7c229be4e77209dad94814e4b16675b",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/07-submit-evidence-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "ef8a2ea073d8895fff7935919dd5759f3b69e76adec32aeaceec64456a4b1790",
+          "status": "captured"
+        }
+      },
+      "digest": "cc6b7983ba21d5ea7f6566290cb05d630f6bdf8554ac2ad74a768d7c24e915b8"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/08-submit-funding.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 3: Funding & Bounty Commitment",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "form",
+        "main#main-content",
+        ".allowance-panel"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        ".wallet-dynamic-balance"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.4",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/08-submit-funding-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "0466d0b22339bf3f928d7bc4a2a733e772c1a8a20fd85ce6a6a0726a2efb1ba6",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/08-submit-funding-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "d9ab2a0f418961ddfd79ef45ab73d502f52301aebe71b0f530614c1d9a505bdc",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/08-submit-funding-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "865fef4b5b73b28778c2e3e1b5cded44f3109905af857ad80d02470412352d41",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/08-submit-funding-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "14fa7f53e540f26e7c9fd52b8fe779809d896c6b22287645c64c6004eadbd408",
+          "status": "captured"
+        }
+      },
+      "digest": "d9f467b79c8703fac4cec61a5bc9d57cfb30916aa5211a044ca085161803f58a"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/09-submit-review-authorize.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 4: Review & On-Chain Authorization",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "form",
+        "main#main-content",
+        ".review-summary-card"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.4",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/09-submit-review-authorize-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "5d9981d4c678ab8007e98df657c62d763bdedb5c963503e597e07ac9d886bf1d",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/09-submit-review-authorize-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "ba89b2764011e6e907332c25bcef81b02aff95ca63f3abd1ab88f5369f7551b9",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/09-submit-review-authorize-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "4ad2fd3d1b8a09328329926940c386c8950874d90277c6d5ca0c39a4ea9b5ce6",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/09-submit-review-authorize-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "c3f1091268fb6a9d207a698b57e7108257051fde243699b218a132eaaf77f51d",
+          "status": "captured"
+        }
+      },
+      "digest": "5a5e4ad9359057f74687b44cf657a7c7b8872d0d21cfe471f58b718190271bc1"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/10-owned-claims.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Owned Claims Management",
+      "canonicalRoute": "/dashboard/claims",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Claimant owned claims list scheduled for Wave 10 under UI-FE-076",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "denied"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "6a48a5b54085e4adb5f6a2697f69c75861a0ce8f08417d59da84a82410ea082a"
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/11-rewards-transactions.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Rewards & Transaction Settlement Center",
+      "canonicalRoute": "/dashboard/rewards",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        "section[aria-label='Rewards center']",
+        "section[aria-label='Transaction center']"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "3.3.4",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/11-rewards-transactions-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "f2ebba8a90ae15572af69d29d7ecb9dbd85fa7aaa43e401c38712b730c36db1f",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/11-rewards-transactions-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "5347d95a9e0d8c4ac3d9c6763be38857d23b9376918dcd79c5b7cda3a2b8e5e8",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/11-rewards-transactions-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "7b229472dba5a7f41d24563533e04b185b6af0b1fde2a14e6936448a8e61a08d",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/11-rewards-transactions-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "50a5b81757685914c0e0015b9b42a41dcb21fab2f86a57fef3bb4d95f3ecfc81",
+          "status": "captured"
+        }
+      },
+      "digest": "459f4d98b9a29cfe9992da13a67462219c73c31eb50de43544764a7788b76911"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/01-verifier-eligibility-readiness.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verifier Eligibility & Staking Readiness",
+      "canonicalRoute": "/dashboard/verifications",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Verifier readiness gating component scheduled under UI-FE-078",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "denied"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "b7d783a017a2e574b7c51be10dbaa2f65fb2db7e269e58ee9bdb955c5a875af4"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/02-verification-queue.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Work Queue",
+      "canonicalRoute": "/dashboard/verifications",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Verifier queue table scheduled under UI-FE-078",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "denied"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.10",
+          "2.1.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "626f492f6a1f57adfca433f15600d9f4899e5a94e8f1b09674090d0f05333386"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/03-verification-evidence-workspace.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Evidence Workspace",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Split verification workspace scheduled under UI-FE-079",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "2.4.4"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "b812738a5719bd3457b74dace525168ac5652ebd67174e10f538411224fa603a"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/04-stake-effective-weight.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Stake & Effective Weight Calculator",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Effective stake weighting calculator scheduled under UI-FE-079",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "559705e35561d2b182d33b8613abafbce8375cf5630b62ad2df441dba0c12697"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/05-verification-decision.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Decision & Citation Form",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Verification decision recording scheduled under UI-FE-079",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.1",
+          "3.3.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "588ea6658895d4d808358f929d4d8923ff6ad87631f42e687125bf751d53b447"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/06-verification-authorize-reveal.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Authorize & Reveal Commit",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Commit-reveal cryptographic authorization scheduled under UI-FE-079",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.4",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "89e18e2841aa1c18a711c6f710c39cda00083121d94475cdbb2fb00816c3ea3b"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/07-my-verifications.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "My Historical Verifications & Slashing Audit",
+      "canonicalRoute": "/dashboard/verifications",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Historical verifications list scheduled under UI-FE-078",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "7f374ac4c2bf3b49796576c7ad4184d84b0001a882b5317aab071d7f102526ab"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/08-public-dispute-register.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Public Dispute Register & History",
+      "canonicalRoute": "/disputes",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        "table",
+        "header[role='banner']"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.10",
+          "2.1.1",
+          "2.5.8",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/08-public-dispute-register-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "c55182eed7d36c333ba68822420e62bb5fe060bebaaa4b7935af600f0853ab62",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/08-public-dispute-register-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "7f9e26987e7fb6015a7ea9bc22d2bbe4943b7351fd2c2a7ab2871aa167abd563",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/08-public-dispute-register-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "72540c243ae06dd38719ff65e3c8408b1b0fafc5b8f591f975f4b42b94b9bee8",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/08-public-dispute-register-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "413a3716fcfd98278ce2470fce147315385ca9c113ea5486caeb339ebf4a8106",
+          "status": "captured"
+        }
+      },
+      "digest": "1926eb1577ab28f6fe926fa6d406c1d841dfa59cb630807e9528856752c0055d"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/09-dispute-detail.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Dispute Detail & Timeline",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dispute detail route scheduled under UI-FE-083",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "2.4.4"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "2d84a1d274fd1e8ad7c664b972cbc12415ceb0e649212668e391b4d5f4aa5644"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/10-dispute-eligibility-entry.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Dispute Eligibility Entry",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dispute eligibility modal scheduled under UI-FE-083",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "denied"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "ed0fffe77f946ef8414948a6c3400ddef9f79ee93358bfe4728df68091c86ca9"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/11-open-dispute-evidence.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Open Dispute Evidence Workspace",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Open dispute evidence attachment scheduled under UI-FE-083",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "db86a099061b2b2fc1bb1de9d59f65d8782eaaff87e09ce61c4ca79ff7590fb3"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/12-dispute-review-authorize.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Dispute Review & Bond Authorization",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dispute bond authorization scheduled under UI-FE-083",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.4",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "dcc00a1d302321535c54c124814f087ba9ec79256ea9c363a2b13964dbc939be"
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/13-appeal-resolution-settlement.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Appeal Resolution & Settlement Finality",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Appeal round settlement finality scheduled under UI-FE-083",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "finalized",
+        "reorged"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "657c8f7f5b9dadb698cb70f67f554f06156a87bd8e41e057c776310c1b245c5f"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/01-privileged-access-readiness.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Privileged Access Readiness Gate",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "denied"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        "section[aria-label='Privileged access']"
+      ],
+      "maskedRegions": [
+        "[data-testid*='address']",
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/01-privileged-access-readiness-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "df1847617b11f28ecc27594a1afdafb5f44f04791011db024c45e82a86dbcb35",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/01-privileged-access-readiness-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "a9ece7166003362bbe85b0e10bf77814f721e12b52c7eb5e6f1c6ea38397e281",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/01-privileged-access-readiness-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "2e3052b75b906bf3926cc4d216f8ce7214a85d11e17c0dff076d2e321e08c04b",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/01-privileged-access-readiness-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "8a01342ceeba78d8356b09bc6e11675ea4d85b19d809257b3d6796fe31ca47f2",
+          "status": "captured"
+        }
+      },
+      "digest": "673c6f3a5b3b3d8292b065335ca99029899a3701c22df27d8510bea040a20f65"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/02-privileged-overview.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Privileged Operations Overview",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".admin-dashboard-grid"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "2.4.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/02-privileged-overview-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "16daa5cac4ccc37c2bb177e8c7712299e84c90df94cc54b46d778f3ec49d172f",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/02-privileged-overview-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "20662cc7fea22b441a30e6c61e2ac68fff6f3e112c09c3f64778418717734790",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/02-privileged-overview-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "859fd2cb3b44848f6cfc17925a20cfae5dcdac30a32b4f422d77504bbfe72ee6",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/02-privileged-overview-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "b8fd9708063fc8eb7d85b004293f3fb471f145a8b95a4db33a4b2241fb7a09d6",
+          "status": "captured"
+        }
+      },
+      "digest": "115b349560f99e6740a5088f35971101a190b0a23596e6fc91b235106080cf0a"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/03-system-health-release-status.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "System Health & Release Status",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "stale"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".system-health-panel"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='block-number']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.1",
+          "2.1.1",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/03-system-health-release-status-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "525ff5fdf7e806102521ddb545a52ad40f0f0b5f8e56475b77c2089f48b30010",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/03-system-health-release-status-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "2a518af97ac29a796d1f6cb5f3d0196d116e595ae9f8dcf25b5fb8495375f8f2",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/03-system-health-release-status-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "94385f5e4b16ccb00f80c23056e719551265aaa07f0db4a8dcb8064443757619",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/03-system-health-release-status-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "01c4928780f8a642b12b0e6d37dfabce314e174e3527e536ea9d79b5381f0cfb",
+          "status": "captured"
+        }
+      },
+      "digest": "561c4ac5277eb4352a5cba9d776401e15155a90aeefe2f481d03c84d72a9e04f"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/04-operational-queue-register.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Operational Queue Register",
+      "canonicalRoute": "/admin/operations/:queue",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        "table",
+        "h1"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.10",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/04-operational-queue-register-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "2203b561544d5a0dfd0f9c1e06e72ec55e05e354bcf8921787bf909ea8e46e78",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/04-operational-queue-register-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "dee356388a95637ae03eddb747f6f85e730e968c42ec8fb8328efdbdf58f1897",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/04-operational-queue-register-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "e49bd310166e1b6380befbc6630693b82865a85863f35a2a972ef1c7d6cabeb7",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/04-operational-queue-register-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "b1437cfb7420523b5f387304b5d15cc01d4c731c67200ebd17ff5f44e572ddb9",
+          "status": "captured"
+        }
+      },
+      "digest": "6bf7b0443c11c50e685e0c992be487ac2fc7aa5289199aeea9972d7b6156e5e4"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/05-queue-item-safe-retry.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Queue Item Safe Retry & Impact Review",
+      "canonicalRoute": "/admin/operations/:queue",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        "dialog",
+        ".retry-confirmation-panel"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "2.1.2",
+          "3.3.4",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/05-queue-item-safe-retry-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "8cc6d57c7565f4f25e4af7a583b1181fda3153ae32823d4c75b0121fe3ac1d10",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/05-queue-item-safe-retry-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "7d3719455101520b9372f0553d68b54290afc0f1536b79215a1a00e37971ca56",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/05-queue-item-safe-retry-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "d3f07c5c3a59119e4a3e39545d01938e9927b6564e6280d0408037a7aef0467f",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/05-queue-item-safe-retry-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "49f11a736cd9982db7d005c2c7cb3b98bc512aec9c8b08d8550f40739ccf44f2",
+          "status": "captured"
+        }
+      },
+      "digest": "3a1e90b08e857de39a3e124f271938ee57b8714e37ccf0c80eb4fd5630e19e9e"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/06-administrative-audit-trail.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Administrative Action Audit Trail",
+      "canonicalRoute": "/admin/audit",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dedicated audit log viewer scheduled for Wave 10 under UI-FE-089",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.10",
+          "2.1.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "80d90655f2e65443cd92b65d6d2fecad2b171318a0ca6d090dd04e37caa40dbb"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/07-governance-proposal-register.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Governance Proposal Register",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "empty"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".governance-proposal-list"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/07-governance-proposal-register-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "584554ae6134522d99ea6f63e8a22c1c44b996f2aae8d5a46a3ac1c9e3eeb908",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/07-governance-proposal-register-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "d886f2eb55c8c203c360eb18f2b941f5a7ecb8168a7229764832bea085b6a19a",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/07-governance-proposal-register-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "81699db34758e0033b3400648d1852ecaf858589572dc022f4acc41fd98f93ae",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/07-governance-proposal-register-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "aad04fbd9a92d6ec4fb7d724325f3e2809f64aa047be680bc5ce833409c8c281",
+          "status": "captured"
+        }
+      },
+      "digest": "e920367cdef368f2cf96f835730f8e1120387977274aefffe3c656f8e1d33ffc"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/08-governance-proposal-detail.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Governance Proposal Detail & Timelock Status",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".proposal-detail-card"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='countdown']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "2.2.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/08-governance-proposal-detail-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "d6ea185a71fadc08019b1c231bbb6b804a21433379bc7f92cce824a9551a5b1c",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/08-governance-proposal-detail-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "7b4acfc71c206952e30daafe7264a45436dde8b47385f5e449daf91b28a9dfa9",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/08-governance-proposal-detail-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "af4cb929de770900f407f1d0d494dd6c41d59f49d9561782f6c0fb51ba310a4e",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/08-governance-proposal-detail-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "542e80c02914d2f6aff3499ba797438a7c580e31ffcd9b059bdf0af32f4108e4",
+          "status": "captured"
+        }
+      },
+      "digest": "31c65f8bbe0b0d7dcec5e773f7c3c4d2571fec5903ec0ba4fc3545c64d12a3b1"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/09-governed-change-preparation.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Governed Change Preparation",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".governed-change-form"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.2",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/09-governed-change-preparation-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "9960dd0dccf5ed5495e0ae1f8b0d04dc08065ef795417f55ebc35eb7dcb7f370",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/09-governed-change-preparation-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "d48f35c9d7bf05a1a010df61c8b3ff1ca3fbd6d3ce1670207881861f86bf092d",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/09-governed-change-preparation-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "5fcf88f9ff315ba9ebd1955d0767816082c50a7aee858d4d89e9b8001b8094a0",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/09-governed-change-preparation-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "c6614bc9e358252fcc21a4a2b4cdc56e6bd5a5b3ea64425eabe99106916f5b76",
+          "status": "captured"
+        }
+      },
+      "digest": "faf8dceb237623fa42ea63cad3ae296f64582ab0cc0af7eb11c8c23cf8a282b4"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/10-timelock-execution.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Timelock Execution & Queue Affirmation",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".timelock-panel"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.4",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/10-timelock-execution-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "6b42561b85ab609233e8ee59e3aee140662ad9c440dc9b5edae4cf8d01a2eca6",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/10-timelock-execution-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "008097c707b6e9ce5d6069a9a397831a1bb167952b6eff7daf2a3023cf8ff825",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/10-timelock-execution-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "479677da31ec9f0b433b92e7286fe57c9f52adc523fa84cc391b979da85a6d4a",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/10-timelock-execution-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "5b4d2198ca43da0be6cc79020656346d116cb5340074036a9bcc4eea674ae144",
+          "status": "captured"
+        }
+      },
+      "digest": "faaad99a8604301974b8983a910e5dc4ee406c447aa7c845017f77c7e002fc0c"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/11-role-administration.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Role Administration & Timelocked Grants",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".role-administration-table"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='address']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.10",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/11-role-administration-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "c36be852533704cf8ca109e62ac4e17f78220a6bc180667973a6a21651b0998a",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/11-role-administration-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "fef8661c422f40b10f8fc8be6fa8e705199d800e0bc23981ff1dd9a087aac2cd",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/11-role-administration-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "bec1dcac54521ca8e95103bec3ebfec7bb1102e69396020871fcabbaacde2eed",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/11-role-administration-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "5dae32165c104d2a8780f48301287b4dd94cbbd942ace33a6086dc3ebe5d8fa8",
+          "status": "captured"
+        }
+      },
+      "digest": "662193bcbb753ce070c379d546a79a9fde6d4aecd3784a804517f1841c93577a"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/12-upgrade-controlled-unpause.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Contract Upgrade & Controlled Unpause",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".upgrade-unpause-panel"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.4",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/12-upgrade-controlled-unpause-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "0e2110d1d7713e520b22975903564def1565fa2a800e2e3c119435a00864d2e8",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/12-upgrade-controlled-unpause-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "5caf7ff6c30a1bfbe113fc6e04464b2805bfed0e1519946368ba4e7b3d770624",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/12-upgrade-controlled-unpause-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "124f6d362129b88a0d8b5b79cee9447a61140c3fb32dad5dbb1d2629735e0e28",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/12-upgrade-controlled-unpause-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "b9216b1645fe6e3b2baa6644aafe98dfb319d18ca2ffba0509eb95ef2ea31891",
+          "status": "captured"
+        }
+      },
+      "digest": "6b036044e1d1e7d9b3e1a1c43b959875c1117475b9a95e75c798628699e20cb0"
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/13-emergency-scope-pause-control.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Emergency Scoped Pause Control",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        ".emergency-pause-card"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='hash']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.4",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/13-emergency-scope-pause-control-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "4f65140441516f39a4dc8d75113aac120c434ae3a0a86596c333ab062a48d33d",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/13-emergency-scope-pause-control-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "b64e6e03019d1ee1293dc999037b0b90ae6a009bfd7a467cb9ad0d4391bcede6",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/13-emergency-scope-pause-control-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "ac985ed86c1d38054d77cbb01c280e3afb821477229569895f4602ef3e54377e",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/13-emergency-scope-pause-control-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "7f4144cc046e6e634941df020d12ddd0efaf9cb9ba3a2e5994b61c2283ec975a",
+          "status": "captured"
+        }
+      },
+      "digest": "9e344fddf6c0b9616310f45e933abdc62731a085be1a1e4ca41a523d51852502"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/01-documentation-home.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Documentation Home & Knowledgebase",
+      "canonicalRoute": "/docs",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Documentation home route scheduled under UI-FE-096",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "2.4.1"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "dbf294039cc43db22ab77f683966e3a0d0e4c2ab48da8851c13d7d2a1a8a47ac"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/02-documentation-article.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Versioned Documentation Article",
+      "canonicalRoute": "/docs/:slug",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Documentation article viewer scheduled under UI-FE-096",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "2.4.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "1ed98b1a945d1301e8859f3acabedd3266940811845c800a770b72c30a5a45f0"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/03-help-troubleshooting.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Troubleshooting & Self-Help Wizard",
+      "canonicalRoute": "/support",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Support troubleshooting wizard scheduled under UI-FE-097",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "993c71253c305d185b120540f9d8dc47a1eaf9bdc74034b16b190afde2418b89"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/04-service-status-overview.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Service Status Overview & Health Metrics",
+      "canonicalRoute": "/status",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Service status overview scheduled under UI-FE-094",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "stale",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.1",
+          "2.1.1",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "2512c7a1cb0664763566aa75a2f7768667e4919b1544565cc0ec86645076342f"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/05-incident-detail-history.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Incident Detail, Impact & Postmortem History",
+      "canonicalRoute": "/status/incidents/:incidentId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Incident postmortem viewer scheduled under UI-FE-094",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "88d19764e5d57c137103531bc39fdc3197cf9c0417ce8dc8def453ebe8f59e70"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/06-contact-support-entry.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Contact Support Category Selection",
+      "canonicalRoute": "/contact",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Contact category triage scheduled under UI-FE-097",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "2.4.4"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "3750c43156183e902c4cdbad8121262a7de3b97d9cf127ba422aa73ef9f38a76"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/07-support-request-form.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Minimum-Data Support Request Form",
+      "canonicalRoute": "/support",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Support submission form scheduled under UI-FE-097",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "pending",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "3.3.1",
+          "3.3.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "bb78dfcdc18a0c3fecb477403367e397b9bd3ab238780b23a747d33184b3ee31"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/08-security-reporting.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Responsible Vulnerability Disclosure",
+      "canonicalRoute": "/security",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Security vulnerability reporting portal scheduled under UI-FE-098",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "2.4.4"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "9e2a4df09469e7ef36713dbe8305d8c0bdf2b39b4e46353efd4fc6af229398f3"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/09-privacy-notice.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Versioned Privacy Notice",
+      "canonicalRoute": "/privacy",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Privacy notice route scheduled under UI-FE-099",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "2.4.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "284a19d0f8c8902f0301f1b247d842d4499c75ae0c1d2137888a1c76261d90ab"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/10-terms-of-use.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Versioned Terms of Use",
+      "canonicalRoute": "/terms",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content",
+        "article",
+        "h1"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']",
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "2.4.1",
+          "2.4.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/10-terms-of-use-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "6068832bc54b8ad4ec18eaa9e31735bed7082b998bfae268f08c3bdb4e554a5d",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/10-terms-of-use-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "dfcb28ee1464118d42ea5fcbe4f676e487745c2bc7f657af5c95c55edc5bf1a7",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/10-terms-of-use-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "33b09c76ec1b412bfc326dcdad4a84f14ef92a314157dd23d44cc336e650d49a",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/10-terms-of-use-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "53a4878aba40a88b17e1362435c4068fa1c27c24268beb0ae16c7d778a8483fd",
+          "status": "captured"
+        }
+      },
+      "digest": "7e8c5e471f4f2cd22ab8a56fde6d84526e183531fc890df8305c9003c6e1dd1b"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/11-protocol-risk-disclosures.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Protocol Risk & Participation Disclosures",
+      "canonicalRoute": "/disclosures",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Risk disclosures viewer scheduled under UI-FE-099",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.3",
+          "2.1.1",
+          "2.4.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "d5404f28b2e264304200b3a67aa9347d929231ec7693fba942b5e6674e0b48f8"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/12-legal-version-consent.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Legal Version Consent & Agreement Modal",
+      "canonicalRoute": "/settings",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Consent update modal scheduled under UI-FE-081",
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error"
+      ],
+      "stableRegions": [
+        "main#main-content"
+      ],
+      "maskedRegions": [
+        "[data-mask='dynamic-data']"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "2.1.1",
+          "2.1.2",
+          "4.1.2"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": null,
+      "digest": "6d26e95d801730cdfb7e6770d3371b3333cfda40eaae3ed78e6148234da82b8b"
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/13-system-support-states.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "System Support Degraded & Fallback States",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "blockedReason": null,
+      "requiredViewports": [
+        "desktop",
+        "tablet",
+        "mobile",
+        "zoom200"
+      ],
+      "relevantStates": [
+        "ready",
+        "loading",
+        "error",
+        "stale",
+        "offline",
+        "unavailable"
+      ],
+      "stableRegions": [
+        "[role='status']",
+        "[role='alert']",
+        ".system-support-boundary"
+      ],
+      "maskedRegions": [
+        "[data-testid*='timestamp']",
+        "time"
+      ],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": [
+          "1.3.1",
+          "1.4.1",
+          "2.1.1",
+          "4.1.3"
+        ],
+        "zeroHorizontalScroll": true
+      },
+      "captures": {
+        "desktop": {
+          "artifactPath": "reports/visual-evidence/13-system-support-states-desktop.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "Desktop (1440px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "aacc35a95fd1a4a6cf8582ca9aaaf0d5da19bccb3fc22840d65a163c86da38f8",
+          "status": "captured"
+        },
+        "tablet": {
+          "artifactPath": "reports/visual-evidence/13-system-support-states-tablet.png",
+          "viewport": {
+            "width": 768,
+            "height": 1024,
+            "label": "Tablet (768px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "8f51f65127d9d2ac8774f34be89ddd38112151985465c48e2ee358b9c99a0bd0",
+          "status": "captured"
+        },
+        "mobile": {
+          "artifactPath": "reports/visual-evidence/13-system-support-states-mobile.png",
+          "viewport": {
+            "width": 375,
+            "height": 812,
+            "label": "Mobile (375px)",
+            "deviceScaleFactor": 1
+          },
+          "hash": "997a4d03757af11bc35522f18b5afcad0dfbbf3a8c9731e9f4409435616e0228",
+          "status": "captured"
+        },
+        "zoom200": {
+          "artifactPath": "reports/visual-evidence/13-system-support-states-zoom200.png",
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "label": "200% Zoom / Reflow",
+            "deviceScaleFactor": 2
+          },
+          "hash": "9735dde7bd7166015f8f5ea286f6ea5fb200e832dc21ef93957f106db5408dc3",
+          "status": "captured"
+        }
+      },
+      "digest": "b41b0424244a35db4e2f83032616dcc9a83f8c75c149e1fd301622bbfd997513"
+    }
+  ],
+  "bundleDigest": "97084169a7d144c56145fcdf709bf4e8b57f0df4f11f33beda0b7e2a751790be"
+}

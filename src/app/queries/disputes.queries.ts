@@ -1,4 +1,4 @@
-/**
+/*
  * Query hooks for disputes.
  *
  * Authoritative source: on-chain indexed dispute projections.
@@ -19,17 +19,29 @@ import {
   fetchPublicDisputeDetail,
   createDispute,
   type CreateDisputePayload,
+  type Dispute,
 } from '../api/disputes.api';
+
+/**
+ * Staleness threshold for dispute projections. Disputes can change
+ * during active voting, so we refresh aggressively but still expose
+ * issueData.isStale to the UI so it can fail closed rather than present
+ * stale critical data as current.
+ */
+const DISPUTES_STALE_TIME_MS = 1000 * 30; // 30 s — disputes can change during active voting
 
 /**
  * All disputes associated with a specific claim.
  */
 export function useDisputesByClaim(claimId: string) {
-  return useQuery({
+  return useQuery<Dispute[]>({
     queryKey: queryKeys.disputes.byClaim(claimId),
     queryFn: () => fetchDisputesByClaim(claimId),
-    enabled: !!claimId,
-    staleTime: 1000 * 30, // 30 s — disputes can change during active voting
+    enabled: Boolean(claimId),
+    staleTime: DISPUTES_STALE_TIME_MS,
+    // Keep previous data visible but flag staleness to the consumer.
+    refetchOnMount: true,
+    retry: 1,
   });
 }
 
@@ -37,11 +49,13 @@ export function useDisputesByClaim(claimId: string) {
  * Single dispute detail by dispute ID.
  */
 export function useDisputeDetail(disputeId: string) {
-  return useQuery({
+  return useQuery<Dispute>({
     queryKey: queryKeys.disputes.detail(disputeId),
     queryFn: () => fetchDisputeDetail(disputeId),
-    enabled: !!disputeId,
-    staleTime: 1000 * 30,
+    enabled: Boolean(disputeId),
+    staleTime: DISPUTES_STALE_TIME_MS,
+    refetchOnMount: true,
+    retry: 1,
   });
 }
 
@@ -76,6 +90,11 @@ export function usePublicDisputeDetail(disputeId: string) {
 /**
  * Mutation to create a new dispute.
  *
+ * The mutation forwards the canonical payload to the API, which is a
+ * projection of on-chain state. Success here means the request was
+ * accepted for indexing — it does NOT mean the dispute is finalized.
+ * Consumers must still read the projection to confirm chain state.
+ *
  * On success: invalidates the disputes projection for the affected claim and
  * the claim detail (which may reflect the new dispute state).
  * Does NOT invalidate disputes.all — no cache-wide churn.
@@ -83,7 +102,7 @@ export function usePublicDisputeDetail(disputeId: string) {
 export function useCreateDispute() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Dispute, Error, CreateDisputePayload>({
     mutationFn: createDispute,
     onSuccess: (_data, variables: CreateDisputePayload) => {
       // Surgical invalidation: only the projections downstream of this claim.

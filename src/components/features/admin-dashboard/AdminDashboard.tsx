@@ -267,7 +267,7 @@ export function AdminDashboardContent({
       {/* 4a. Accessible Error Summary for failed submissions */}
       {operationErrors.length > 0 && (
         <FormErrorSummary
-          ref=errorSummaryRef}
+          ref={errorSummaryRef}
           errors={operationErrors}
           title="Operation could not be completed"
           onNavigateToField={(fieldId) => {
