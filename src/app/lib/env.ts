@@ -1,4 +1,4 @@
-import { chains as wagmiChains } from "wagmi";
+import * as wagmiChains from "wagmi/chains";
 
 /**
  * Canonical environment contract for the STAB frontend.
@@ -20,6 +20,14 @@ export const NEXT_PUBLIC_VARS = [
 ] as const;
 
 export type PublicEnvVar = (typeof NEXT_PUBLIC_VARS)[number];
+
+// Identifier aliases so the strings above can be used as typed keys throughout
+// this module without magic string repetition.
+const NEXT_PUBLIC_CHAIN_ID = "NEXT_PUBLIC_CHAIN_ID" as const;
+const NEXT_PUBLIC_RPC_URL = "NEXT_PUBLIC_RPC_URL" as const;
+const NEXT_PUBLIC_API_BASE_URL = "NEXT_PUBLIC_API_BASE_URL" as const;
+const NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID = "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID" as const;
+const NEXT_PUBLIC_EXPLORER_BASE_URL = "NEXT_PUBLIC_EXPLORER_BASE_URL" as const;
 
 export interface Env {
   readonly target: AppTarget;
@@ -148,20 +156,20 @@ export function validateEnv(
     }
   }
 
-  const chainId = parseChainId(NEXT_PUBLIC_CHAIN_ID, resolved[NEXT_PUBLIC_CHAIN_ID]);
-  const rpcUrl = parseUrl(NEXT_PUBLIC_RPC_URL, resolved[NEXT_PUBLIC_RPC_URL], isProduction);
+  const chainId = parseChainId("NEXT_PUBLIC_CHAIN_ID", resolved["NEXT_PUBLIC_CHAIN_ID"]);
+  const rpcUrl = parseUrl("NEXT_PUBLIC_RPC_URL", resolved["NEXT_PUBLIC_RPC_URL"], isProduction);
   const apiBaseUrl = parseUrl(
-    NEXT_PUBLIC_API_BASE_URL,
-    resolved[NEXT_PUBLIC_API_BASE_URL],
+    "NEXT_PUBLIC_API_BASE_URL",
+    resolved["NEXT_PUBLIC_API_BASE_URL"],
     isProduction,
   );
   const walletConnectProjectId = parseWalletConnectProjectId(
-    NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-    resolved[NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID],
+    "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID",
+    resolved["NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID"],
   );
   const explorerBaseUrl = parseUrl(
-    NEXT_PUBLIC_EXPLORER_BASE_URL,
-    resolved[NEXT_PUBLIC_EXPLORER_BASE_URL],
+    "NEXT_PUBLIC_EXPLORER_BASE_URL",
+    resolved["NEXT_PUBLIC_EXPLORER_BASE_URL"],
     isProduction,
   );
 
@@ -169,7 +177,7 @@ export function validateEnv(
     const knownChainIds = new Set(Object.values(wagmiChains).map((chain) => chain.id));
     if (!knownChainIds.has(chainId)) {
       throw new EnvValidationError(
-        NEXT_PUBLIC_CHAIN_ID,
+        "NEXT_PUBLIC_CHAIN_ID",
         `unknown chain id "${chainId}"; must match a supported network configuration`,
       );
     }
@@ -186,8 +194,28 @@ export function validateEnv(
   };
 }
 
+export function assertProductionEnv(
+  source: Record<string, string | undefined> = process.env as Record<string, string | undefined>,
+): Env {
+  return validateEnv(source);
+}
+
 export function loadEnv(): Env {
   return validateEnv();
 }
 
 export const env: Env = loadEnv();
+
+/**
+ * Called at build time (next.config.ts) to fail the production build when
+ * required environment variables are missing or invalid.
+ * In non-production environments this is a no-op so local/test builds
+ * are not blocked by missing production secrets.
+ */
+export function assertProductionEnv(
+  source: Record<string, string | undefined> = process.env as Record<string, string | undefined>,
+): void {
+  const target = resolveTarget(source);
+  if (target !== 'production') return;
+  validateEnv(source);
+}

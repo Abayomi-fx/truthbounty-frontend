@@ -291,10 +291,13 @@
     "status": {
       "idle": "Not started",
       "pending": "Pending",
-      "active": "Active",
-      "resolved": "Resolved",
-      "disputed": "Disputed",
-      "finalized": "Finalized"
+      "confirming": "Confirming",
+      "confirmed": "Confirmed",
+      "failed": "Failed",
+      "rejected": "Rejected",
+      "stale": "Stale",
+      "finalized": "Finalized",
+      "reorged": "Reorged"
     },
     
     "evidence": {

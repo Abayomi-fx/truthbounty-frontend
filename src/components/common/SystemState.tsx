@@ -28,7 +28,7 @@ import Link from 'next/link';
 import {
   Loader2,
   Inbox,
-  ClockCountdown,
+  Clock as ClockCountdown,
   WifiOff,
   ServerOff,
   AlertTriangle,
