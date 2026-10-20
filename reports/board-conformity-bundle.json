@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "generator": "verify-board-conformity.mjs (UI-FE-093)",
   "timestamp": "2026-10-19T12:00:00.000Z",
-  "frontendRevision": "f9e2e158f7e11afc315199337e2fa183180603b3",
+  "frontendRevision": "9efbc5ec545b1dc3dd065e92fb750805b41350ee",
   "protocolAuthorityRevision": "60c66b78cf797d8f821089c99ae1bc461009fecc",
   "protocolRepository": "DigiNodes/truthbounty-protocol",
   "totalApprovedBoards": 58,
@@ -3904,5 +3904,5 @@
       "digest": "b41b0424244a35db4e2f83032616dcc9a83f8c75c149e1fd301622bbfd997513"
     }
   ],
-  "bundleDigest": "98f419109c89c04992a215971774a5486fea2af629267bf1d02b219ee7a26d32"
+  "bundleDigest": "97084169a7d144c56145fcdf709bf4e8b57f0df4f11f33beda0b7e2a751790be"
 }
