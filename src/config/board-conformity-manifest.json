@@ -1,0 +1,1271 @@
+{
+  "$schema": "./board-conformity.schema.json",
+  "protocolAuthority": {
+    "repository": "DigiNodes/truthbounty-protocol",
+    "commit": "60c66b78cf797d8f821089c99ae1bc461009fecc",
+    "totalApprovedBoards": 58,
+    "batchCount": 6,
+    "sourceReferences": {
+      "sitemap": "docs/ux-authority/SITEMAP_AND_ROUTE_CONTRACT.md",
+      "implementationMatrix": "docs/ux-authority/FRONTEND_IMPLEMENTATION_MATRIX.md",
+      "appShell": "docs/ux-authority/APP_SHELL_AND_NAVIGATION.md"
+    }
+  },
+  "batches": [
+    {
+      "id": "foundation",
+      "batchNumber": 1,
+      "title": "Foundation Architecture, Tokens & System Shells",
+      "directory": "designs/frontend-v2/foundation/boards",
+      "boardCount": 8
+    },
+    {
+      "id": "public-claimant",
+      "batchNumber": 2,
+      "title": "Public Discovery & Claimant Lifecycle",
+      "directory": "designs/frontend-v2/public-claimant/boards",
+      "boardCount": 11
+    },
+    {
+      "id": "verifier",
+      "batchNumber": 3,
+      "title": "Verifier Eligibility, Queue & Workspace",
+      "directory": "designs/frontend-v2/verifier-dispute/boards",
+      "boardCount": 7
+    },
+    {
+      "id": "dispute",
+      "batchNumber": 4,
+      "title": "Public Dispute Register & Appeal Resolution",
+      "directory": "designs/frontend-v2/verifier-dispute/boards",
+      "boardCount": 6
+    },
+    {
+      "id": "privileged",
+      "batchNumber": 5,
+      "title": "Privileged Operations, Emergency & Governance Timelock",
+      "directory": "designs/frontend-v2/privileged/boards",
+      "boardCount": 13
+    },
+    {
+      "id": "support-legal",
+      "batchNumber": 6,
+      "title": "Support, Incident Status, Security & Legal Compliance",
+      "directory": "designs/frontend-v2/support-legal/boards",
+      "boardCount": 13
+    }
+  ],
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "label": "Desktop (1440px)",
+      "deviceScaleFactor": 1
+    },
+    "tablet": {
+      "width": 768,
+      "height": 1024,
+      "label": "Tablet (768px)",
+      "deviceScaleFactor": 1
+    },
+    "mobile": {
+      "width": 375,
+      "height": 812,
+      "label": "Mobile (375px)",
+      "deviceScaleFactor": 1
+    },
+    "zoom200": {
+      "width": 1440,
+      "height": 900,
+      "label": "200% Zoom / Reflow",
+      "deviceScaleFactor": 2
+    }
+  },
+  "canonicalStates": [
+    "ready",
+    "loading",
+    "empty",
+    "error",
+    "stale",
+    "denied"
+  ],
+  "globalDynamicMasks": [
+    "[data-mask='dynamic-data']",
+    "[data-testid*='hash']",
+    "[data-testid*='timestamp']",
+    "[data-testid*='block-number']",
+    "[data-testid*='countdown']",
+    "[class*='animate-pulse']",
+    "[class*='animate-spin']",
+    "time",
+    ".wallet-dynamic-balance",
+    ".dynamic-timestamp"
+  ],
+  "maxAllowedDiffPixelRatio": 0.005,
+  "defaultDiffThreshold": 0.002,
+  "boards": [
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/01-design-tokens.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Design Tokens & Foundations",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready"],
+      "stableRegions": [":root", "body"],
+      "maskedRegions": [],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-01-TOKENS-RASTER",
+          "category": "subpixel-rendering",
+          "description": "Design tokens define HSL and CSS custom property primitives; browser rasterization exhibits natural subpixel variance against SVG vector shapes.",
+          "justification": "CSS custom property variables enforce exact semantic color codes; display pixel differences are non-semantic antialiasing.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": ["1.4.1", "1.4.3", "1.4.11"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/02-application-shells.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Application Shells & Responsive Layouts",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "stale"],
+      "stableRegions": ["header[role='banner']", "nav[role='navigation']", "main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-02-SHELL-DRAWER",
+          "category": "responsive-behavior",
+          "description": "Mobile screen (<640px) uses accessible collapsible modal drawer triggered by fixed hamburger button rather than horizontal shrink.",
+          "justification": "Required by WCAG 2.5.8 touch target ergonomics and responsive layout specifications.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.10", "2.1.1", "2.4.1", "2.5.8"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/03-navigation.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Navigation Structures & Route Transitions",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready"],
+      "stableRegions": ["header[role='banner']", "nav"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.4.4", "2.4.7", "3.2.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/04-component-primitives.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Component Primitives Catalogue",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": [".tb-primitive-container", "[data-slot]"],
+      "maskedRegions": [],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.4.3", "2.1.1", "2.5.8", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/05-wallet-network-identity.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Wallet Connection, Network Selector & Identity Entry",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "denied"],
+      "stableRegions": ["[data-testid='wallet-modal']", "header[role='banner']"],
+      "maskedRegions": ["[data-testid*='address']", "[data-mask='dynamic-data']", ".wallet-dynamic-balance"],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-05-WALLET-MOCK",
+          "category": "mock-isolation",
+          "description": "Mocked test wallet renders deterministic checksum address 0x742d35Cc6634C0532925a3b844Bc9e7595f0eB1E instead of live injected signer.",
+          "justification": "Ensures reproducible clean CI execution without relying on browser wallet extensions or live keyrings.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.2", "2.4.3", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/06-transaction-states.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Transaction Lifecycle States",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "stale"],
+      "stableRegions": ["[data-testid='transaction-status-badge']", ".tb-transaction-container"],
+      "maskedRegions": ["[data-testid*='hash']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.4.1", "2.2.1", "2.3.3", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/07-system-states.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Canonical System States",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "error", "stale", "denied"],
+      "stableRegions": ["[data-testid='system-state-card']", "[role='status']", "[role='alert']"],
+      "maskedRegions": ["[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.1", "1.4.3", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/foundation/boards/08-responsive-accessibility.svg",
+      "batch": "foundation",
+      "batchNumber": 1,
+      "name": "Responsive Breakpoints & Accessibility Norms",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready"],
+      "stableRegions": ["a.skip-link", "main#main-content"],
+      "maskedRegions": [],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.4.4", "1.4.10", "2.3.3", "2.4.1", "2.5.8"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/01-product-landing.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Product Landing Page",
+      "canonicalRoute": "/",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "stale"],
+      "stableRegions": ["header[role='banner']", "main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [
+        {
+          "id": "VAR-01-LANDING-ANTIALIAS",
+          "category": "typography-rendering",
+          "description": "SVG vector typography in approved design authority renders with subpixel differences compared to browser webfont glyph rasterization at 1440px.",
+          "justification": "Approved browser typography uses Inter with font-smoothing; vector SVG rasterizer antialiasing varies by subpixel renderer.",
+          "approvedBy": "maintainers",
+          "approvedAt": "2026-10-18T10:00:00Z"
+        }
+      ],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "1.4.10", "2.1.1", "2.4.1", "2.5.8"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/02-explore-claims.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Explore Public Claims Feed",
+      "canonicalRoute": "/claims",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "error", "stale"],
+      "stableRegions": ["table[role='table']", "main#main-content", "input#claim-search"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.10", "2.1.1", "2.5.8", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/03-claim-detail.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Claim Detail, Evidence & Timeline",
+      "canonicalRoute": "/claims/:claimId",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "stale"],
+      "stableRegions": ["article[role='article']", "h1#claim-heading", "main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']", "[data-testid*='timestamp']", "time", ".stake-balance"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.1.1", "1.3.1", "1.4.10", "2.4.4", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/04-wallet-entry-and-eligibility.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Wallet Entry & Eligibility Verification",
+      "canonicalRoute": "/settings/identity",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Identity and humanity verification journey in staging review under UI-FE-082; planned for Wave 10",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "denied"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/05-claimant-dashboard.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Claimant Personal Dashboard",
+      "canonicalRoute": "/dashboard",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Personal claimant dashboard view scheduled for Wave 10 under UI-FE-075",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "denied"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/06-submit-claim-statement.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 1: Statement",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["form", "main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.2", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/07-submit-evidence.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 2: Evidence Attachment",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["form", "main#main-content", ".evidence-dropzone"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='cid']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.1", "3.3.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/08-submit-funding.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 3: Funding & Bounty Commitment",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["form", "main#main-content", ".allowance-panel"],
+      "maskedRegions": ["[data-mask='dynamic-data']", ".wallet-dynamic-balance"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.4", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/09-submit-review-authorize.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Submit Claim — Step 4: Review & On-Chain Authorization",
+      "canonicalRoute": "/claims/new",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["form", "main#main-content", ".review-summary-card"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.4", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/10-owned-claims.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Owned Claims Management",
+      "canonicalRoute": "/dashboard/claims",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Claimant owned claims list scheduled for Wave 10 under UI-FE-076",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "denied"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/public-claimant/boards/11-rewards-transactions.svg",
+      "batch": "public-claimant",
+      "batchNumber": 2,
+      "name": "Rewards & Transaction Settlement Center",
+      "canonicalRoute": "/dashboard/rewards",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "error", "stale"],
+      "stableRegions": ["main#main-content", "section[aria-label='Rewards center']", "section[aria-label='Transaction center']"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "3.3.4", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/01-verifier-eligibility-readiness.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verifier Eligibility & Staking Readiness",
+      "canonicalRoute": "/dashboard/verifications",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Verifier readiness gating component scheduled under UI-FE-078",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "denied"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/02-verification-queue.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Work Queue",
+      "canonicalRoute": "/dashboard/verifications",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Verifier queue table scheduled under UI-FE-078",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "denied"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.10", "2.1.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/03-verification-evidence-workspace.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Evidence Workspace",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Split verification workspace scheduled under UI-FE-079",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "2.4.4"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/04-stake-effective-weight.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Stake & Effective Weight Calculator",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Effective stake weighting calculator scheduled under UI-FE-079",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/05-verification-decision.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Decision & Citation Form",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Verification decision recording scheduled under UI-FE-079",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.1", "3.3.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/06-verification-authorize-reveal.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "Verification Authorize & Reveal Commit",
+      "canonicalRoute": "/dashboard/verifications/:claimId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Commit-reveal cryptographic authorization scheduled under UI-FE-079",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.4", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/07-my-verifications.svg",
+      "batch": "verifier",
+      "batchNumber": 3,
+      "name": "My Historical Verifications & Slashing Audit",
+      "canonicalRoute": "/dashboard/verifications",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Historical verifications list scheduled under UI-FE-078",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/08-public-dispute-register.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Public Dispute Register & History",
+      "canonicalRoute": "/disputes",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "error", "stale"],
+      "stableRegions": ["main#main-content", "table", "header[role='banner']"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.10", "2.1.1", "2.5.8", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/09-dispute-detail.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Dispute Detail & Timeline",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dispute detail route scheduled under UI-FE-083",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "stale"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "2.4.4"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/10-dispute-eligibility-entry.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Dispute Eligibility Entry",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dispute eligibility modal scheduled under UI-FE-083",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "denied"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/11-open-dispute-evidence.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Open Dispute Evidence Workspace",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Open dispute evidence attachment scheduled under UI-FE-083",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/12-dispute-review-authorize.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Dispute Review & Bond Authorization",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dispute bond authorization scheduled under UI-FE-083",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.4", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/verifier-dispute/boards/13-appeal-resolution-settlement.svg",
+      "batch": "dispute",
+      "batchNumber": 4,
+      "name": "Appeal Resolution & Settlement Finality",
+      "canonicalRoute": "/disputes/:disputeId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Appeal round settlement finality scheduled under UI-FE-083",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "finalized", "reorged"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/01-privileged-access-readiness.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Privileged Access Readiness Gate",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "denied"],
+      "stableRegions": ["main#main-content", "section[aria-label='Privileged access']"],
+      "maskedRegions": ["[data-testid*='address']", "[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/02-privileged-overview.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Privileged Operations Overview",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content", ".admin-dashboard-grid"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "2.4.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/03-system-health-release-status.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "System Health & Release Status",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "stale"],
+      "stableRegions": ["main#main-content", ".system-health-panel"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='block-number']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.1", "2.1.1", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/04-operational-queue-register.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Operational Queue Register",
+      "canonicalRoute": "/admin/operations/:queue",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty", "error"],
+      "stableRegions": ["main#main-content", "table", "h1"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.10", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/05-queue-item-safe-retry.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Queue Item Safe Retry & Impact Review",
+      "canonicalRoute": "/admin/operations/:queue",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["main#main-content", "dialog", ".retry-confirmation-panel"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "2.1.2", "3.3.4", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/06-administrative-audit-trail.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Administrative Action Audit Trail",
+      "canonicalRoute": "/admin/audit",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Dedicated audit log viewer scheduled for Wave 10 under UI-FE-089",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.10", "2.1.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/07-governance-proposal-register.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Governance Proposal Register",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "empty"],
+      "stableRegions": ["main#main-content", ".governance-proposal-list"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/08-governance-proposal-detail.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Governance Proposal Detail & Timelock Status",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content", ".proposal-detail-card"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='countdown']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "2.2.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/09-governed-change-preparation.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Governed Change Preparation",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content", ".governed-change-form"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.2", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/10-timelock-execution.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Timelock Execution & Queue Affirmation",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["main#main-content", ".timelock-panel"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.4", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/11-role-administration.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Role Administration & Timelocked Grants",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content", ".role-administration-table"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='address']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.10", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/12-upgrade-controlled-unpause.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Contract Upgrade & Controlled Unpause",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["main#main-content", ".upgrade-unpause-panel"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.4", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/privileged/boards/13-emergency-scope-pause-control.svg",
+      "batch": "privileged",
+      "batchNumber": 5,
+      "name": "Emergency Scoped Pause Control",
+      "canonicalRoute": "/admin",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["main#main-content", ".emergency-pause-card"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='hash']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.4", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/01-documentation-home.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Documentation Home & Knowledgebase",
+      "canonicalRoute": "/docs",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "2.4.1"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/02-documentation-article.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Versioned Documentation Article",
+      "canonicalRoute": "/docs/:slug",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "2.4.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/03-help-troubleshooting.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Troubleshooting & Self-Help Wizard",
+      "canonicalRoute": "/support",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Support troubleshooting wizard scheduled under UI-FE-097",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/04-service-status-overview.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Service Status Overview & Health Metrics",
+      "canonicalRoute": "/status",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Service status overview scheduled under UI-FE-094",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "stale", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.1", "2.1.1", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/05-incident-detail-history.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Incident Detail, Impact & Postmortem History",
+      "canonicalRoute": "/status/incidents/:incidentId",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Incident postmortem viewer scheduled under UI-FE-094",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/06-contact-support-entry.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Contact Support Category Selection",
+      "canonicalRoute": "/contact",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Contact category triage scheduled under UI-FE-097",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "2.4.4"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/07-support-request-form.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Minimum-Data Support Request Form",
+      "canonicalRoute": "/support",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Support submission form scheduled under UI-FE-097",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "pending", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "3.3.1", "3.3.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/08-security-reporting.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Responsible Vulnerability Disclosure",
+      "canonicalRoute": "/security",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Security vulnerability reporting portal scheduled under UI-FE-098",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "2.4.4"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/09-privacy-notice.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Versioned Privacy Notice",
+      "canonicalRoute": "/privacy",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Privacy notice route scheduled under UI-FE-099",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "2.4.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/10-terms-of-use.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Versioned Terms of Use",
+      "canonicalRoute": "/terms",
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content", "article", "h1"],
+      "maskedRegions": ["[data-mask='dynamic-data']", "[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "2.4.1", "2.4.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/11-protocol-risk-disclosures.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Protocol Risk & Participation Disclosures",
+      "canonicalRoute": "/disclosures",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Risk disclosures viewer scheduled under UI-FE-099",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.3", "2.1.1", "2.4.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/12-legal-version-consent.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "Legal Version Consent & Agreement Modal",
+      "canonicalRoute": "/settings",
+      "implementationStatus": "planned",
+      "approvalStatus": "blocked",
+      "blockedReason": "Consent update modal scheduled under UI-FE-081",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error"],
+      "stableRegions": ["main#main-content"],
+      "maskedRegions": ["[data-mask='dynamic-data']"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "2.1.1", "2.1.2", "4.1.2"],
+        "zeroHorizontalScroll": true
+      }
+    },
+    {
+      "boardId": "designs/frontend-v2/support-legal/boards/13-system-support-states.svg",
+      "batch": "support-legal",
+      "batchNumber": 6,
+      "name": "System Support Degraded & Fallback States",
+      "canonicalRoute": null,
+      "implementationStatus": "implemented",
+      "approvalStatus": "approved",
+      "requiredViewports": ["desktop", "tablet", "mobile", "zoom200"],
+      "relevantStates": ["ready", "loading", "error", "stale", "offline", "unavailable"],
+      "stableRegions": ["[role='status']", "[role='alert']", ".system-support-boundary"],
+      "maskedRegions": ["[data-testid*='timestamp']", "time"],
+      "diffThreshold": 0.002,
+      "knownVariances": [],
+      "a11yContract": {
+        "wcagCriteria": ["1.3.1", "1.4.1", "2.1.1", "4.1.3"],
+        "zeroHorizontalScroll": true
+      }
+    }
+  ]
+}

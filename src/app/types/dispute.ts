@@ -1,4 +1,4 @@
-/**
+/*
  * Dispute opening and challenge types for V2 protocol
  * Handles opening challenges against provisional outcomes on Optimism/EVM
  */
@@ -9,17 +9,17 @@
  */
 export interface ProvisionalOutcome {
   claimId: string;
-  
+
   // First-round verification result
   decision: 'VERIFIED' | 'REJECTED';
   votesFor: number;
   votesAgainst: number;
   totalStake: string; // Wei amount as string
-  
+
   // Outcome finalization
   outcomeAt: string; // ISO 8601 timestamp when outcome was determined
   outcomeBlock: number;
-  
+
   // Settlement state
   isProvisional: boolean; // True if dispute window still open
   isFinalized: boolean; // True if dispute window closed without challenge
@@ -30,19 +30,19 @@ export interface ProvisionalOutcome {
  */
 export interface DisputeDeadline {
   claimId: string;
-  
+
   // Challenge window timestamps
   windowStartTime: string; // ISO 8601
   windowEndTime: string; // ISO 8601
-  
+
   // Time remaining to challenge (in seconds, 0 if expired)
   timeRemaining: number;
-  
+
   // Block-based deadline (for on-chain finality)
   windowEndBlock: number;
   currentBlock: number;
   blocksRemaining: number;
-  
+
   // State flags
   isWindowOpen: boolean; // Can still challenge
   isWindowClosed: boolean; // Toolate to challenge
@@ -54,14 +54,14 @@ export interface DisputeDeadline {
  */
 export interface ChallengeBond {
   claimId: string;
-  
+
   // Bond amount required to open dispute
   bondAmount: string; // Wei amount as string
-  
+
   // Slashing risk if challenge fails
   slashAmount: string; // Wei amount as string
   slashPercentage: number; // e.g., 10 for 10%
-  
+
   // Potential reward if challenge succeeds
   potentialReward: string; // Wei amount as string
   rewardMultiplier: number; // e.g., 1.5 for 1.5x bond
@@ -73,14 +73,14 @@ export interface ChallengeBond {
 export interface DisputeWalletPosition {
   claimId: string;
   userAddress: string;
-  
+
   // Can user open dispute?
   canChallenge: boolean;
-  
+
   // Existing participation checks
   hasParticipatedInFirstRound: boolean; // Participated in verification
   hasOpenedDispute: boolean; // Already opened this dispute
-  
+
   // Balance checks
   currentBalance: string; // Wei amount as string
   hasSufficientBalance: boolean;
@@ -96,7 +96,7 @@ export interface DisputeContext {
   deadline: DisputeDeadline;
   bond: ChallengeBond;
   walletPosition: DisputeWalletPosition;
-  
+
   // Computed eligibility
   isEligible: boolean;
   ineligibilityReason?: string;
@@ -120,7 +120,7 @@ export interface DisputeSubmissionPayload {
   reason: string;
   bondAmount: string; // Wei amount as string
   userAddress: string;
-  
+
   // Optional metadata
   evidence?: string[]; // URLs or IPFS hashes
 }
@@ -133,19 +133,19 @@ export interface DisputeTransaction {
   from: string;
   to: string; // Contract address
   status: DisputeSubmissionStatus;
-  
+
   claimId: string;
   disputeId?: string; // Available after indexing
   reason: string;
   bondAmount: string; // Wei amount as string
-  
+
   timestamp: string; // ISO 8601
   blockNumber?: number;
-  
+
   // Gas details
   gasUsed?: string;
   gasPrice?: string;
-  
+
   // Bond lock confirmation
   bondLocked: boolean;
   bondLockConfirmedAt?: string; // ISO 8601
@@ -157,10 +157,10 @@ export interface DisputeTransaction {
 export interface DisputeSimulationResult {
   success: boolean;
   error?: string;
-  
+
   // Gas estimation
   gasEstimate?: string;
-  
+
   // Projected state after dispute opens.
   // `disputeId` is absent until the contract assigns it on-chain; the id is
   // never predicted locally.
@@ -169,7 +169,7 @@ export interface DisputeSimulationResult {
     bondLocked: string;
     newStatus: 'DISPUTING';
   };
-  
+
   // Transaction data
   data?: {
     from: string;
@@ -186,7 +186,7 @@ export interface DisputeValidation {
   isValid: boolean;
   errors: string[];
   warnings: string[];
-  
+
   // Validation details
   checks: {
     windowOpen: boolean;
@@ -209,18 +209,97 @@ export interface DisputeValidation {
 export interface DisputeReconciliationResult {
   transactionHash: string;
   status: 'confirmed' | 'reverted' | 'timeout' | 'replaced';
-  
+
   // Final state after reconciliation
   disputeId?: string;
   bondLocked: boolean;
   bondAmount: string;
-  
+
   // Updated wallet state
   newBalance: string;
-  
+
   // Error details (if failed)
   error?: string;
   revertReason?: string;
+}
+
+/**
+ * Discrete UI state for the dispute initiation flow.
+ * Every state is derived from canonical chain/API projection data and the
+ * local submission lifecycle. No state implies a protocol outcome that has
+ * not been observed on-chain.
+ */
+export type DisputeInitiationState =
+  | { kind: 'loading' }
+  | { kind: 'unavailable'; reason: DisputeUnavailableReason }
+  | { kind: 'ready'; context: DisputeContext; validation: DisputeValidation }
+  | { kind: 'simulating'; context: DisputeContext }
+  | { kind: 'simulation-failed'; context: DisputeContext; error: string }
+  | { kind: 'awaiting-signature'; context: DisputeContext; simulation: DisputeSimulationResult }
+  | { kind: 'rejected'; context: DisputeContext; reason: string }
+  | { kind: 'pending'; context: DisputeContext; transactionHash: string }
+  | { kind: 'confirmed'; context: DisputeContext; reconciliation: DisputeReconciliationResult }
+  | { kind: 'reverted'; context: DisputeContext; reconciliation: DisputeReconciliationResult }
+  | { kind: 'replaced'; context: DisputeContext; transactionHash: string; replacementHash: string }
+  | { kind: 'timeout'; context: DisputeContext; transactionHash: string }
+  | { kind: 'reorged'; context: DisputeContext; transactionHash: string };
+
+/**
+ * Reasons the dispute initiation flow cannot proceed. These are fail-closed
+ * conditions surfaced to the user with actionable recovery guidance.
+ */
+export type DisputeUnavailableReason =
+  | 'unsupported-chain'
+  | 'missing-configuration'
+  | 'stale-data'
+  | 'integrity-uncertain'
+  | 'window-closed'
+  | 'active-dispute'
+  | 'outcome-finalized'
+  | 'contract-paused'
+  | 'wallet-disconnected';
+
+/**
+ * Error codes surfaced by the dispute initiation hook/component.
+ */
+export type DisputeInitiationErrorCode =
+  | 'WALLET_REJECTED'
+  | 'WALLET_DISCONNECTED'
+  | 'ACCOUNT_CHANGED'
+  | 'CHAIN_CHANGED'
+  | 'SIMULATION_FAILED'
+  | 'TRANSACTION_REVERTED'
+  | 'TRANSACTION_REPLACED'
+  | 'CONFIRMATION_TIMEOUT'
+  | 'REORGED_CONFIRMATION'
+  | 'INSUFFICIENT_BALANCE'
+  | 'INVALID_BOND_AMOUNT'
+  | 'REASON_REQUIRED'
+  | 'CONTRACT_PAUSED'
+  | 'UNSUPPORTED_CHAIN'
+  | 'MISSING_CONFIGURATION'
+  | 'STALE_DATA'
+  | 'UNKNOWN';
+
+/**
+ * Structured error for the dispute initiation flow. Messages are safe for
+ * display (no raw revert data or secrets).
+ */
+export interface DisputeInitiationError {
+  code: DisputeInitiationErrorCode;
+  message: string;
+  recoverable: boolean;
+  revertReason?: string;
+}
+
+/**
+ * Result of a chain reorg check for a confirmed dispute transaction.
+ */
+export interface DisputeReorgCheck {
+  transactionHash: string;
+  stillCanonical: boolean;
+  confirmations: number;
+  checkedAtBlock: number;
 }
 
 // Legacy types (kept for backward compatibility)
@@ -246,7 +325,7 @@ export interface Dispute {
   reason: string;
   status: 'OPEN' | 'VOTING' | 'RESOLVED' | 'FAILED' | 'APPEALED';
   proVotes: number;
-  conVotes: number; 
+  conVotes: number;
   totalStaked: number;
   createdAt: string;
   

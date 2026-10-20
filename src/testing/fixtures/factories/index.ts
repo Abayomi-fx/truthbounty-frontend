@@ -17,3 +17,4 @@ export * from './legal-content';
 export * from './releases';
 export * from './transactions';
 export * from './verifications';
+export * from './governance-proposals';

@@ -7,13 +7,13 @@
  * Next.js metadata directly.
  */
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
 import { generateRouteMetadata } from '@/lib/metadata/route-metadata';
 
 export const metadata: Metadata = generateRouteMetadata({
   pathname: '/how-it-works',
 });
 
-export default function HowItWorksLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+export default function HowItWorksLayout(): never {
+  redirect('/docs');
 }

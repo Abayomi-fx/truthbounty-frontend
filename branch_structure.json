@@ -1,0 +1,18 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "main",
+    "origin",
+    "security/issue-627-ui-fe-055-build-a-bounded-api-request-lifecycle"
+  ],
+  "parent": {
+    "main": null,
+    "origin": "main",
+    "security/issue-627-ui-fe-055-build-a-bounded-api-request-lifecycle": "main"
+  },
+  "order": [
+    "main",
+    "origin",
+    "security/issue-627-ui-fe-055-build-a-bounded-api-request-lifecycle"
+  ]
+}
