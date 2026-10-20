@@ -147,6 +147,12 @@ export const ROUTE_META_TABLE: readonly RouteMetaDef[] = [
       'Browse and verify active claims on the TruthBounty decentralized protocol. Community consensus and economic staking determine what information can be trusted.',
     visibility: 'public',
   },
+  {
+    path: '/docs',
+    title: 'Documentation',
+    description: 'Browse approved, versioned TruthBounty protocol documentation and user guidance.',
+    visibility: 'public',
+  },
   // Route contract: /how-it-works is an alias that redirects to /docs, which
   // this app does not serve. No canonical destination can be advertised, so it
   // is treated as a non-indexable alias (fail closed).
@@ -260,6 +266,9 @@ export function findRouteMeta(pathname: string): RouteMetaDef | undefined {
  * the pathname to a static key and relies on the table for authority.
  */
 function normalizePathnameForLookup(pathname: string): string {
+  if (/^\/docs\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pathname)) {
+    return '/docs/[slug]';
+  }
   // /claims/<something-that-is-not-"new"> → /claims/[id]
   if (/^\/claims\/[^/]+$/.test(pathname) && !pathname.startsWith('/claims/new')) {
     return '/claims/[id]';
